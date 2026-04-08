@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>ULBC_Volunteer_Since__c</fullName>
+    <label>Volunteer Since</label>
+    <type>Date</type>
+    <required>false</required>
+    <description>Date volunteering began. Must not be populated unless Is Volunteer is true. Enforced by validation rule.</description>
+    <trackHistory>false</trackHistory>
+</CustomField>

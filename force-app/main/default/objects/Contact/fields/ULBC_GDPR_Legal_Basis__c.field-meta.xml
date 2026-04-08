@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>ULBC_GDPR_Legal_Basis__c</fullName>
+    <label>GDPR Legal Basis</label>
+    <type>Picklist</type>
+    <required>false</required>
+    <description>UK GDPR legal basis for holding and processing this contact data. All imported contacts default to Legitimate Interests. Decision 1.13.</description>
+    <valueSet>
+        <valueSetDefinition>
+            <sorted>false</sorted>
+            <value><fullName>Legitimate Interests — membership relationship</fullName><default>true</default><label>Legitimate Interests — membership relationship</label></value>
+            <value><fullName>Consent</fullName><default>false</default><label>Consent</label></value>
+            <value><fullName>Contract</fullName><default>false</default><label>Contract</label></value>
+            <value><fullName>Legal Obligation</fullName><default>false</default><label>Legal Obligation</label></value>
+        </valueSetDefinition>
+    </valueSet>
+    <trackHistory>false</trackHistory>
+</CustomField>

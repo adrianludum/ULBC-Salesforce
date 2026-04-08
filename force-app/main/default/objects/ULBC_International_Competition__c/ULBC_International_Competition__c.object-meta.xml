@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
+    <label>International Competition</label>
+    <pluralLabel>International Competitions</pluralLabel>
+    <nameField>
+        <label>International Competition Name</label>
+        <type>AutoNumber</type>
+        <displayFormat>INTL-{0000}</displayFormat>
+    </nameField>
+    <deploymentStatus>Deployed</deploymentStatus>
+    <sharingModel>ControlledByParent</sharingModel>
+    <description>International competition history. Multiple records per contact and multiple in same year are permitted. Decision 1.26.</description>
+    <fields>
+        <fullName>ULBC_Contact__c</fullName>
+        <label>Contact</label>
+        <type>MasterDetail</type>
+        <referenceTo>Contact</referenceTo>
+        <relationshipName>ULBC_International_Competitions</relationshipName>
+        <relationshipLabel>International Competition History</relationshipLabel>
+        <writeRequiresMasterRead>false</writeRequiresMasterRead>
+        <reparentableMasterDetail>false</reparentableMasterDetail>
+        <!-- required implicit for MasterDetail -->
+    </fields>
+    <fields>
+        <fullName>ULBC_Year__c</fullName>
+        <label>Year</label>
+        <type>Number</type>
+        <precision>4</precision>
+        <scale>0</scale>
+        <!-- required implicit for MasterDetail -->
+    </fields>
+    <fields>
+        <fullName>ULBC_Competition__c</fullName>
+        <label>Competition</label>
+        <type>Picklist</type>
+        <!-- required implicit for MasterDetail -->
+        <valueSet>
+            <valueSetDefinition>
+                <sorted>false</sorted>
+                <value><fullName>U23 World Championships</fullName><default>false</default><label>U23 World Championships</label></value>
+                <value><fullName>World Championships</fullName><default>false</default><label>World Championships</label></value>
+                <value><fullName>Olympic Games</fullName><default>false</default><label>Olympic Games</label></value>
+                <value><fullName>Other</fullName><default>false</default><label>Other</label></value>
+            </valueSetDefinition>
+        </valueSet>
+    </fields>
+    <fields>
+        <fullName>ULBC_Event__c</fullName>
+        <label>Event</label>
+        <type>Text</type>
+        <length>100</length>
+        <required>false</required>
+    </fields>
+    <fields>
+        <fullName>ULBC_Result__c</fullName>
+        <label>Result</label>
+        <type>Text</type>
+        <length>100</length>
+        <required>false</required>
+    </fields>
+    <fields>
+        <fullName>ULBC_Country_Represented__c</fullName>
+        <label>Country Represented</label>
+        <type>Text</type>
+        <length>10</length>
+        <required>false</required>
+        <defaultValue>&apos;GB&apos;</defaultValue>
+    </fields>
+    <listViews>
+        <fullName>All</fullName>
+        <filterScope>Everything</filterScope>
+        <label>All International Competition Records</label>
+    </listViews>
+</CustomObject>

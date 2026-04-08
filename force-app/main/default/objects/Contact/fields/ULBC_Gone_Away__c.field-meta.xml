@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>ULBC_Gone_Away__c</fullName>
+    <label>Gone Away</label>
+    <type>Checkbox</type>
+    <defaultValue>false</defaultValue>
+    <description>True when postal or email contact has bounced. Phase 2 trigger will set HasOptedOutOfEmail = true. Maps from FileMaker GoneAway field.</description>
+    <trackHistory>false</trackHistory>
+</CustomField>

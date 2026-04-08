@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>ULBC_Last_Gift_Date__c</fullName>
+    <label>Last Gift Date</label>
+    <type>Date</type>
+    <required>false</required>
+    <description>Date of most recent closed-won Opportunity. Used to calculate Lapsed status (no gift in 24 months).</description>
+    <trackHistory>false</trackHistory>
+</CustomField>

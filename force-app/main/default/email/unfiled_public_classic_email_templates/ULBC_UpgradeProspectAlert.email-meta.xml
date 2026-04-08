@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<EmailTemplate xmlns="http://soap.sforce.com/2006/04/metadata">
+    <available>true</available>
+    <encodingKey>UTF-8</encodingKey>
+    <name>ULBC_UpgradeProspectAlert</name>
+    <style>none</style>
+    <subject>Upgrade Opportunity: {!relatedTo.FirstName} {!relatedTo.LastName} is approaching their next giving tier</subject>
+    <type>visualforce</type>
+    <description>Sent to the ULBC Relationship Manager when a donor reaches 80% of their tier ceiling.</description>
+</EmailTemplate>

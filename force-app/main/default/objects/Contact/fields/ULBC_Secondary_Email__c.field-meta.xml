@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>ULBC_Secondary_Email__c</fullName>
+    <label>Secondary Email</label>
+    <type>Email</type>
+    <required>false</required>
+    <unique>false</unique>
+    <description>Secondary email address. Primary email is the standard Contact Email field.</description>
+    <trackHistory>false</trackHistory>
+</CustomField>

@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>ULBC_Trust_ID__c</fullName>
+    <label>Trust ID</label>
+    <type>Text</type>
+    <length>50</length>
+    <required>false</required>
+    <externalId>true</externalId>
+    <unique>true</unique>
+    <caseSensitive>false</caseSensitive>
+    <description>Master migration key linking all FileMaker tables. External ID enabling upserts on data load and Stripe integration.</description>
+    <trackHistory>false</trackHistory>
+</CustomField>

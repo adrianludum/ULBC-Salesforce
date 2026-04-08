@@ -1,0 +1,15 @@
+# Salesforce
+.sf/
+.sfdx/
+*.log
+
+# macOS
+.DS_Store
+__MACOSX/
+
+# IDE
+.vscode/
+.idea/
+
+# Node
+node_modules/

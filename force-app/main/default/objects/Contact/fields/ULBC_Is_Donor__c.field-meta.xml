@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>ULBC_Is_Donor__c</fullName>
+    <label>Is Donor</label>
+    <type>Checkbox</type>
+    <defaultValue>false</defaultValue>
+    <description>Additive flag. Set to true when first Opportunity is recorded. Decision 1.11.</description>
+    <trackHistory>false</trackHistory>
+</CustomField>

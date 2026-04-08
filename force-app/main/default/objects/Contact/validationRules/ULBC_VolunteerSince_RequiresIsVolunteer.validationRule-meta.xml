@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ValidationRule xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>ULBC_VolunteerSince_RequiresIsVolunteer</fullName>
+    <active>true</active>
+    <description>Volunteer Since must not be populated unless Is Volunteer is checked.</description>
+    <errorConditionFormula>AND(NOT(ULBC_Is_Volunteer__c), NOT(ISBLANK(ULBC_Volunteer_Since__c)))</errorConditionFormula>
+    <errorDisplayField>ULBC_Volunteer_Since__c</errorDisplayField>
+    <errorMessage>Volunteer Since can only be set when Is Volunteer is checked.</errorMessage>
+</ValidationRule>

@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>ULBC_Rolling_12m_Giving__c</fullName>
+    <label>Rolling 12-Month Giving</label>
+    <type>Currency</type>
+    <precision>10</precision>
+    <scale>2</scale>
+    <required>false</required>
+    <description>Sum of closed-won Opportunities in the rolling 12-month window. Updated by ULBC_DonorTierEngine.</description>
+    <trackHistory>false</trackHistory>
+</CustomField>

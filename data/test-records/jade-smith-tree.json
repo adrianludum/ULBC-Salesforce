@@ -1,0 +1,51 @@
+{
+  "records": [
+    {
+      "attributes": { "type": "Contact", "referenceId": "JadeSmithRef" },
+      "FirstName": "Jade",
+      "LastName": "Smith",
+      "ULBC_Birth_Name__c": "Robinson",
+      "ULBC_Trust_ID__c": "ULBC-0001",
+      "ULBC_Primary_Contact_Type__c": "Alumni",
+      "ULBC_Gender__c": "Female",
+      "Birthdate": "1966-03-14",
+      "Email": "jade.smith@example.com",
+      "ULBC_Secondary_Email__c": "jade.robinson@example.com",
+      "ULBC_GDPR_Legal_Basis__c": "Legitimate Interests — membership relationship",
+      "ULBC_Is_Donor__c": true,
+      "ULBC_Is_Volunteer__c": true,
+      "ULBC_Volunteer_Since__c": "2024-01-01",
+      "ULBC_Is_Tyrian_Member__c": false,
+      "ULBC_Gone_Away__c": false,
+      "ULBC_Alumni_Type__c": "UK",
+      "ULBC_Acquisition_Channel__c": "Alumni",
+      "ULBC_Education_Histories__r": {
+        "records": [
+          { "attributes": { "type": "ULBC_Education_History__c", "referenceId": "JadeEduUCL" }, "ULBC_Institution__c": "University College London", "ULBC_Degree_Type__c": "Undergraduate", "ULBC_Subject__c": "Biology", "ULBC_Start_Year__c": 1985, "ULBC_End_Year__c": 1988 },
+          { "attributes": { "type": "ULBC_Education_History__c", "referenceId": "JadeEduKings" }, "ULBC_Institution__c": "Kings College London", "ULBC_Degree_Type__c": "Masters", "ULBC_Subject__c": "Sports Science", "ULBC_Start_Year__c": 1988, "ULBC_End_Year__c": 1990 },
+          { "attributes": { "type": "ULBC_Education_History__c", "referenceId": "JadeEduRH" }, "ULBC_Institution__c": "Royal Holloway", "ULBC_Degree_Type__c": "PhD", "ULBC_Subject__c": "Exercise Physiology", "ULBC_Start_Year__c": 1990, "ULBC_End_Year__c": 1994 }
+        ]
+      },
+      "ULBC_International_Competitions__r": {
+        "records": [
+          { "attributes": { "type": "ULBC_International_Competition__c", "referenceId": "JadeU23" }, "ULBC_Year__c": 1985, "ULBC_Competition__c": "U23 World Championships", "ULBC_Event__c": "Women's 4-", "ULBC_Result__c": "2nd", "ULBC_Country_Represented__c": "GB" },
+          { "attributes": { "type": "ULBC_International_Competition__c", "referenceId": "JadeOlympics" }, "ULBC_Year__c": 1988, "ULBC_Competition__c": "Olympic Games", "ULBC_Event__c": "Women's 8+", "ULBC_Result__c": "5th", "ULBC_Country_Represented__c": "GB" }
+        ]
+      },
+      "ULBC_Crew_Histories__r": {
+        "records": [
+          { "attributes": { "type": "ULBC_Crew_History__c", "referenceId": "Crew1983" }, "ULBC_Crew_Code__c": "HRR-W8-1983", "ULBC_Year__c": 1983, "ULBC_Regatta__c": "Henley Royal Regatta", "ULBC_Event__c": "Women's Eight", "ULBC_Crew_Name__c": "ULBC Women's Eight 1983", "ULBC_Result__c": "Finalist" },
+          { "attributes": { "type": "ULBC_Crew_History__c", "referenceId": "Crew1984" }, "ULBC_Crew_Code__c": "HRR-W8-1984", "ULBC_Year__c": 1984, "ULBC_Regatta__c": "Henley Royal Regatta", "ULBC_Event__c": "Women's Eight", "ULBC_Crew_Name__c": "ULBC Women's Eight 1984", "ULBC_Result__c": "Finalist" },
+          { "attributes": { "type": "ULBC_Crew_History__c", "referenceId": "Crew1985" }, "ULBC_Crew_Code__c": "HRR-W8-1985", "ULBC_Year__c": 1985, "ULBC_Regatta__c": "Henley Royal Regatta", "ULBC_Event__c": "Women's Eight", "ULBC_Crew_Name__c": "ULBC Women's Eight 1985", "ULBC_Result__c": "Winner" },
+          { "attributes": { "type": "ULBC_Crew_History__c", "referenceId": "Crew1986" }, "ULBC_Crew_Code__c": "HRR-W8-1986", "ULBC_Year__c": 1986, "ULBC_Regatta__c": "Henley Royal Regatta", "ULBC_Event__c": "Women's Eight", "ULBC_Crew_Name__c": "ULBC Women's Eight 1986", "ULBC_Result__c": "Finalist" },
+          { "attributes": { "type": "ULBC_Crew_History__c", "referenceId": "Crew1987" }, "ULBC_Crew_Code__c": "HRR-W8-1987", "ULBC_Year__c": 1987, "ULBC_Regatta__c": "Henley Royal Regatta", "ULBC_Event__c": "Women's Eight", "ULBC_Crew_Name__c": "ULBC Women's Eight 1987", "ULBC_Result__c": "Finalist" },
+          { "attributes": { "type": "ULBC_Crew_History__c", "referenceId": "Crew1988" }, "ULBC_Crew_Code__c": "HRR-W8-1988", "ULBC_Year__c": 1988, "ULBC_Regatta__c": "Henley Royal Regatta", "ULBC_Event__c": "Women's Eight", "ULBC_Crew_Name__c": "ULBC Women's Eight 1988", "ULBC_Result__c": "Winner" },
+          { "attributes": { "type": "ULBC_Crew_History__c", "referenceId": "Crew1989" }, "ULBC_Crew_Code__c": "HRR-W8-1989", "ULBC_Year__c": 1989, "ULBC_Regatta__c": "Henley Royal Regatta", "ULBC_Event__c": "Women's Eight", "ULBC_Crew_Name__c": "ULBC Women's Eight 1989", "ULBC_Result__c": "Finalist" },
+          { "attributes": { "type": "ULBC_Crew_History__c", "referenceId": "Crew1990" }, "ULBC_Crew_Code__c": "HRR-W8-1990", "ULBC_Year__c": 1990, "ULBC_Regatta__c": "Henley Royal Regatta", "ULBC_Event__c": "Women's Eight", "ULBC_Crew_Name__c": "ULBC Women's Eight 1990", "ULBC_Result__c": "Winner" },
+          { "attributes": { "type": "ULBC_Crew_History__c", "referenceId": "Crew1991" }, "ULBC_Crew_Code__c": "HRR-W8-1991", "ULBC_Year__c": 1991, "ULBC_Regatta__c": "Henley Royal Regatta", "ULBC_Event__c": "Women's Eight", "ULBC_Crew_Name__c": "ULBC Women's Eight 1991", "ULBC_Result__c": "Finalist" },
+          { "attributes": { "type": "ULBC_Crew_History__c", "referenceId": "Crew1992" }, "ULBC_Crew_Code__c": "HRR-W8-1992", "ULBC_Year__c": 1992, "ULBC_Regatta__c": "Henley Royal Regatta", "ULBC_Event__c": "Women's Eight", "ULBC_Crew_Name__c": "ULBC Women's Eight 1992", "ULBC_Result__c": "Finalist" }
+        ]
+      }
+    }
+  ]
+}

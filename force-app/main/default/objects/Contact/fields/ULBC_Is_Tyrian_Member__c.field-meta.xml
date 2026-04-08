@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>ULBC_Is_Tyrian_Member__c</fullName>
+    <label>Is Tyrian Member</label>
+    <type>Checkbox</type>
+    <defaultValue>false</defaultValue>
+    <description>Additive flag. Tyrian is the alumni rowing club with its own separate subscription. Decision 1.4, 1.9.</description>
+    <trackHistory>false</trackHistory>
+</CustomField>

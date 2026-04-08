@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>ULBC_Is_Volunteer__c</fullName>
+    <label>Is Volunteer</label>
+    <type>Checkbox</type>
+    <defaultValue>false</defaultValue>
+    <description>Additive flag. When true, ULBC_Volunteer_Since__c must be populated. Validation rule enforces this.</description>
+    <trackHistory>false</trackHistory>
+</CustomField>

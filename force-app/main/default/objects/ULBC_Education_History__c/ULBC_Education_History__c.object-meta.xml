@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
+    <label>Education History</label>
+    <pluralLabel>Education Histories</pluralLabel>
+    <nameField>
+        <label>Education History Name</label>
+        <type>AutoNumber</type>
+        <displayFormat>EDU-{0000}</displayFormat>
+    </nameField>
+    <deploymentStatus>Deployed</deploymentStatus>
+    <sharingModel>ControlledByParent</sharingModel>
+    <description>One record per institution attended. Supports multiple institutions per contact. Decision 1.24.</description>
+    <fields>
+        <fullName>ULBC_Contact__c</fullName>
+        <label>Contact</label>
+        <type>MasterDetail</type>
+        <referenceTo>Contact</referenceTo>
+        <relationshipName>ULBC_Education_Histories</relationshipName>
+        <relationshipLabel>Education History</relationshipLabel>
+        <writeRequiresMasterRead>false</writeRequiresMasterRead>
+        <reparentableMasterDetail>false</reparentableMasterDetail>
+        <!-- required implicit for MasterDetail -->
+    </fields>
+    <fields>
+        <fullName>ULBC_Institution__c</fullName>
+        <label>Institution</label>
+        <type>Text</type>
+        <length>255</length>
+        <!-- required implicit for MasterDetail -->
+    </fields>
+    <fields>
+        <fullName>ULBC_Degree_Type__c</fullName>
+        <label>Degree Type</label>
+        <type>Picklist</type>
+        <required>false</required>
+        <valueSet>
+            <valueSetDefinition>
+                <sorted>false</sorted>
+                <value><fullName>Undergraduate</fullName><default>true</default><label>Undergraduate</label></value>
+                <value><fullName>Masters</fullName><default>false</default><label>Masters</label></value>
+                <value><fullName>PhD</fullName><default>false</default><label>PhD</label></value>
+                <value><fullName>Other</fullName><default>false</default><label>Other</label></value>
+            </valueSetDefinition>
+        </valueSet>
+    </fields>
+    <fields>
+        <fullName>ULBC_Subject__c</fullName>
+        <label>Subject</label>
+        <type>Text</type>
+        <length>255</length>
+        <required>false</required>
+    </fields>
+    <fields>
+        <fullName>ULBC_Start_Year__c</fullName>
+        <label>Start Year</label>
+        <type>Number</type>
+        <precision>4</precision>
+        <scale>0</scale>
+        <required>false</required>
+    </fields>
+    <fields>
+        <fullName>ULBC_End_Year__c</fullName>
+        <label>End Year</label>
+        <type>Number</type>
+        <precision>4</precision>
+        <scale>0</scale>
+        <required>false</required>
+    </fields>
+    <listViews>
+        <fullName>All</fullName>
+        <filterScope>Everything</filterScope>
+        <label>All Education History Records</label>
+    </listViews>
+</CustomObject>

@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>ULBC_Donor_Tier__c</fullName>
+    <label>Donor Tier</label>
+    <type>Picklist</type>
+    <required>false</required>
+    <description>Auto-calculated donor tier based on rolling 12-month giving. Decision 1.8.</description>
+    <valueSet>
+        <valueSetDefinition>
+            <sorted>false</sorted>
+            <value><fullName>Prospect</fullName><default>true</default><label>Prospect</label></value>
+            <value><fullName>Standard</fullName><default>false</default><label>Standard</label></value>
+            <value><fullName>Patron</fullName><default>false</default><label>Patron</label></value>
+            <value><fullName>Major</fullName><default>false</default><label>Major</label></value>
+            <value><fullName>Lapsed</fullName><default>false</default><label>Lapsed</label></value>
+            <value><fullName>Legacy Prospect</fullName><default>false</default><label>Legacy Prospect</label></value>
+            <value><fullName>Legacy Pledger</fullName><default>false</default><label>Legacy Pledger</label></value>
+            <value><fullName>Legator</fullName><default>false</default><label>Legator</label></value>
+        </valueSetDefinition>
+    </valueSet>
+    <trackHistory>false</trackHistory>
+</CustomField>

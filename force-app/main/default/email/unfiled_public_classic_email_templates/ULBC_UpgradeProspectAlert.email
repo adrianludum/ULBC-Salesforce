@@ -1,0 +1,119 @@
+<messaging:emailTemplate subject="Upgrade Opportunity: {!relatedTo.FirstName} {!relatedTo.LastName} is approaching their next giving tier"
+    recipientType="User"
+    relatedToType="Contact"
+    xmlns:messaging="http://soap.sforce.com/2006/04/messaging">
+<messaging:htmlEmailBody>
+<html>
+<head>
+<meta charset="UTF-8"/>
+<style>
+  body { margin:0; padding:0; background-color:#f4f1f8; font-family:Georgia,'Times New Roman',serif; color:#040008; }
+  .wrapper { max-width:620px; margin:40px auto; background-color:#fbfafc; border-radius:4px; overflow:hidden; box-shadow:0 2px 12px rgba(4,0,8,0.12); }
+  .header { background-color:#040008; padding:36px 40px 28px; text-align:center; }
+  .header img { width:90px; height:90px; border-radius:50%; border:3px solid #784ca8; }
+  .header-title { color:#fbfafc; font-size:13px; letter-spacing:3px; text-transform:uppercase; margin-top:16px; margin-bottom:0; font-family:Arial,sans-serif; }
+  .alert-banner { background-color:#784ca8; padding:18px 40px; text-align:center; }
+  .alert-banner p { margin:0; color:#fbfafc; font-size:15px; font-family:Arial,sans-serif; letter-spacing:1px; text-transform:uppercase; font-weight:bold; }
+  .body { padding:40px 40px 32px; }
+  .greeting { font-size:22px; font-weight:bold; color:#040008; margin:0 0 8px; }
+  .intro { font-size:15px; color:#333; line-height:1.7; margin:0 0 32px; font-family:Arial,sans-serif; }
+  .donor-card { background-color:#f4f1f8; border-left:4px solid #784ca8; border-radius:3px; padding:24px 28px; margin-bottom:32px; }
+  .donor-name { font-size:20px; font-weight:bold; color:#040008; margin:0 0 16px; }
+  .stat-row { margin-bottom:10px; font-family:Arial,sans-serif; font-size:14px; }
+  .stat-label { color:#666; display:inline-block; width:180px; }
+  .stat-value { color:#040008; font-weight:bold; }
+  .stat-value.highlight { color:#784ca8; }
+  .progress-section { margin-bottom:32px; }
+  .progress-label { font-family:Arial,sans-serif; font-size:13px; color:#666; margin-bottom:8px; }
+  .progress-bar-bg { background-color:#e8e2f0; border-radius:20px; height:14px; overflow:hidden; }
+  .progress-bar-fill { background-color:#784ca8; height:14px; border-radius:20px; }
+  .progress-pct { font-family:Arial,sans-serif; font-size:12px; color:#784ca8; font-weight:bold; margin-top:6px; text-align:right; }
+  .cta-section { text-align:center; margin-bottom:32px; }
+  .cta-button { display:inline-block; background-color:#784ca8; color:#fbfafc !important; text-decoration:none; padding:14px 36px; border-radius:3px; font-family:Arial,sans-serif; font-size:14px; font-weight:bold; letter-spacing:1px; text-transform:uppercase; }
+  .next-steps { background-color:#040008; border-radius:3px; padding:24px 28px; margin-bottom:32px; }
+  .next-steps h3 { color:#784ca8; font-family:Arial,sans-serif; font-size:12px; letter-spacing:2px; text-transform:uppercase; margin:0 0 14px; }
+  .next-steps ul { margin:0; padding-left:18px; color:#fbfafc; font-family:Arial,sans-serif; font-size:14px; line-height:1.8; }
+  .footer { background-color:#040008; padding:24px 40px; text-align:center; border-top:3px solid #784ca8; }
+  .footer p { color:#888; font-family:Arial,sans-serif; font-size:12px; margin:0; line-height:1.6; }
+  .footer a { color:#784ca8; text-decoration:none; }
+  hr.divider { border:none; border-top:1px solid #e8e2f0; margin:0 0 32px; }
+</style>
+</head>
+<body>
+<div class="wrapper">
+  <div class="header">
+    <img src="{!$Resource.ULBC_Logo}" alt="ULBC Trust Crest"/>
+    <p class="header-title">ULBC Trust Limited &nbsp;&#183;&nbsp; Fundraising Intelligence</p>
+  </div>
+  <div class="alert-banner">
+    <p>Upgrade Prospect Identified</p>
+  </div>
+  <div class="body">
+    <p class="greeting">A donor is approaching their next tier.</p>
+    <p class="intro">The following contact has reached the upgrade threshold. Their rolling 12&#8209;month giving is now within range of the next fundraising tier. This is the right moment to make a personalised approach.</p>
+    <div class="donor-card">
+      <p class="donor-name">{!relatedTo.FirstName} {!relatedTo.LastName}</p>
+      <div class="stat-row"><span class="stat-label">Current Tier</span><span class="stat-value">{!relatedTo.ULBC_Donor_Tier__c}</span></div>
+      <div class="stat-row"><span class="stat-label">12-Month Giving</span><span class="stat-value highlight">&#163;{!relatedTo.ULBC_Rolling_12m_Giving__c}</span></div>
+      <div class="stat-row"><span class="stat-label">Next Tier Threshold</span><span class="stat-value">&#163;{!relatedTo.ULBC_Next_Tier_Threshold__c}</span></div>
+      <div class="stat-row"><span class="stat-label">Gap to Next Tier</span><span class="stat-value">&#163;{!relatedTo.ULBC_Gap_To_Next_Tier__c}</span></div>
+      <div class="stat-row"><span class="stat-label">Acquisition Channel</span><span class="stat-value">{!relatedTo.ULBC_Acquisition_Channel__c}</span></div>
+    </div>
+    <div class="progress-section">
+      <p class="progress-label">Progress toward next tier threshold</p>
+      <div class="progress-bar-bg">
+        <div class="progress-bar-fill" style="width:{!relatedTo.ULBC_Tier_Progress_Pct__c}%;"></div>
+      </div>
+      <p class="progress-pct">{!relatedTo.ULBC_Tier_Progress_Pct__c}% of threshold reached</p>
+    </div>
+    <hr class="divider"/>
+    <div class="next-steps">
+      <h3>Suggested Next Steps</h3>
+      <ul>
+        <li>Review this donor's full giving history in Salesforce</li>
+        <li>Check their crew history and international competition record &#8212; useful conversation hooks</li>
+        <li>Consider a personal call or handwritten note before making the ask</li>
+        <li>If they are a Henley alumni, reference the current season</li>
+        <li>Log your outreach as an Activity on their contact record</li>
+      </ul>
+    </div>
+    <div class="cta-section">
+      <a class="cta-button" href="https://ulbctrustlimited.lightning.force.com/lightning/r/Contact/{!relatedTo.Id}/view">
+        Open {!relatedTo.FirstName}'s Record in Salesforce
+      </a>
+    </div>
+    <p style="font-family:Arial,sans-serif;font-size:13px;color:#888;text-align:center;margin:0;">
+      This alert was generated automatically by ULBC Trust Salesforce.<br/>
+      Clear the <strong>Upgrade Prospect</strong> flag on the contact record once you have acted on it.
+    </p>
+  </div>
+  <div class="footer">
+    <p>
+      ULBC Trust Limited &nbsp;&#183;&nbsp; Registered Charity &nbsp;&#183;&nbsp; England &amp; Wales<br/>
+      <a href="https://ulbctrustlimited.lightning.force.com">Open Salesforce</a>
+      &nbsp;&#183;&nbsp;
+      This email was sent because you are the ULBC Relationship Manager for this contact.
+    </p>
+  </div>
+</div>
+</body>
+</html>
+</messaging:htmlEmailBody>
+<messaging:plainTextEmailBody>
+ULBC TRUST — UPGRADE PROSPECT ALERT
+
+Donor: {!relatedTo.FirstName} {!relatedTo.LastName}
+Current Tier: {!relatedTo.ULBC_Donor_Tier__c}
+12-Month Giving: £{!relatedTo.ULBC_Rolling_12m_Giving__c}
+Next Tier Threshold: £{!relatedTo.ULBC_Next_Tier_Threshold__c}
+Gap to Next Tier: £{!relatedTo.ULBC_Gap_To_Next_Tier__c}
+
+This donor has reached the upgrade threshold. Now is the right time to make a personalised approach.
+
+Open their record: https://ulbctrustlimited.lightning.force.com/lightning/r/Contact/{!relatedTo.Id}/view
+
+Clear the Upgrade Prospect flag on the contact record once you have acted on it.
+
+ULBC Trust Limited · Registered Charity · England and Wales
+</messaging:plainTextEmailBody>
+</messaging:emailTemplate>

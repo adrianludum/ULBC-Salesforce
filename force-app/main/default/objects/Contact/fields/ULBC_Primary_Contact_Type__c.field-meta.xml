@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>ULBC_Primary_Contact_Type__c</fullName>
+    <label>Primary Contact Type</label>
+    <type>Picklist</type>
+    <required>true</required>
+    <description>Single evolving primary classification. Athlete-Student to Alumni is one-way on graduation. All imported FileMaker contacts default to Alumni. Decision 1.11, 1.12.</description>
+    <valueSet>
+        <valueSetDefinition>
+            <sorted>false</sorted>
+            <value><fullName>Athlete-Student</fullName><default>false</default><label>Athlete-Student</label></value>
+            <value><fullName>Alumni</fullName><default>true</default><label>Alumni</label></value>
+            <value><fullName>Parent</fullName><default>false</default><label>Parent</label></value>
+            <value><fullName>Other</fullName><default>false</default><label>Other</label></value>
+        </valueSetDefinition>
+    </valueSet>
+    <trackHistory>false</trackHistory>
+</CustomField>
