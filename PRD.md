@@ -1,5 +1,5 @@
 # ULBC Trust Salesforce — Product Requirements Document
-*Status: Phase 2B In Progress*
+*Status: Phase 2B Complete — Phase 2C Next*
 *Last synthesised: 2026-04-08*
 
 ---
@@ -96,7 +96,7 @@ ULBC Trust Limited is the fundraising arm of the University of London Boat Club 
 | Gap to Next Tier | ULBC_Gap_To_Next_Tier__c | Currency | ✅ Deployed |
 | Tier Progress % | ULBC_Tier_Progress_Pct__c | Number | ✅ Deployed |
 
-### TODO: Add Phase 2B fields to Contact page layout and permission set
+### Phase 2B fields added to Contact page layout ✅ and permission set ✅
 
 ### Validation Rules — DEPLOYED ✅
 - ULBC_VolunteerSince_RequiresIsVolunteer: Volunteer Since cannot be set unless Is Volunteer = true
@@ -161,12 +161,14 @@ Tier thresholds (auto-calculated on Contact from rolling 12-month cumulative giv
 - Lapsed flag when no donation in 24 months
 - ULBC_OpportunityTrigger fires recalculation on every Opportunity insert/update/delete/undelete
 
-### Upgrade Prospect Email Alert — PARTIALLY BUILT ⚠️
-- HTML email template built (ULBC_UpgradeProspectAlert) — deploy pending (folder error)
+### Upgrade Prospect Email Alert — TEMPLATE DEPLOYED ✅, FLOW NOT YET BUILT ⚠️
+- HTML email template deployed (ULBC_UpgradeProspectAlert) ✅
 - ULBC crest logo deployed as Static Resource ✅
 - Brand colours: #784ca8 (purple), #fbfafc (white), #040008 (black)
-- Flow/email alert to fire template when Upgrade Prospect = true — NOT YET BUILT
-- Recipient: ULBC Relationship Manager on the Contact record
+- Recipient: info@innovatefundraising.com (single default — Decision 2.8)
+- From address: noreply@ulbctrust.org (Org-Wide Email Address — needs verification in Setup — Decision 2.9)
+- Upgrade Prospect flag manually cleared by fundraiser after acting (Decision 2.7)
+- **REMAINING**: Record-Triggered Flow on Contact (when ULBC_Upgrade_Prospect__c changes false→true) to send Email Alert. Blocked on Org-Wide Email Address verification.
 
 ### Required fields on every donation — NOT YET BUILT (Phase 2C)
 - Amount (GBP)
@@ -262,15 +264,13 @@ Tier thresholds (auto-calculated on Contact from rolling 12-month cumulative giv
 |---|---|---|---|
 | Phase 1 | Contact data model, 3 related lists, page layout, Jade Smith test record | 33 | ✅ Complete |
 | Phase 2A | Gone Away → HasOptedOutOfEmail trigger | 12 | ✅ Complete |
-| Phase 2B | Donor tier engine, opportunity trigger, upgrade prospect fields | 17 | ✅ Complete |
+| Phase 2B | Donor tier engine, opportunity trigger, upgrade prospect fields, email template | 18 | ✅ Complete |
 
 ### In Progress
 | Item | Status |
 |---|---|
-| Email template deployment (ULBC_UpgradeProspectAlert) | ⚠️ Folder error — needs fix |
-| Flow to fire email alert when Upgrade Prospect = true | ❌ Not built |
-| Phase 2B fields added to Contact page layout | ❌ Not done |
-| Permission set updated for Phase 2B fields | ❌ Not done |
+| Org-Wide Email Address (noreply@ulbctrust.org) verification | ❌ Manual step needed in Setup |
+| Flow to fire email alert when Upgrade Prospect = true | ❌ Not built — blocked on Org-Wide Email Address |
 
 ### Remaining
 | Phase | Description |
@@ -312,7 +312,8 @@ Tier thresholds (auto-calculated on Contact from rolling 12-month cumulative giv
 - **Salesforce username**: adrian-36nu@cassidy.uk.com
 - **Org ID**: 00D8e000001DvjUEAS
 - **CLI alias**: ulbc
-- **Project directory**: ~/ULBC-salesforcce
+- **Project directory**: ~/Projects/ULBC-salesforce
+- **GitHub**: https://github.com/adrianludum/ULBC-Salesforce
 - **Email**: Salesforce native Marketing User licences
 - **Payments**: Stripe (v2 integration)
 - **Brand colours**: #784ca8 (purple), #fbfafc (off-white), #040008 (near-black)
@@ -333,7 +334,7 @@ Tier thresholds (auto-calculated on Contact from rolling 12-month cumulative giv
 | ULBC_ContactTrigger | Contact | before insert, before update | Gone Away → HasOptedOutOfEmail |
 | ULBC_OpportunityTrigger | Opportunity | after insert/update/delete/undelete | Fire donor tier recalculation |
 
-### Total test count: 62 passing, 0 failing
+### Total test count: 63 passing, 0 failing
 
 ---
 

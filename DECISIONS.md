@@ -1,6 +1,6 @@
 # ULBC Trust Salesforce — Decision Log
 *Last updated: 2026-04-08*
-*Current phase: Phase 2B — Donor Tier Engine*
+*Current phase: Phase 2B Complete — Ready for Phase 2C*
 
 ---
 
@@ -136,7 +136,7 @@
 ### Decision 2.4 — Upgrade prospect notification is email to fundraiser
 - **What**: When Upgrade Prospect flag is set on Contact, an HTML email is sent to the ULBC Relationship Manager. No in-app notification or Task.
 - **Why**: Fundraiser may not be in Salesforce daily. Email works outside the platform. At 5-10 prospects/year, noise is not an issue.
-- **Implementation**: Email template built (ULBC_UpgradeProspectAlert) — deploy pending. Flow not yet built.
+- **Implementation**: Email template deployed (ULBC_UpgradeProspectAlert) ✅. Flow to fire it NOT YET BUILT — blocked on Org-Wide Email Address verification.
 - **Date**: 2026-04-08
 
 ### Decision 2.5 — ULBC subscription is £100/year, Tyrian is £75/year at launch
