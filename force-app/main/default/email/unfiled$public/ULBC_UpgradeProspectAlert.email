@@ -1,8 +1,3 @@
-<messaging:emailTemplate subject="Upgrade Opportunity: {!relatedTo.FirstName} {!relatedTo.LastName} is approaching their next giving tier"
-    recipientType="User"
-    relatedToType="Contact"
-    xmlns:messaging="http://soap.sforce.com/2006/04/messaging">
-<messaging:htmlEmailBody>
 <html>
 <head>
 <meta charset="UTF-8"/>
@@ -98,22 +93,3 @@
 </div>
 </body>
 </html>
-</messaging:htmlEmailBody>
-<messaging:plainTextEmailBody>
-ULBC TRUST — UPGRADE PROSPECT ALERT
-
-Donor: {!relatedTo.FirstName} {!relatedTo.LastName}
-Current Tier: {!relatedTo.ULBC_Donor_Tier__c}
-12-Month Giving: £{!relatedTo.ULBC_Rolling_12m_Giving__c}
-Next Tier Threshold: £{!relatedTo.ULBC_Next_Tier_Threshold__c}
-Gap to Next Tier: £{!relatedTo.ULBC_Gap_To_Next_Tier__c}
-
-This donor has reached the upgrade threshold. Now is the right time to make a personalised approach.
-
-Open their record: https://ulbctrustlimited.lightning.force.com/lightning/r/Contact/{!relatedTo.Id}/view
-
-Clear the Upgrade Prospect flag on the contact record once you have acted on it.
-
-ULBC Trust Limited · Registered Charity · England and Wales
-</messaging:plainTextEmailBody>
-</messaging:emailTemplate>

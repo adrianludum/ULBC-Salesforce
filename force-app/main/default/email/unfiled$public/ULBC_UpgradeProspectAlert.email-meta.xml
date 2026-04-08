@@ -5,6 +5,6 @@
     <name>ULBC_UpgradeProspectAlert</name>
     <style>none</style>
     <subject>Upgrade Opportunity: {!relatedTo.FirstName} {!relatedTo.LastName} is approaching their next giving tier</subject>
-    <type>visualforce</type>
+    <type>custom</type>
     <description>Sent to the ULBC Relationship Manager when a donor reaches 80% of their tier ceiling.</description>
 </EmailTemplate>
