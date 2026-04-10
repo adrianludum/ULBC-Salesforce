@@ -1,5 +1,5 @@
 # ULBC Trust Salesforce — Open Questions
-*Last updated: 2026-04-08*
+*Last updated: 2026-04-09*
 
 ---
 
@@ -61,8 +61,16 @@
 
 **OQ-019** ✅ — Upgrade Prospect flag manually cleared by fundraiser after acting. Decision 2.7.
 
-**OQ-020**: Does Gift Aid need to be tracked at the individual transaction level (on each Opportunity) or at the contact level only (declaration on Contact)?
-*PRD specifies both — confirm before Phase 2C build.*
+**OQ-020** ✅ — Gift Aid tracked at both levels. Declaration data on Contact; per-donation eligibility + claimed date on Opportunity. Decision 2.10.
 
 **OQ-021**: What is the ULBC Trust charity registration number? Needed for Gift Aid configuration.
-*Blocking: Phase 2C (Gift Aid)*
+*Blocking: Phase 3 (HMRC Gift Aid claim submissions)*
+
+---
+
+## Phase 2C Open Questions — Added 2026-04-09
+
+**OQ-022**: Should the Contact lookup on ULBC_Subscription__c and ULBC_Tyrian_Membership__c be enforced as required via a Validation Rule (since the metadata-level required=true conflicts with Salesforce's deleteConstraint rules)?
+*Recommendation: Yes — add a Validation Rule to both objects: ISBLANK(ULBC_Contact__c) → error "A contact must be selected". Low priority — add in Phase 3 alongside other validation rules.*
+
+**OQ-023**: Is noreply@ulbctrust.org now verified in Setup → Organization-Wide Email Addresses? Blocks the Upgrade Prospect Record-Triggered Flow (last remaining Phase 2B item).

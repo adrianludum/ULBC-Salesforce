@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>ULBC_Fund_Type__c</fullName>
+    <label>Fund Type</label>
+    <type>Picklist</type>
+    <required>false</required>
+    <description>Whether the gift is unrestricted (charity discretion) or restricted to a named fund. Required on every Opportunity. Phase 2C.</description>
+    <valueSet>
+        <valueSetDefinition>
+            <sorted>false</sorted>
+            <value><fullName>Unrestricted</fullName><default>true</default><label>Unrestricted</label></value>
+            <value><fullName>Restricted</fullName><default>false</default><label>Restricted</label></value>
+        </valueSetDefinition>
+    </valueSet>
+    <trackHistory>false</trackHistory>
+</CustomField>

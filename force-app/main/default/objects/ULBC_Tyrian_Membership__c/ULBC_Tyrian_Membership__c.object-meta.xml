@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
+    <label>Tyrian Membership</label>
+    <pluralLabel>Tyrian Memberships</pluralLabel>
+    <nameField>
+        <label>Membership Name</label>
+        <type>AutoNumber</type>
+        <displayFormat>TYR-{0000}</displayFormat>
+    </nameField>
+    <deploymentStatus>Deployed</deploymentStatus>
+    <sharingModel>ReadWrite</sharingModel>
+    <description>Tyrian alumni rowing club membership (launch default £75/year). Separate track from ULBC alumni subscription. Decision 1.4, Decision 1.9, Decision 2.5. Phase 2C.</description>
+
+    <fields>
+        <fullName>ULBC_Contact__c</fullName>
+        <label>Contact</label>
+        <type>Lookup</type>
+        <referenceTo>Contact</referenceTo>
+        <relationshipName>ULBC_Tyrian_Memberships</relationshipName>
+        <relationshipLabel>Tyrian Memberships</relationshipLabel>
+        <required>false</required>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <description>The alumnus holding this Tyrian membership.</description>
+    </fields>
+
+    <fields>
+        <fullName>ULBC_Amount__c</fullName>
+        <label>Amount</label>
+        <type>Currency</type>
+        <precision>8</precision>
+        <scale>2</scale>
+        <required>true</required>
+        <defaultValue>75</defaultValue>
+        <description>Membership fee in GBP. Launch default £75/year — stored on record, not hardcoded. Decision 2.5.</description>
+    </fields>
+
+    <fields>
+        <fullName>ULBC_Frequency__c</fullName>
+        <label>Frequency</label>
+        <type>Picklist</type>
+        <required>true</required>
+        <description>Payment frequency. Launch default Annual. Decision 2.5.</description>
+        <valueSet>
+            <valueSetDefinition>
+                <sorted>false</sorted>
+                <value><fullName>Annual</fullName><default>true</default><label>Annual</label></value>
+                <value><fullName>Monthly</fullName><default>false</default><label>Monthly</label></value>
+            </valueSetDefinition>
+        </valueSet>
+    </fields>
+
+    <fields>
+        <fullName>ULBC_Status__c</fullName>
+        <label>Status</label>
+        <type>Picklist</type>
+        <required>true</required>
+        <description>Current state of the Tyrian membership. When Active, ULBC_Is_Tyrian_Member__c on Contact should also be true.</description>
+        <valueSet>
+            <valueSetDefinition>
+                <sorted>false</sorted>
+                <value><fullName>Active</fullName><default>true</default><label>Active</label></value>
+                <value><fullName>Lapsed</fullName><default>false</default><label>Lapsed</label></value>
+                <value><fullName>Cancelled</fullName><default>false</default><label>Cancelled</label></value>
+            </valueSetDefinition>
+        </valueSet>
+    </fields>
+
+    <fields>
+        <fullName>ULBC_Start_Date__c</fullName>
+        <label>Start Date</label>
+        <type>Date</type>
+        <required>true</required>
+        <description>Date the Tyrian membership began.</description>
+    </fields>
+
+    <fields>
+        <fullName>ULBC_Last_Payment_Date__c</fullName>
+        <label>Last Payment Date</label>
+        <type>Date</type>
+        <required>false</required>
+        <description>Date of most recent membership fee payment. Updated manually or via Stripe (v2).</description>
+    </fields>
+
+    <fields>
+        <fullName>ULBC_Next_Payment_Date__c</fullName>
+        <label>Next Payment Date</label>
+        <type>Date</type>
+        <required>false</required>
+        <description>Expected date of next membership fee. Updated manually or via Stripe (v2).</description>
+    </fields>
+
+    <fields>
+        <fullName>ULBC_Stripe_Payment_ID__c</fullName>
+        <label>Stripe Payment ID</label>
+        <type>Text</type>
+        <length>255</length>
+        <required>false</required>
+        <unique>false</unique>
+        <externalId>false</externalId>
+        <description>Placeholder for Stripe subscription ID. Not populated until Stripe integration (v2). Decision 1.7.</description>
+    </fields>
+
+    <listViews>
+        <fullName>All</fullName>
+        <filterScope>Everything</filterScope>
+        <label>All Tyrian Memberships</label>
+    </listViews>
+    <listViews>
+        <fullName>Active_Memberships</fullName>
+        <filterScope>Everything</filterScope>
+        <label>Active Memberships</label>
+        <filters>
+            <field>ULBC_Status__c</field>
+            <operation>equals</operation>
+            <value>Active</value>
+        </filters>
+    </listViews>
+</CustomObject>

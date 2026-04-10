@@ -1,6 +1,6 @@
 # ULBC Trust Salesforce — Product Requirements Document
-*Status: Phase 2B Complete — Phase 2C Next*
-*Last synthesised: 2026-04-08*
+*Status: Phase 2C Complete — Phase 3 Next*
+*Last synthesised: 2026-04-09*
 
 ---
 
@@ -170,41 +170,48 @@ Tier thresholds (auto-calculated on Contact from rolling 12-month cumulative giv
 - Upgrade Prospect flag manually cleared by fundraiser after acting (Decision 2.7)
 - **REMAINING**: Record-Triggered Flow on Contact (when ULBC_Upgrade_Prospect__c changes false→true) to send Email Alert. Blocked on Org-Wide Email Address verification.
 
-### Required fields on every donation — NOT YET BUILT (Phase 2C)
-- Amount (GBP)
-- Close Date
-- Gift Type (One-off / Regular / Pledge / Legacy-Pledge / Legacy-Gift / Gift-in-Kind / In Memory / Tribute Fund)
-- Fund / Campaign allocation (required — lookup to Campaign)
-- Fund Type (Unrestricted / Restricted)
-- Source / Acquisition Channel
-- Gift Aid Eligible (yes/no)
-- Gift Aid Claimed Date
-- Linked Contact
-- Stripe Payment ID (placeholder)
+### Required fields on every donation — DEPLOYED ✅ (Phase 2C)
+| Field | API Name | Type | Status |
+|---|---|---|---|
+| Gift Type | ULBC_Gift_Type__c | Picklist (8 values) | ✅ Deployed |
+| Fund Type | ULBC_Fund_Type__c | Picklist (Unrestricted/Restricted) | ✅ Deployed |
+| Gift Aid Eligible | ULBC_Gift_Aid_Eligible__c | Checkbox | ✅ Deployed |
+| Gift Aid Claimed Date | ULBC_Gift_Aid_Claimed_Date__c | Date | ✅ Deployed |
+| Gift Source | ULBC_Gift_Source__c | Picklist | ✅ Deployed |
+| Stripe Payment ID | ULBC_Stripe_Payment_ID__c | Text(255) placeholder | ✅ Deployed |
+| Amount (GBP) | Amount | Standard NPSP field | ✅ Live |
+| Close Date | CloseDate | Standard field | ✅ Live |
+| Fund / Campaign | CampaignId | Standard NPSP field | ✅ Live |
 
 ---
 
-## 8. Subscription Model (Custom Objects) — NOT YET BUILT (Phase 2C)
+## 8. Subscription Model (Custom Objects) — DEPLOYED ✅ (Phase 2C)
 
-### ULBC Subscription (Custom Object)
-- Contact (lookup)
-- Amount (GBP) — launch default: £100/year
-- Frequency (Monthly / Annual) — launch default: Annual
-- Status (Active / Lapsed / Cancelled)
-- Start Date
-- Last Payment Date
-- Next Payment Date
-- Stripe Payment ID (placeholder)
+### ULBC Subscription (Custom Object) — DEPLOYED ✅
+Auto-number: SUB-{0000}. Sharing: ReadWrite.
+| Field | API Name | Type | Notes |
+|---|---|---|---|
+| Contact | ULBC_Contact__c | Lookup(Contact) | Optional + SetNull on delete. Decision 2.11 |
+| Amount | ULBC_Amount__c | Currency | Default £100. Decision 2.5 |
+| Frequency | ULBC_Frequency__c | Picklist | Monthly / Annual. Default Annual |
+| Status | ULBC_Status__c | Picklist | Active / Lapsed / Cancelled |
+| Start Date | ULBC_Start_Date__c | Date | Required |
+| Last Payment Date | ULBC_Last_Payment_Date__c | Date | Optional |
+| Next Payment Date | ULBC_Next_Payment_Date__c | Date | Optional |
+| Stripe Payment ID | ULBC_Stripe_Payment_ID__c | Text(255) | Placeholder. Decision 1.7 |
 
-### Tyrian Membership (Custom Object)
-- Contact (lookup)
-- Amount (GBP) — launch default: £75/year
-- Frequency (Monthly / Annual) — launch default: Annual
-- Status (Active / Lapsed / Cancelled)
-- Start Date
-- Last Payment Date
-- Next Payment Date
-- Stripe Payment ID (placeholder)
+### Tyrian Membership (Custom Object) — DEPLOYED ✅
+Auto-number: TYR-{0000}. Sharing: ReadWrite.
+| Field | API Name | Type | Notes |
+|---|---|---|---|
+| Contact | ULBC_Contact__c | Lookup(Contact) | Optional + SetNull on delete. Decision 2.11 |
+| Amount | ULBC_Amount__c | Currency | Default £75. Decision 2.5 |
+| Frequency | ULBC_Frequency__c | Picklist | Monthly / Annual. Default Annual |
+| Status | ULBC_Status__c | Picklist | Active / Lapsed / Cancelled |
+| Start Date | ULBC_Start_Date__c | Date | Required |
+| Last Payment Date | ULBC_Last_Payment_Date__c | Date | Optional |
+| Next Payment Date | ULBC_Next_Payment_Date__c | Date | Optional |
+| Stripe Payment ID | ULBC_Stripe_Payment_ID__c | Text(255) | Placeholder. Decision 1.7 |
 
 ---
 
@@ -239,12 +246,25 @@ Tier thresholds (auto-calculated on Contact from rolling 12-month cumulative giv
 
 ---
 
-## 12. Gift Aid — NOT YET BUILT (Phase 2C)
+## 12. Gift Aid — DEPLOYED ✅ (Phase 2C)
 
-- All Gift Aid declarations stored on Contact record
-- Fields: Eligible (yes/no), Declaration Date, Declaration Source, Postcode, Valid From, Valid To
-- Tax claim date recorded on Opportunity when claimed
-- Registered under ULBC Trust Limited
+Tracked at two levels (Decision 2.10):
+
+**Contact level — declaration record:**
+| Field | API Name | Type |
+|---|---|---|
+| Gift Aid Eligible | ULBC_Gift_Aid_Eligible__c | Checkbox |
+| Declaration Date | ULBC_Gift_Aid_Declaration_Date__c | Date |
+| Declaration Source | ULBC_Gift_Aid_Declaration_Source__c | Picklist |
+| Gift Aid Postcode | ULBC_Gift_Aid_Postcode__c | Text(10) |
+| Valid From | ULBC_Gift_Aid_Valid_From__c | Date |
+| Valid To | ULBC_Gift_Aid_Valid_To__c | Date (blank = open-ended) |
+
+**Opportunity level — per-gift tracking:**
+- Gift Aid Eligible: ULBC_Gift_Aid_Eligible__c (Checkbox) — set manually per donation
+- Gift Aid Claimed Date: ULBC_Gift_Aid_Claimed_Date__c (Date) — date HMRC claim submitted
+
+Registered under ULBC Trust Limited.
 
 ---
 
@@ -265,6 +285,7 @@ Tier thresholds (auto-calculated on Contact from rolling 12-month cumulative giv
 | Phase 1 | Contact data model, 3 related lists, page layout, Jade Smith test record | 33 | ✅ Complete |
 | Phase 2A | Gone Away → HasOptedOutOfEmail trigger | 12 | ✅ Complete |
 | Phase 2B | Donor tier engine, opportunity trigger, upgrade prospect fields, email template | 18 | ✅ Complete |
+| Phase 2C | Opportunity fields, Gift Aid fields, ULBC Subscription object, Tyrian Membership object | 7 | ✅ Complete |
 
 ### In Progress
 | Item | Status |
@@ -275,7 +296,7 @@ Tier thresholds (auto-calculated on Contact from rolling 12-month cumulative giv
 ### Remaining
 | Phase | Description |
 |---|---|
-| Phase 2C | Opportunity custom fields, Gift Aid fields, ULBC Subscription object, Tyrian Membership object |
+| Phase 2C | Opportunity custom fields, Gift Aid fields, ULBC Subscription object, Tyrian Membership object | 7 | ✅ Complete |
 | Phase 3 | Profiles & FLS, Campaign model, Event model, Recruitment pipeline, Email comms setup |
 | Phase 4 | Full 1,500 record migration from FileMaker |
 
@@ -327,6 +348,7 @@ Tier thresholds (auto-calculated on Contact from rolling 12-month cumulative giv
 | ULBC_ContactDataModel_Test | Phase 1 tests | — |
 | ULBC_GoneAwayTrigger_Test | Phase 2A tests | — |
 | ULBC_DonorTierEngine_Test | Phase 2B tests | — |
+| ULBC_Phase2C_DataModel_Test | Phase 2C tests | — |
 
 ### Deployed Triggers
 | Trigger | Object | Events | Purpose |
@@ -334,7 +356,7 @@ Tier thresholds (auto-calculated on Contact from rolling 12-month cumulative giv
 | ULBC_ContactTrigger | Contact | before insert, before update | Gone Away → HasOptedOutOfEmail |
 | ULBC_OpportunityTrigger | Opportunity | after insert/update/delete/undelete | Fire donor tier recalculation |
 
-### Total test count: 63 passing, 0 failing
+### Total test count: 70 passing, 0 failing
 
 ---
 

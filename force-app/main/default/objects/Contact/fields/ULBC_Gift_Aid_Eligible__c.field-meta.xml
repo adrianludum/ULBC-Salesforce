@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>ULBC_Gift_Aid_Eligible__c</fullName>
+    <label>Gift Aid Eligible</label>
+    <type>Checkbox</type>
+    <defaultValue>false</defaultValue>
+    <description>True when a valid Gift Aid declaration is on file. Decision 1.10 — registered under ULBC Trust Limited. Phase 2C.</description>
+    <trackHistory>false</trackHistory>
+</CustomField>

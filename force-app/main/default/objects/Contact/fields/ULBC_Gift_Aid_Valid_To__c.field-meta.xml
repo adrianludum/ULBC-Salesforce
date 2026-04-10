@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>ULBC_Gift_Aid_Valid_To__c</fullName>
+    <label>Gift Aid Valid To</label>
+    <type>Date</type>
+    <required>false</required>
+    <description>Date the declaration expires. Leave blank for open-ended declarations. Set when donor cancels or declaration lapses. Phase 2C.</description>
+    <trackHistory>false</trackHistory>
+</CustomField>

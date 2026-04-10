@@ -164,3 +164,23 @@
 - **What**: Org-Wide Email Address configured as noreply@ulbctrust.org. Used as the "from" address on the upgrade prospect email alert.
 - **Why**: Professional sender identity. Salesforce sends the email — no Gmail routing needed. The address just needs to be verified in Setup → Organization-Wide Email Addresses.
 - **Date**: 2026-04-08
+
+---
+
+## Phase 2C Decisions
+
+### Decision 2.10 — Gift Aid tracked at both Contact and Opportunity level
+- **What**: Gift Aid declaration data (eligible flag, declaration date, source, postcode, valid from/to) stored on Contact. Per-donation tracking (gift aid eligible checkbox, claimed date) stored on Opportunity.
+- **Why**: HMRC compliance requires both the declaration audit trail (Contact) and a record of which specific donations were claimed and when (Opportunity). Resolves OQ-020.
+- **Date**: 2026-04-09
+
+### Decision 2.11 — Contact lookup on Subscription and Tyrian Membership is optional (not required) at metadata level
+- **What**: ULBC_Contact__c on both ULBC_Subscription__c and ULBC_Tyrian_Membership__c is defined as required=false with deleteConstraint=SetNull.
+- **Why**: Salesforce metadata API does not permit a required Lookup field with deleteConstraint=SetNull. The alternatives — Restrict (blocks contact deletion) or Cascade (deletes subscriptions on contact delete) — are both worse for a charity CRM. In practice, the Contact field is always populated; this is a metadata-level constraint only.
+- **Date**: 2026-04-09
+
+### Decision 2.12 — Required custom object fields are excluded from permission set FLS entries
+- **What**: Fields defined as required=true on custom objects (Amount, Frequency, Status, Start Date on both subscription objects) are not listed in ULBC_Full_Access fieldPermissions.
+- **Why**: Salesforce platform rule — required fields and master-detail relationship fields are always readable and editable by anyone with object access. The metadata API rejects permission set deployments that include FLS entries for required fields.
+- **Implementation note**: Only optional fields (Contact lookup, Last/Next Payment Date, Stripe Payment ID) need FLS entries in the permission set.
+- **Date**: 2026-04-09

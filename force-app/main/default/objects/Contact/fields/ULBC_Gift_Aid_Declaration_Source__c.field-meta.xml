@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>ULBC_Gift_Aid_Declaration_Source__c</fullName>
+    <label>Gift Aid Declaration Source</label>
+    <type>Picklist</type>
+    <required>false</required>
+    <description>How the Gift Aid declaration was obtained. Required for HMRC audit trail. Phase 2C.</description>
+    <valueSet>
+        <valueSetDefinition>
+            <sorted>false</sorted>
+            <value><fullName>Online</fullName><default>false</default><label>Online</label></value>
+            <value><fullName>Written Letter</fullName><default>false</default><label>Written Letter</label></value>
+            <value><fullName>Verbal</fullName><default>false</default><label>Verbal</label></value>
+            <value><fullName>Telephone</fullName><default>false</default><label>Telephone</label></value>
+            <value><fullName>Form / Tick Box</fullName><default>false</default><label>Form / Tick Box</label></value>
+        </valueSetDefinition>
+    </valueSet>
+    <trackHistory>false</trackHistory>
+</CustomField>

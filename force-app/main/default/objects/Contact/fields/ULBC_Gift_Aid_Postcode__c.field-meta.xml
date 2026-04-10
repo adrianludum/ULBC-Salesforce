@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>ULBC_Gift_Aid_Postcode__c</fullName>
+    <label>Gift Aid Postcode</label>
+    <type>Text</type>
+    <length>10</length>
+    <required>false</required>
+    <description>UK postcode at time of Gift Aid declaration. Required by HMRC for audit. Stored separately in case contact has since moved. Phase 2C.</description>
+    <trackHistory>false</trackHistory>
+</CustomField>

@@ -1,9 +1,98 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <PermissionSet xmlns="http://soap.sforce.com/2006/04/metadata">
     <label>ULBC Full Access</label>
-    <description>Grants read/write access to all ULBC custom fields on Contact and all three ULBC custom objects.</description>
+    <description>Grants read/write access to all ULBC custom fields on Contact, Opportunity, and all ULBC custom objects.</description>
     <hasActivationRequired>false</hasActivationRequired>
-    <!-- Phase 2B Donor Tier fields -->
+
+    <!-- ── Phase 2C: Contact Gift Aid fields ────────────────────────── -->
+    <fieldPermissions>
+        <field>Contact.ULBC_Gift_Aid_Eligible__c</field>
+        <readable>true</readable><editable>true</editable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <field>Contact.ULBC_Gift_Aid_Declaration_Date__c</field>
+        <readable>true</readable><editable>true</editable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <field>Contact.ULBC_Gift_Aid_Declaration_Source__c</field>
+        <readable>true</readable><editable>true</editable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <field>Contact.ULBC_Gift_Aid_Postcode__c</field>
+        <readable>true</readable><editable>true</editable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <field>Contact.ULBC_Gift_Aid_Valid_From__c</field>
+        <readable>true</readable><editable>true</editable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <field>Contact.ULBC_Gift_Aid_Valid_To__c</field>
+        <readable>true</readable><editable>true</editable>
+    </fieldPermissions>
+
+    <!-- ── Phase 2C: Opportunity fields ────────────────────────────── -->
+    <fieldPermissions>
+        <field>Opportunity.ULBC_Gift_Type__c</field>
+        <readable>true</readable><editable>true</editable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <field>Opportunity.ULBC_Fund_Type__c</field>
+        <readable>true</readable><editable>true</editable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <field>Opportunity.ULBC_Gift_Aid_Eligible__c</field>
+        <readable>true</readable><editable>true</editable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <field>Opportunity.ULBC_Gift_Aid_Claimed_Date__c</field>
+        <readable>true</readable><editable>true</editable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <field>Opportunity.ULBC_Gift_Source__c</field>
+        <readable>true</readable><editable>true</editable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <field>Opportunity.ULBC_Stripe_Payment_ID__c</field>
+        <readable>true</readable><editable>true</editable>
+    </fieldPermissions>
+
+    <!-- ── Phase 2C: ULBC_Subscription__c fields ────────────────────── -->
+    <fieldPermissions>
+        <field>ULBC_Subscription__c.ULBC_Contact__c</field>
+        <readable>true</readable><editable>true</editable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <field>ULBC_Subscription__c.ULBC_Last_Payment_Date__c</field>
+        <readable>true</readable><editable>true</editable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <field>ULBC_Subscription__c.ULBC_Next_Payment_Date__c</field>
+        <readable>true</readable><editable>true</editable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <field>ULBC_Subscription__c.ULBC_Stripe_Payment_ID__c</field>
+        <readable>true</readable><editable>true</editable>
+    </fieldPermissions>
+
+    <!-- ── Phase 2C: ULBC_Tyrian_Membership__c fields ───────────────── -->
+    <fieldPermissions>
+        <field>ULBC_Tyrian_Membership__c.ULBC_Contact__c</field>
+        <readable>true</readable><editable>true</editable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <field>ULBC_Tyrian_Membership__c.ULBC_Last_Payment_Date__c</field>
+        <readable>true</readable><editable>true</editable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <field>ULBC_Tyrian_Membership__c.ULBC_Next_Payment_Date__c</field>
+        <readable>true</readable><editable>true</editable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <field>ULBC_Tyrian_Membership__c.ULBC_Stripe_Payment_ID__c</field>
+        <readable>true</readable><editable>true</editable>
+    </fieldPermissions>
+
+    <!-- ── Phase 2B: Donor Tier fields ─────────────────────────────── -->
     <fieldPermissions>
         <field>Contact.ULBC_Donor_Tier__c</field>
         <readable>true</readable><editable>true</editable>
@@ -32,7 +121,8 @@
         <field>Contact.ULBC_Tier_Progress_Pct__c</field>
         <readable>true</readable><editable>true</editable>
     </fieldPermissions>
-    <!-- Phase 1 fields -->
+
+    <!-- ── Phase 1: Core Contact fields ─────────────────────────────── -->
     <fieldPermissions>
         <field>Contact.ULBC_Acquisition_Channel__c</field>
         <readable>true</readable><editable>true</editable>
@@ -81,6 +171,8 @@
         <field>Contact.ULBC_Volunteer_Since__c</field>
         <readable>true</readable><editable>true</editable>
     </fieldPermissions>
+
+    <!-- ── Phase 1: Related list object fields ──────────────────────── -->
     <fieldPermissions>
         <field>ULBC_Education_History__c.ULBC_Institution__c</field>
         <readable>true</readable><editable>true</editable>
@@ -145,6 +237,8 @@
         <field>ULBC_Crew_History__c.ULBC_Result__c</field>
         <readable>true</readable><editable>true</editable>
     </fieldPermissions>
+
+    <!-- ── Object permissions ───────────────────────────────────────── -->
     <objectPermissions>
         <object>Contact</object>
         <allowCreate>true</allowCreate>
@@ -153,6 +247,33 @@
         <allowDelete>false</allowDelete>
         <viewAllRecords>true</viewAllRecords>
         <modifyAllRecords>false</modifyAllRecords>
+    </objectPermissions>
+    <objectPermissions>
+        <object>Opportunity</object>
+        <allowCreate>true</allowCreate>
+        <allowRead>true</allowRead>
+        <allowEdit>true</allowEdit>
+        <allowDelete>false</allowDelete>
+        <viewAllRecords>true</viewAllRecords>
+        <modifyAllRecords>false</modifyAllRecords>
+    </objectPermissions>
+    <objectPermissions>
+        <object>ULBC_Subscription__c</object>
+        <allowCreate>true</allowCreate>
+        <allowRead>true</allowRead>
+        <allowEdit>true</allowEdit>
+        <allowDelete>true</allowDelete>
+        <viewAllRecords>true</viewAllRecords>
+        <modifyAllRecords>true</modifyAllRecords>
+    </objectPermissions>
+    <objectPermissions>
+        <object>ULBC_Tyrian_Membership__c</object>
+        <allowCreate>true</allowCreate>
+        <allowRead>true</allowRead>
+        <allowEdit>true</allowEdit>
+        <allowDelete>true</allowDelete>
+        <viewAllRecords>true</viewAllRecords>
+        <modifyAllRecords>true</modifyAllRecords>
     </objectPermissions>
     <objectPermissions>
         <object>ULBC_Crew_History__c</object>

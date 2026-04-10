@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Package xmlns="http://soap.sforce.com/2006/04/metadata">
+    <types>
+        <members>ULBC_Subscription__c</members>
+        <members>ULBC_Tyrian_Membership__c</members>
+        <name>CustomObject</name>
+    </types>
+    <types>
+        <members>Contact.ULBC_Gift_Aid_Eligible__c</members>
+        <members>Contact.ULBC_Gift_Aid_Declaration_Date__c</members>
+        <members>Contact.ULBC_Gift_Aid_Declaration_Source__c</members>
+        <members>Contact.ULBC_Gift_Aid_Postcode__c</members>
+        <members>Contact.ULBC_Gift_Aid_Valid_From__c</members>
+        <members>Contact.ULBC_Gift_Aid_Valid_To__c</members>
+        <members>Opportunity.ULBC_Gift_Type__c</members>
+        <members>Opportunity.ULBC_Fund_Type__c</members>
+        <members>Opportunity.ULBC_Gift_Aid_Eligible__c</members>
+        <members>Opportunity.ULBC_Gift_Aid_Claimed_Date__c</members>
+        <members>Opportunity.ULBC_Gift_Source__c</members>
+        <members>Opportunity.ULBC_Stripe_Payment_ID__c</members>
+        <name>CustomField</name>
+    </types>
+    <types>
+        <members>ULBC_Phase2C_DataModel_Test</members>
+        <name>ApexClass</name>
+    </types>
+    <version>61.0</version>
+</Package>

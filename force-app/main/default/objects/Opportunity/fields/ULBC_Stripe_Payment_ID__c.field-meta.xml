@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>ULBC_Stripe_Payment_ID__c</fullName>
+    <label>Stripe Payment ID</label>
+    <type>Text</type>
+    <length>255</length>
+    <required>false</required>
+    <unique>false</unique>
+    <externalId>false</externalId>
+    <description>Placeholder for Stripe payment_intent or charge ID. Not populated until Stripe integration (v2). Decision 1.7. Phase 2C.</description>
+    <trackHistory>false</trackHistory>
+</CustomField>

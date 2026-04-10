@@ -4,6 +4,8 @@
         <members>ULBC_Education_History__c</members>
         <members>ULBC_International_Competition__c</members>
         <members>ULBC_Crew_History__c</members>
+        <members>ULBC_Subscription__c</members>
+        <members>ULBC_Tyrian_Membership__c</members>
         <name>CustomObject</name>
     </types>
     <types>
@@ -27,6 +29,18 @@
         <members>Contact.ULBC_Next_Tier_Threshold__c</members>
         <members>Contact.ULBC_Gap_To_Next_Tier__c</members>
         <members>Contact.ULBC_Tier_Progress_Pct__c</members>
+        <members>Contact.ULBC_Gift_Aid_Eligible__c</members>
+        <members>Contact.ULBC_Gift_Aid_Declaration_Date__c</members>
+        <members>Contact.ULBC_Gift_Aid_Declaration_Source__c</members>
+        <members>Contact.ULBC_Gift_Aid_Postcode__c</members>
+        <members>Contact.ULBC_Gift_Aid_Valid_From__c</members>
+        <members>Contact.ULBC_Gift_Aid_Valid_To__c</members>
+        <members>Opportunity.ULBC_Gift_Type__c</members>
+        <members>Opportunity.ULBC_Fund_Type__c</members>
+        <members>Opportunity.ULBC_Gift_Aid_Eligible__c</members>
+        <members>Opportunity.ULBC_Gift_Aid_Claimed_Date__c</members>
+        <members>Opportunity.ULBC_Gift_Source__c</members>
+        <members>Opportunity.ULBC_Stripe_Payment_ID__c</members>
         <name>CustomField</name>
     </types>
     <types>
@@ -39,6 +53,7 @@
         <members>ULBC_DonorTierEngine</members>
         <members>ULBC_DonorTierEngine_Test</members>
         <members>ULBC_GoneAwayTrigger_Test</members>
+        <members>ULBC_Phase2C_DataModel_Test</members>
         <name>ApexClass</name>
     </types>
     <types>

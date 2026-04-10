@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>ULBC_Gift_Aid_Declaration_Date__c</fullName>
+    <label>Gift Aid Declaration Date</label>
+    <type>Date</type>
+    <required>false</required>
+    <description>Date the Gift Aid declaration was received. Required when Gift Aid Eligible = true. Phase 2C.</description>
+    <trackHistory>false</trackHistory>
+</CustomField>
