@@ -141,3 +141,22 @@
 *Recommendation: (a) Automated Credit Note. Build alongside the main invoice creation.*
 *Decision needed by: Finance Person.*
 
+
+---
+
+## Resolved Phase 5 Open Questions (Closed 2026-04-27)
+
+**OQ-036** [CLOSED 2026-04-27]: Bulk donation-link export tool — how should the Fundraiser produce personalised donation URLs at scale (e.g. 800 alumni in a Christmas appeal)?
+*Resolution: Closed by confirmation that all fundraising email is sent from Salesforce (Marketing User licences in Phase 1). The merge field `{!Contact.ULBC_Donation_Link__c}` on the new formula field is sufficient — no separate export tool needed. If Fundraiser ever needs CSV export, a List View "Export" action covers it natively.*
+
+**OQ-037** [CLOSED 2026-04-27]: How should the donate page accept and forward the `ulbc_trust_id` URL parameter to Stripe Checkout, given the WordPress page is managed by a third party?
+*Resolution: Closed by Decision 5.15. Personalised donations go to a new Salesforce-hosted donate page (`ulbcDonate` LWC on the same Salesforce Site as event ticketing). The third-party WordPress page handles only cold/anonymous traffic. No third-party cooperation required.*
+
+---
+
+## Phase 5/3 Tidy-up
+
+**OQ-038**: Broken legacy report `ULBC_Crews_By_Regatta` fails to deploy with "invalid report type" despite the referenced Custom Report Type `ULBC_Crew_Histories` existing in the org. Currently excluded from project deploys (file moved to `~/ulbc-crews-report-broken.xml.bak`) and the `ULBC_Dashboard.dashboard-meta.xml` that references it is also excluded (`*.broken` rename). Pre-existing from Phase 2C/3.
+*Investigate during a Phase 2C/3 tidy-up sprint. Either rebuild the Custom Report Type, or delete the report (and remove its reference from the dashboard).*
+*Not blocking any phase.*
+

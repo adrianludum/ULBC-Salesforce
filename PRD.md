@@ -431,27 +431,35 @@ Stripe handles **website donations** and **event ticketing** (dinners, BBQs, etc
 ### Sub-phases
 | Sub-phase | Scope | Status |
 |---|---|---|
-| 5A.1 | Data model — ULBC_Stripe_Customer_ID__c on Contact, ULBC_Stripe_Payment_ID__c on CampaignMember, permission set updates | Not started |
+| 5A.1 | Data model — `ULBC_Stripe_Customer_ID__c` on Contact, `ULBC_Donation_Link__c` formula on Contact, `ULBC_Stripe_Payment_ID__c` on CampaignMember, `ULBC_Stripe_Settings__c` Custom Setting, permission set + layout updates | **Deployed ✅ 2026-04-27** |
 | 5A.2 | Apex webhook receiver (signature verification, logging only, deployed to Salesforce Site) | Not started |
-| 5A.3 | Webhook business logic for event tickets (`intent=event_ticket` handler) | Not started |
-| 5A.4 | Salesforce Site + event registration LWC with TrustID-personalised links | Not started |
-| 5B | Donation flow (`intent=donation` handler) — added when website donate page is rebuilt | Deferred |
+| 5A.3 | Webhook business logic for event tickets AND donations (`intent=event_ticket` + `intent=donation` handlers) | Not started |
+| 5A.4 | Salesforce Site + LWCs: `ulbcEventRegister` (event ticketing) AND `ulbcDonate` (personalised donations), per Decisions 5.4 + 5.15 | Not started |
+| ~~5B~~ | ~~Donation flow~~ | **Closed — merged into 5A.3 + 5A.4 by Decision 5.15** |
 
-### Stripe metadata contract (Decision 5.9)
+### Stripe metadata contract (Decision 5.9, amended 2026-04-27)
 Every Stripe Checkout Session must pass:
 - `intent`: "donation" | "event_ticket" | "subscription"
 - `fund`: Campaign ID or fund slug (donations only)
-- `trust_id`: ULBC-XXXX (if known)
+- `ulbc_trust_id`: ULBC-XXXX (if known) — **renamed from `trust_id` for clarity in Stripe Dashboard**
 - `gift_aid`: "true" | "false" (donations only)
 - `gift_aid_postcode`: postcode string (if gift_aid=true)
 - `gift_type`: "One-Off" | "Recurring" (donations only)
 - `campaign_id`: Salesforce Campaign 18-char ID (event tickets only)
 
-### Contact matching priority (Decision 5.8)
-1. TrustID from metadata
-2. Stripe Customer ID match
-3. Email match
-4. Create new with Acquisition Channel = "Stripe Donation" or "Stripe Event Registration"
+### Contact matching priority (Decision 5.8) + Identity bridging (Decision 5.14)
+**How an anonymous Stripe payment is linked to the right Contact:**
+
+The donor never sees or types their TrustID. Two mechanisms get the TrustID into the Stripe payload:
+
+1. **Personalised URL** (primary): every fundraising email sent from Salesforce contains a link with `?ulbc_trust_id=ULBC-XXXX` baked in. The donate / event page reads the URL parameter and passes it as Stripe metadata.
+2. **Email match** (secondary): for cold web donors with no personalised link, Stripe Checkout collects email by default; webhook handler matches by Contact.Email.
+
+**Match priority used by webhook handler:**
+1. `metadata.ulbc_trust_id` from Stripe (personalised URL hit)
+2. Stripe Customer ID match (`Contact.ULBC_Stripe_Customer_ID__c`)
+3. Email match (`Contact.Email` or `Contact.ULBC_Secondary_Email__c`)
+4. Create new Contact with Acquisition Channel = "Stripe Donation" or "Stripe Event Registration", flagged for manual review by Fundraiser.
 
 ### Existing Stripe footprint (as of April 2026)
 - Stripe account registered to ULBC Trust Limited ✅

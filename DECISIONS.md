@@ -414,6 +414,28 @@
 
 ## Phase 6 Decisions — Xero Integration (Added 2026-04-27)
 
+### Decision 5.14 — Identity bridging strategy (Stripe → Contact)
+- **What**: Two-mechanism approach for linking anonymous Stripe payments back to the right Salesforce Contact.
+  1. **Personalised URL parameter** (primary): every fundraising email and event invite sent from Salesforce includes a unique link with `?ulbc_trust_id=ULBC-XXXX` embedded. The donate/event page reads the parameter and passes it to Stripe Checkout as `metadata.ulbc_trust_id`. Webhook handler matches Contact by `ULBC_Trust_ID__c`.
+  2. **Email match at checkout** (secondary): for donors arriving without a personalised link (cold web traffic), Stripe Checkout collects email by default; webhook handler matches by `Contact.Email` or `ULBC_Secondary_Email__c`.
+  3. **No-match fallback**: webhook creates a new Contact with Acquisition Channel = "Stripe Donation" or "Stripe Event Registration", flagged for manual review by Fundraiser.
+- **Why**: Personalised links handle the bulk of identified income (email-driven fundraising). Email match catches repeat web donors. Manual review handles genuinely new donors. Considered and rejected: a public dropdown / search of all Contact names — GDPR violation (publishing 1,500 alumni names without consent has no lawful basis under UK GDPR Art. 6); also a safeguarding risk for estranged or "Gone Away" individuals.
+- **Implementation**: New formula field `Contact.ULBC_Donation_Link__c` constructs the personalised URL by concatenating a base URL (from Custom Setting `ULBC_Stripe_Settings__c.DonationBaseURL__c`) with the Trust ID. Used as merge field `{!Contact.ULBC_Donation_Link__c}` in any Salesforce email template.
+- **Date**: 2026-04-27
+
+### Decision 5.15 — Salesforce-hosted donate page for personalised giving
+- **What**: Build a public donate page on the same Salesforce Site as event ticketing (per Decision 5.4). Personalised donation links from Salesforce email go to this page; cold web traffic continues to use the existing WordPress donate page until WordPress is rebuilt (OQ-026).
+- **Why**: Eliminates the third-party WordPress dependency for identified donations. Reuses the Site/LWC/Stripe infrastructure already being built for events. Collapses Phase 5B (donation flow) into Phase 5A — no separate sub-phase needed.
+- **Implementation**: New LWC `ulbcDonate` reads `ulbc_trust_id` and `fund` from URL parameters, calls Apex method `ULBC_StripeCheckoutController.createDonationSession()`, redirects to Stripe Checkout. Webhook handler routes by `metadata.intent = "donation"` per Decision 5.9.
+- **Implication**: Phase 5B is now closed and merged into 5A.3 (donation handler) + 5A.4 (donate LWC alongside event LWC). PRD section 15 updated accordingly.
+- **Date**: 2026-04-27
+
+### Decision 5.9 — Stripe metadata contract — AMENDED 2026-04-27
+- **Amendment**: The metadata key `trust_id` is renamed to `ulbc_trust_id` for clarity in the Stripe Dashboard. Field name on Salesforce Contact (`ULBC_Trust_ID__c`) is unchanged.
+- **Why**: Anyone reading a Stripe payload metadata block now sees `ulbc_trust_id: ULBC-0042` and the link to the Salesforce field is unambiguous. Free change — no code yet written against the old name.
+- **Original decision text below remains otherwise valid.**
+
+
 ### Decision 6.1 — Xero is the source of truth for finance; Salesforce is the source of truth for fundraising
 - **What**: ULBC Trust uses Xero for statutory accounts, bank reconciliation, charity accounts (SORP), and audit. Salesforce holds the fundraising and donor relationship data. The two systems are integrated: every donation that creates an Opportunity in Salesforce also creates a paid invoice in Xero. Bank deposits from Stripe are reconciled in Xero against those invoices.
 - **Why**: Finance Person works exclusively in Xero. Fundraiser/Admin work in Salesforce. The integration bridges the workflow boundary so that both can do their jobs without manual transcription.
