@@ -13,3 +13,28 @@ __MACOSX/
 
 # Node
 node_modules/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+
+# Backup files (from XML patcher scripts and manual edits)
+*.bak
+*.broken
+*.phase2c
+
+# Migration data — contains source data that should not be committed
+data/source/
+data/migration_log/
+data/test-records/
+
+# Manifest backups and ad-hoc retrieve manifests
+manifest/package.xml.phase2c
+manifest/retrieve-*.xml
+
+# Local zip backups
+*.zip
+
+# Layout retrieve scratch directory
+layout-retrieve/
