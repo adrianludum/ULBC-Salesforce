@@ -1,0 +1,411 @@
+<template>
+    <div class="dashboard">
+        <!-- Header -->
+        <header class="dashboard-header">
+            <img src={logoUrl} alt="ULBC" class="logo" />
+            <h1>ULBC Trust Dashboard</h1>
+        </header>
+
+        <!-- KPI Cards -->
+        <section class="kpi-grid">
+            <template lwc:if={kpiLoading}>
+                <div class="kpi-card skeleton"></div>
+                <div class="kpi-card skeleton"></div>
+                <div class="kpi-card skeleton"></div>
+                <div class="kpi-card skeleton"></div>
+                <div class="kpi-card skeleton"></div>
+            </template>
+            <template lwc:elseif={kpiError}>
+                <div class="kpi-card error-card">
+                    <p class="error-text">{kpiError}</p>
+                </div>
+            </template>
+            <template lwc:else>
+                <div class="kpi-card">
+                    <span class="kpi-label">Total Contacts</span>
+                    <span class="kpi-value">{totalContacts}</span>
+                </div>
+                <div class="kpi-card">
+                    <span class="kpi-label">Total Donors</span>
+                    <span class="kpi-value">{totalDonors}</span>
+                </div>
+                <div class="kpi-card">
+                    <span class="kpi-label">Gifts This Year</span>
+                    <span class="kpi-value currency">{giftsThisYear}</span>
+                </div>
+                <div class="kpi-card">
+                    <span class="kpi-label">Gifts Last Year</span>
+                    <span class="kpi-value currency">{giftsLastYear}</span>
+                </div>
+                <div class="kpi-card">
+                    <span class="kpi-label">Lapsed Donors</span>
+                    <span class="kpi-value accent">{lapsedCount}</span>
+                </div>
+            </template>
+        </section>
+
+        <!-- Row 1: Charts -->
+        <section class="chart-grid three-col">
+            <!-- Donors by Tier (SVG donut) -->
+            <div class="card">
+                <h2 class="card-title">Donors by Tier</h2>
+                <template lwc:if={tierLoading}>
+                    <div class="loading-indicator">Loading...</div>
+                </template>
+                <template lwc:if={tierError}>
+                    <p class="error-text">{tierError}</p>
+                </template>
+                <template lwc:if={hasTierData}>
+                    <div class="donut-container">
+                        <svg viewBox="0 0 200 200" class="donut-svg">
+                            <template for:each={tierSvgSegments} for:item="seg">
+                                <path
+                                    key={seg.key}
+                                    d={seg.path}
+                                    fill={seg.color}
+                                    class="donut-segment"
+                                    data-tier={seg.dataValue}
+                                    onclick={handleTierClick}
+                                ></path>
+                            </template>
+                            <template for:each={tierSvgLabels} for:item="seg">
+                                <text
+                                    key={seg.labelKey}
+                                    x={seg.labelX}
+                                    y={seg.labelY}
+                                    text-anchor="middle"
+                                    dominant-baseline="middle"
+                                    class="donut-label"
+                                >{seg.labelText}</text>
+                            </template>
+                        </svg>
+                        <div class="legend">
+                            <template for:each={donorsByTier} for:item="item">
+                                <div class="legend-item clickable" key={item.key} data-tier={item.label} onclick={handleTierClick}>
+                                    <span class="legend-swatch" style={item.swatchStyle}></span>
+                                    <span class="legend-label">{item.label}</span>
+                                    <span class="legend-value">{item.value} ({item.pct}%)</span>
+                                </div>
+                            </template>
+                        </div>
+                    </div>
+                </template>
+            </div>
+
+            <!-- Donations by Fund (bar) -->
+            <div class="card">
+                <h2 class="card-title">Donations by Fund</h2>
+                <template lwc:if={fundLoading}>
+                    <div class="loading-indicator">Loading...</div>
+                </template>
+                <template lwc:if={fundError}>
+                    <p class="error-text">{fundError}</p>
+                </template>
+                <template lwc:if={hasFundData}>
+                    <div class="bar-chart">
+                        <template for:each={donationsByFund} for:item="item">
+                            <div class="bar-row" key={item.key}>
+                                <span class="bar-label">{item.label}</span>
+                                <div class="bar-track">
+                                    <div class="bar-fill" style={item.barStyle}></div>
+                                </div>
+                                <span class="bar-value">{item.formattedValue}</span>
+                            </div>
+                        </template>
+                    </div>
+                </template>
+            </div>
+
+            <!-- Gifts by Year (SVG line) -->
+            <div class="card">
+                <h2 class="card-title clickable" onclick={handleYearClick}>Gifts by Year</h2>
+                <template lwc:if={yearLoading}>
+                    <div class="loading-indicator">Loading...</div>
+                </template>
+                <template lwc:if={yearError}>
+                    <p class="error-text">{yearError}</p>
+                </template>
+                <template lwc:if={hasYearData}>
+                    <div class="svg-chart-container clickable" onclick={handleYearClick}>
+                        <svg class="line-chart" viewBox="0 0 400 180" preserveAspectRatio="xMidYMid meet">
+                            <polyline
+                                fill="none"
+                                stroke="#e91e8c"
+                                stroke-width="2.5"
+                                points={svgPolylinePoints}
+                            />
+                            <template for:each={svgDots} for:item="dot">
+                                <circle
+                                    key={dot.key}
+                                    cx={dot.cx}
+                                    cy={dot.cy}
+                                    r="3"
+                                    fill="#e91e8c"
+                                    stroke="#2d1f3d"
+                                    stroke-width="1.5"
+                                />
+                            </template>
+                            <template for:each={svgYearLabels} for:item="lbl">
+                                <text
+                                    key={lbl.key}
+                                    x={lbl.x}
+                                    y={lbl.y}
+                                    text-anchor="middle"
+                                    class="svg-label"
+                                >{lbl.label}</text>
+                            </template>
+                            <template for:each={svgAmountLabels} for:item="lbl">
+                                <text
+                                    key={lbl.key}
+                                    x={lbl.x}
+                                    y={lbl.y}
+                                    text-anchor="middle"
+                                    class="svg-amount-label"
+                                >{lbl.label}</text>
+                            </template>
+                        </svg>
+                    </div>
+                </template>
+            </div>
+        </section>
+
+        <!-- Row 2: More charts -->
+        <section class="chart-grid three-col">
+            <!-- Crews by Regatta (bar) -->
+            <div class="card">
+                <h2 class="card-title">Crews by Regatta</h2>
+                <template lwc:if={crewsLoading}>
+                    <div class="loading-indicator">Loading...</div>
+                </template>
+                <template lwc:if={crewsError}>
+                    <p class="error-text">{crewsError}</p>
+                </template>
+                <template lwc:if={hasCrewData}>
+                    <div class="bar-chart">
+                        <template for:each={crewsByRegatta} for:item="item">
+                            <div class="bar-row clickable" key={item.key} data-regatta={item.label} onclick={handleCrewClick}>
+                                <span class="bar-label">{item.label}</span>
+                                <div class="bar-track">
+                                    <div class="bar-fill" style={item.barStyle}></div>
+                                </div>
+                                <span class="bar-value">{item.value}</span>
+                            </div>
+                        </template>
+                    </div>
+                </template>
+            </div>
+
+            <!-- Gift Aid Status (bar chart) -->
+            <div class="card">
+                <h2 class="card-title clickable" onclick={handleGiftAidClick}>Gift Aid Status</h2>
+                <template lwc:if={giftAidLoading}>
+                    <div class="loading-indicator">Loading...</div>
+                </template>
+                <template lwc:if={giftAidError}>
+                    <p class="error-text">{giftAidError}</p>
+                </template>
+                <template lwc:if={hasGiftAidData}>
+                    <div class="bar-chart gift-aid-chart">
+                        <template for:each={giftAidStatus} for:item="item">
+                            <div class="gift-aid-row" key={item.key}>
+                                <div class="gift-aid-header">
+                                    <span class="legend-swatch" style={item.swatchStyle}></span>
+                                    <span class="gift-aid-label">{item.label}</span>
+                                </div>
+                                <div class="gift-aid-bar-wrapper">
+                                    <div class="bar-track bar-track-lg">
+                                        <div class="bar-fill" style={item.barStyle}></div>
+                                    </div>
+                                </div>
+                                <div class="gift-aid-stats">
+                                    <span class="gift-aid-amount">{item.formattedAmount}</span>
+                                    <span class="gift-aid-count">{item.count} gifts</span>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+                </template>
+            </div>
+
+            <!-- Event Attendance (bar) -->
+            <div class="card">
+                <h2 class="card-title">Event Attendance</h2>
+                <template lwc:if={eventsLoading}>
+                    <div class="loading-indicator">Loading...</div>
+                </template>
+                <template lwc:if={eventsError}>
+                    <p class="error-text">{eventsError}</p>
+                </template>
+                <template lwc:if={hasEventData}>
+                    <div class="bar-chart">
+                        <template for:each={eventAttendance} for:item="item">
+                            <div class="bar-row clickable" key={item.key} data-eventid={item.eventId} onclick={handleEventClick}>
+                                <span class="bar-label" title={item.eventName}>{item.eventName}</span>
+                                <div class="bar-track">
+                                    <div class="bar-fill" style={item.barStyle}></div>
+                                </div>
+                                <span class="bar-value">{item.attendeeCount}</span>
+                            </div>
+                        </template>
+                    </div>
+                </template>
+            </div>
+        </section>
+
+        <!-- Active Campaigns -->
+        <section class="chart-grid single-col">
+            <div class="card">
+                <h2 class="card-title">Active Campaigns</h2>
+                <template lwc:if={campaignsLoading}>
+                    <div class="loading-indicator">Loading...</div>
+                </template>
+                <template lwc:if={campaignsError}>
+                    <p class="error-text">{campaignsError}</p>
+                </template>
+                <template lwc:if={hasCampaignData}>
+                    <div class="table-wrapper">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Campaign</th>
+                                    <th>Type</th>
+                                    <th>Status</th>
+                                    <th>Start</th>
+                                    <th>End</th>
+                                    <th>Members</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <template for:each={activeCampaigns} for:item="row">
+                                    <tr key={row.key}>
+                                        <td><a href={row.linkUrl} class="record-link">{row.Name}</a></td>
+                                        <td>{row.type}</td>
+                                        <td><span class="status-badge">{row.status}</span></td>
+                                        <td>{row.startDate}</td>
+                                        <td>{row.endDate}</td>
+                                        <td class="number-cell">{row.members}</td>
+                                    </tr>
+                                </template>
+                            </tbody>
+                        </table>
+                    </div>
+                </template>
+            </div>
+        </section>
+
+        <!-- Row 3: Tables -->
+        <section class="chart-grid three-col">
+            <!-- Upgrade Prospects -->
+            <div class="card">
+                <h2 class="card-title">Upgrade Prospects</h2>
+                <template lwc:if={prospectsLoading}>
+                    <div class="loading-indicator">Loading...</div>
+                </template>
+                <template lwc:if={prospectsError}>
+                    <p class="error-text">{prospectsError}</p>
+                </template>
+                <template lwc:if={hasProspectData}>
+                    <div class="table-wrapper">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Trust ID</th>
+                                    <th>Tier</th>
+                                    <th>12m Giving</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <template for:each={upgradeProspects} for:item="row">
+                                    <tr key={row.key}>
+                                        <td><a href={row.linkUrl} class="record-link">{row.Name}</a></td>
+                                        <td>{row.trustId}</td>
+                                        <td>{row.tier}</td>
+                                        <td class="currency-cell">{row.giving}</td>
+                                    </tr>
+                                </template>
+                            </tbody>
+                        </table>
+                    </div>
+                </template>
+            </div>
+
+            <!-- Lapsed Donors -->
+            <div class="card">
+                <h2 class="card-title">Lapsed Donors</h2>
+                <template lwc:if={lapsedLoading}>
+                    <div class="loading-indicator">Loading...</div>
+                </template>
+                <template lwc:if={lapsedError}>
+                    <p class="error-text">{lapsedError}</p>
+                </template>
+                <template lwc:if={hasLapsedData}>
+                    <div class="table-wrapper">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Trust ID</th>
+                                    <th>Last Gift</th>
+                                    <th>12m Giving</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <template for:each={lapsedDonors} for:item="row">
+                                    <tr key={row.key}>
+                                        <td><a href={row.linkUrl} class="record-link">{row.Name}</a></td>
+                                        <td>{row.trustId}</td>
+                                        <td>{row.lastGift}</td>
+                                        <td class="currency-cell">{row.giving}</td>
+                                    </tr>
+                                </template>
+                            </tbody>
+                        </table>
+                    </div>
+                </template>
+            </div>
+
+            <!-- Recent Donations -->
+            <div class="card">
+                <h2 class="card-title">Recent Donations</h2>
+                <template lwc:if={donationsLoading}>
+                    <div class="loading-indicator">Loading...</div>
+                </template>
+                <template lwc:if={donationsError}>
+                    <p class="error-text">{donationsError}</p>
+                </template>
+                <template lwc:if={hasDonationData}>
+                    <div class="table-wrapper">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Donor</th>
+                                    <th>Amount</th>
+                                    <th>Date</th>
+                                    <th>Fund</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <template for:each={recentDonations} for:item="row">
+                                    <tr key={row.key}>
+                                        <td>
+                                            <template lwc:if={row.hasContactLink}>
+                                                <a href={row.contactUrl} class="record-link">{row.contactName}</a>
+                                            </template>
+                                            <template lwc:else>
+                                                {row.contactName}
+                                            </template>
+                                        </td>
+                                        <td class="currency-cell">{row.amount}</td>
+                                        <td>{row.closeDate}</td>
+                                        <td>{row.fundName}</td>
+                                    </tr>
+                                </template>
+                            </tbody>
+                        </table>
+                    </div>
+                </template>
+            </div>
+        </section>
+    </div>
+</template>

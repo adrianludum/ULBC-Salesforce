@@ -1,5 +1,5 @@
 # ULBC Trust Salesforce — Open Questions
-*Last updated: 2026-04-09*
+*Last updated: 2026-04-15*
 
 ---
 
@@ -28,7 +28,7 @@
 
 **OQ-007**: What interests will be tracked beyond rowing? (cycling, skiing, theatre mentioned — full list needed for Interests multi-select picklist on Contact). Not yet built.
 
-**OQ-008**: What is the full list of Campaigns/Funds at launch? (Unrestricted, Women's Group, Equipment/Fleet, Events, Scholarship, Bursary, Coaching confirmed — any others?)
+**OQ-008** ✅ — Launch funds confirmed: Unrestricted/General, ULBC Women's Group, Equipment/Fleet, Event, Scholarship, Bursary, Coaching. 7 Campaign records deployed. Decision 3.2.
 
 **OQ-009**: What is the protocol for creating a new restricted fund? Who can authorise it?
 
@@ -74,3 +74,70 @@
 *Recommendation: Yes — add a Validation Rule to both objects: ISBLANK(ULBC_Contact__c) → error "A contact must be selected". Low priority — add in Phase 3 alongside other validation rules.*
 
 **OQ-023**: Is noreply@ulbctrust.org now verified in Setup → Organization-Wide Email Addresses? Blocks the Upgrade Prospect Record-Triggered Flow (last remaining Phase 2B item).
+
+---
+
+## Phase 3B Open Questions — Added 2026-04-15
+
+**OQ-024** ✅ — Lead conversion field mapping configured in Setup. Lead.ULBC_Gender__c → Contact.ULBC_Gender__c. TrustID now auto-assigned on Contact insert (Phase 3C trigger). Admin still manually sets Primary Contact Type = 'Athlete-Student' post-conversion.
+
+---
+
+## Phase 5 Open Questions — Stripe Integration (Added 2026-04-27)
+
+**OQ-025**: Bethany Welch (cus_4wkmnY5jxHjbK1) is on a £80/yr legacy Student subscription from 2014, currently active and renewing. Should she be (a) grandfathered at £80/yr indefinitely, (b) gently migrated to the new £100/yr ULBC Subscription model (with her consent), or (c) cancelled and reissued as Tyrian £75/yr?
+*Recommendation: Option (a) — grandfather. One person, not worth automation. Revisit if she lapses.*
+*Decision needed by: Fundraiser*
+
+**OQ-026**: WordPress site is managed by a third party (per Adrian, 2026-04-27). Need to:
+(a) Confirm whether they will continue to host the donate page or whether the website is being rebuilt elsewhere.
+(b) If staying with WordPress: agree on plugin choice (WP Simple Pay vs GiveWP vs custom) and confirm they can pass the metadata contract from Decision 5.9.
+(c) If rebuilding the site: agree on platform and timing.
+*Decision needed by: Adrian + WordPress admin. Does NOT block Phase 5 build (Salesforce-side independent of front-end).*
+
+**OQ-027**: Stripe webhook signing secret. Adrian needs to generate a new endpoint in Stripe Dashboard (Developers → Webhooks → Add endpoint) once the Salesforce Site URL is known, and store the signing secret as a Custom Metadata Record or Protected Custom Setting.
+*Blocking: Phase 5A.2 (webhook receiver deployment).*
+
+**OQ-028**: Salesforce Site URL slug. Default would be something like `ulbctrust-developer-edition.my.site.com` — long and ugly. Custom domain (e.g. `events.ulbctrust.org`) requires DNS access. Acceptable to ship with default Salesforce Site URL in v1, configure custom domain later.
+*Recommendation: Ship with default in v1. Custom domain in v2.*
+
+**OQ-029**: Stripe test mode vs live mode flip. Build entirely in Stripe test mode. Production go-live requires:
+(a) New Stripe webhook endpoint pointed at the same Salesforce Site URL but with the LIVE signing secret.
+(b) Custom Metadata Record updated to swap test secret for live secret.
+(c) End-to-end test with a real £1 donation, then refund.
+*Standard practice — flagged so it's not forgotten on launch day.*
+
+---
+
+## Phase 6 Open Questions — Xero Integration (Added 2026-04-27)
+
+**OQ-030**: Chart of accounts mapping. For each combination of Salesforce Fund (Campaign) × Gift Type, what is the corresponding Xero Account Code and Tracking Category? Need full mapping table from Finance Person before Phase 6 build. Example rows needed:
+| Fund | Gift Type | Xero Account Code | Xero Tracking Category |
+|---|---|---|---|
+| Unrestricted / General | One-Off | ??? | ??? |
+| Unrestricted / General | Recurring | ??? | ??? |
+| Scholarship | One-Off | ??? | ??? |
+| ...etc for all 7 funds × all gift types | | | |
+*Blocking: Phase 6 build (cannot create accurate Xero invoices without this).*
+*Decision needed by: Finance Person.*
+
+**OQ-031**: Xero invoice numbering. Should Salesforce-generated invoices use Xero's auto-numbering, or follow a Salesforce pattern (e.g. SF-OPP-12345)? Affects how Finance Person searches/reconciles in Xero.
+*Recommendation: Use Xero auto-numbering. Salesforce Opportunity ID stored in Xero Reference field for cross-reference.*
+*Decision needed by: Finance Person.*
+
+**OQ-032**: Gift Aid in Xero — separate line item, separate invoice, or tracking-only? When a £100 donation is Gift Aid eligible, how should the £25 reclaim appear in Xero?
+*Options: (a) £100 invoice with Gift Aid as a tracking flag only; reclaim entered manually as separate income when HMRC pays out. (b) £125 invoice with £25 line as "Gift Aid receivable". (c) Two invoices.*
+*Recommendation: (a) — keep Gift Aid out of donation invoices, log as separate income on HMRC payout. Charity accounting standard.*
+*Decision needed by: Finance Person + auditor.*
+
+**OQ-033**: Xero Connected App registration. Adrian needs to register a Salesforce Connected App in the Xero developer portal (https://developer.xero.com/) to obtain OAuth 2.0 client ID and secret. One-time setup.
+*Blocking: Phase 6 build.*
+
+**OQ-034**: Historical opportunities — should Xero invoices be created retroactively for the 24,940 migrated Opportunities, or only for new Opportunities created after Xero integration go-live?
+*Recommendation: New only. Backfilling 24,940 invoices into Xero would create accounting chaos in periods that are already closed and audited. Historical donations remain in Salesforce only.*
+*Decision needed by: Finance Person + Adrian.*
+
+**OQ-035**: Refunds in Xero. When a donation is refunded in Stripe, how does Xero handle it? Options: (a) Credit Note created automatically by Salesforce → Xero handler. (b) Manual handling by Finance Person.
+*Recommendation: (a) Automated Credit Note. Build alongside the main invoice creation.*
+*Decision needed by: Finance Person.*
+

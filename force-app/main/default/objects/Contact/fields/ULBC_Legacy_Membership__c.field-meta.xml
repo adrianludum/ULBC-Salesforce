@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>ULBC_Legacy_Membership__c</fullName>
+    <label>Legacy Membership</label>
+    <type>Text</type>
+    <length>100</length>
+    <required>false</required>
+    <description>Historical membership subtype from FileMaker database. One-time import, not auto-updated. For reference only.</description>
+    <trackHistory>false</trackHistory>
+</CustomField>

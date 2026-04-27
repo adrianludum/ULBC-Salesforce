@@ -1,0 +1,48 @@
+.wizard-progress {
+    display: flex;
+    gap: 1.5rem;
+    justify-content: center;
+}
+
+.step-active {
+    color: #532580;
+    font-weight: 600;
+}
+
+.step-inactive {
+    color: #b2a8b8;
+}
+
+.step-num {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.5rem;
+    height: 1.5rem;
+    border-radius: 50%;
+    background: currentColor;
+    color: #fff;
+    font-size: 0.75rem;
+    margin-right: 0.25rem;
+}
+
+.step-active .step-num {
+    background: #532580;
+}
+
+.step-inactive .step-num {
+    background: #b2a8b8;
+}
+
+.preview-frame {
+    border: 1px solid #d8d8d8;
+    border-radius: 8px;
+    overflow: hidden;
+    background: #fff;
+}
+
+.ev-preview-iframe {
+    width: 100%;
+    height: 500px;
+    border: none;
+}

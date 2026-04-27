@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>DonationBaseURL__c</fullName>
+    <description>Base URL of the Salesforce-hosted donate page. Used by ULBC_Donation_Link__c formula on Contact. Set to placeholder until Salesforce Site is created in Phase 5A.4. Example value (post-Site setup): https://ulbctrust-developer-edition.my.site.com/donate</description>
+    <externalId>false</externalId>
+    <label>Donation Base URL</label>
+    <length>255</length>
+    <required>false</required>
+    <trackTrending>false</trackTrending>
+    <type>Text</type>
+    <unique>false</unique>
+</CustomField>

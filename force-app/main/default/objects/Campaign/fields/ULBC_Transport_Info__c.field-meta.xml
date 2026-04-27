@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>ULBC_Transport_Info__c</fullName>
+    <label>Transport Info</label>
+    <type>LongTextArea</type>
+    <length>5000</length>
+    <visibleLines>4</visibleLines>
+    <required>false</required>
+    <description>Getting there / transport information for the event landing page.</description>
+    <trackHistory>false</trackHistory>
+</CustomField>

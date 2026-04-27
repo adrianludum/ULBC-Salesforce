@@ -64,6 +64,15 @@
         <length>100</length>
         <required>false</required>
     </fields>
+    <fields>
+        <fullName>ULBC_Rowing_Position__c</fullName>
+        <label>Rowing Position</label>
+        <type>Number</type>
+        <precision>2</precision>
+        <scale>0</scale>
+        <required>false</required>
+        <description>Seat position in the crew (1=bow, 9=cox for an eight). Phase 4.</description>
+    </fields>
     <listViews>
         <fullName>All</fullName>
         <filterScope>Everything</filterScope>

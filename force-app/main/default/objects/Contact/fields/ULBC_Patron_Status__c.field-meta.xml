@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>ULBC_Patron_Status__c</fullName>
+    <label>Patron Status</label>
+    <type>Picklist</type>
+    <required>false</required>
+    <description>Patron programme membership status. Independent of auto-calculated Donor Tier. Set manually by admin.</description>
+    <valueSet>
+        <valueSetDefinition>
+            <sorted>false</sorted>
+            <value><fullName>Non-Patron</fullName><default>true</default><label>Non-Patron</label></value>
+            <value><fullName>Patron</fullName><default>false</default><label>Patron</label></value>
+            <value><fullName>Honorary Patron</fullName><default>false</default><label>Honorary Patron</label></value>
+            <value><fullName>Lapsed Patron</fullName><default>false</default><label>Lapsed Patron</label></value>
+        </valueSetDefinition>
+    </valueSet>
+    <trackHistory>false</trackHistory>
+</CustomField>

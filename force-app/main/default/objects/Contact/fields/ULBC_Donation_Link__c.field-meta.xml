@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>ULBC_Donation_Link__c</fullName>
+    <description>Personalised donation URL for this Contact. Embeds ulbc_trust_id parameter so the Stripe webhook can match the payment back to this Contact. Use as a merge field in Salesforce email templates: {!Contact.ULBC_Donation_Link__c}. Base URL stored in ULBC_Stripe_Settings__c custom setting (Decision 5.15).</description>
+    <externalId>false</externalId>
+    <formula>$Setup.ULBC_Stripe_Settings__c.DonationBaseURL__c &amp; "?ulbc_trust_id=" &amp; ULBC_Trust_ID__c</formula>
+    <formulaTreatBlanksAs>BlankAsZero</formulaTreatBlanksAs>
+    <label>Donation Link</label>
+    <required>false</required>
+    <trackTrending>false</trackTrending>
+    <type>Text</type>
+    <unique>false</unique>
+</CustomField>

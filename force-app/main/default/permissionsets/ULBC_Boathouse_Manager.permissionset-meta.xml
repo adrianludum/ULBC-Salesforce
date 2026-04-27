@@ -1,0 +1,156 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<PermissionSet xmlns="http://soap.sforce.com/2006/04/metadata">
+    <label>ULBC Boathouse Manager</label>
+    <description>Boathouse Manager role: current athletes only. No donor records, gift amounts, household links, recruitment.</description>
+    <hasActivationRequired>false</hasActivationRequired>
+
+    <!-- ── Contact fields (limited: basic athlete info only) ─────────── -->
+    <fieldPermissions>
+        <field>Contact.ULBC_Gender__c</field>
+        <readable>true</readable><editable>false</editable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <field>Contact.ULBC_Secondary_Email__c</field>
+        <readable>true</readable><editable>false</editable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <field>Contact.ULBC_Is_Donor__c</field>
+        <readable>true</readable><editable>false</editable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <field>Contact.ULBC_Is_Volunteer__c</field>
+        <readable>true</readable><editable>false</editable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <field>Contact.ULBC_Is_Tyrian_Member__c</field>
+        <readable>true</readable><editable>false</editable>
+    </fieldPermissions>
+
+    <!-- ── Phase 4: Contact migration fields (read only) ────────────── -->
+    <fieldPermissions>
+        <field>Contact.ULBC_Profession__c</field>
+        <readable>true</readable><editable>false</editable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <field>Contact.ULBC_Other_Interests__c</field>
+        <readable>true</readable><editable>false</editable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <field>Contact.ULBC_Special_Skills__c</field>
+        <readable>true</readable><editable>false</editable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <field>Contact.ULBC_Follow_Up_Notes__c</field>
+        <readable>true</readable><editable>false</editable>
+    </fieldPermissions>
+
+    <!-- ── Phase 4: Crew History rowing position ───────────────────────── -->
+    <fieldPermissions>
+        <field>ULBC_Crew_History__c.ULBC_Rowing_Position__c</field>
+        <readable>true</readable><editable>false</editable>
+    </fieldPermissions>
+
+    <!-- ── Related list object fields (read only) ────────────────────── -->
+    <fieldPermissions>
+        <field>ULBC_Education_History__c.ULBC_Institution__c</field>
+        <readable>true</readable><editable>false</editable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <field>ULBC_Education_History__c.ULBC_Degree_Type__c</field>
+        <readable>true</readable><editable>false</editable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <field>ULBC_Education_History__c.ULBC_Subject__c</field>
+        <readable>true</readable><editable>false</editable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <field>ULBC_Education_History__c.ULBC_Start_Year__c</field>
+        <readable>true</readable><editable>false</editable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <field>ULBC_Education_History__c.ULBC_End_Year__c</field>
+        <readable>true</readable><editable>false</editable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <field>ULBC_Crew_History__c.ULBC_Crew_Code__c</field>
+        <readable>true</readable><editable>false</editable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <field>ULBC_Crew_History__c.ULBC_Year__c</field>
+        <readable>true</readable><editable>false</editable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <field>ULBC_Crew_History__c.ULBC_Regatta__c</field>
+        <readable>true</readable><editable>false</editable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <field>ULBC_Crew_History__c.ULBC_Event__c</field>
+        <readable>true</readable><editable>false</editable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <field>ULBC_Crew_History__c.ULBC_Crew_Name__c</field>
+        <readable>true</readable><editable>false</editable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <field>ULBC_Crew_History__c.ULBC_Result__c</field>
+        <readable>true</readable><editable>false</editable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <field>ULBC_International_Competition__c.ULBC_Year__c</field>
+        <readable>true</readable><editable>false</editable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <field>ULBC_International_Competition__c.ULBC_Competition__c</field>
+        <readable>true</readable><editable>false</editable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <field>ULBC_International_Competition__c.ULBC_Event__c</field>
+        <readable>true</readable><editable>false</editable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <field>ULBC_International_Competition__c.ULBC_Result__c</field>
+        <readable>true</readable><editable>false</editable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <field>ULBC_International_Competition__c.ULBC_Country_Represented__c</field>
+        <readable>true</readable><editable>false</editable>
+    </fieldPermissions>
+
+    <!-- ── Object permissions ────────────────────────────────────────── -->
+    <objectPermissions>
+        <object>Contact</object>
+        <allowCreate>false</allowCreate>
+        <allowRead>true</allowRead>
+        <allowEdit>false</allowEdit>
+        <allowDelete>false</allowDelete>
+        <viewAllRecords>true</viewAllRecords>
+        <modifyAllRecords>false</modifyAllRecords>
+    </objectPermissions>
+    <objectPermissions>
+        <object>ULBC_Education_History__c</object>
+        <allowCreate>false</allowCreate>
+        <allowRead>true</allowRead>
+        <allowEdit>false</allowEdit>
+        <allowDelete>false</allowDelete>
+        <viewAllRecords>true</viewAllRecords>
+        <modifyAllRecords>false</modifyAllRecords>
+    </objectPermissions>
+    <objectPermissions>
+        <object>ULBC_Crew_History__c</object>
+        <allowCreate>false</allowCreate>
+        <allowRead>true</allowRead>
+        <allowEdit>false</allowEdit>
+        <allowDelete>false</allowDelete>
+        <viewAllRecords>true</viewAllRecords>
+        <modifyAllRecords>false</modifyAllRecords>
+    </objectPermissions>
+    <objectPermissions>
+        <object>ULBC_International_Competition__c</object>
+        <allowCreate>false</allowCreate>
+        <allowRead>true</allowRead>
+        <allowEdit>false</allowEdit>
+        <allowDelete>false</allowDelete>
+        <viewAllRecords>true</viewAllRecords>
+        <modifyAllRecords>false</modifyAllRecords>
+    </objectPermissions>
+</PermissionSet>

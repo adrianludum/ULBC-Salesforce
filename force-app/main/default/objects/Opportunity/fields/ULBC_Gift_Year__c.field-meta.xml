@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>ULBC_Gift_Year__c</fullName>
+    <label>Gift Year</label>
+    <type>Text</type>
+    <formula>TEXT(YEAR(CloseDate))</formula>
+    <formulaTreatBlanksAs>BlankAsZero</formulaTreatBlanksAs>
+    <externalId>false</externalId>
+</CustomField>

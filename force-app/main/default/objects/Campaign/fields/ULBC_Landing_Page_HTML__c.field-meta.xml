@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>ULBC_Landing_Page_HTML__c</fullName>
+    <label>Landing Page HTML</label>
+    <type>LongTextArea</type>
+    <length>131072</length>
+    <visibleLines>10</visibleLines>
+    <required>false</required>
+    <description>Generated HTML for the event landing page. Copy and paste into WordPress.</description>
+    <trackHistory>false</trackHistory>
+</CustomField>

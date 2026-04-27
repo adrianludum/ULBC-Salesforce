@@ -1,6 +1,6 @@
 # ULBC Trust Salesforce — Product Requirements Document
-*Status: Phase 2C Complete — Phase 3 Next*
-*Last synthesised: 2026-04-09*
+*Status: Phase 4 Complete — Phase 5 (Stripe + Event Ticketing) & Phase 6 (Xero) Planned*
+*Last synthesised: 2026-04-27*
 
 ---
 
@@ -52,6 +52,21 @@ ULBC Trust Limited is the fundraising arm of the University of London Boat Club 
 - Household relationship links hidden from: Coach, Boathouse Manager
 - Recruitment/Lead records visible to: Admin, Coach only
 
+### Permission Sets — DEPLOYED ✅ (Phase 3C)
+| Permission Set | API Name | Key Access |
+|---|---|---|
+| ULBC Full Access | ULBC_Full_Access | Admin — everything |
+| ULBC Fundraiser | ULBC_Fundraiser | All contacts, donations, Gift Aid, campaigns. No Lead. |
+| ULBC Finance | ULBC_Finance | All contacts, all financial data. Campaign read-only. No Lead. |
+| ULBC Event Organiser | ULBC_Event_Organiser | Contact (name/email/read only), Campaign (read/write), history objects (read). No Opportunity, no Lead. |
+| ULBC Coach | ULBC_Coach | Contact (read/edit/create), Lead (read/edit/create + convert), history objects (read). No Opportunity, no Campaign. |
+| ULBC Boathouse Manager | ULBC_Boathouse_Manager | Contact (read only), history objects (read). No Lead, no Opportunity, no Campaign. |
+
+### Current Athletes List View — DEPLOYED ✅ (Phase 3C)
+- Contact list view filtered to `Primary Contact Type = Athlete-Student`
+- Default working view for Coach and Boathouse Manager
+- Graduated athletes drop off automatically when admin flips type to Alumni
+
 ---
 
 ## 5. Contact Data Model
@@ -97,6 +112,12 @@ ULBC Trust Limited is the fundraising arm of the University of London Boat Club 
 | Tier Progress % | ULBC_Tier_Progress_Pct__c | Number | ✅ Deployed |
 
 ### Phase 2B fields added to Contact page layout ✅ and permission set ✅
+
+### Auto-TrustID Assignment — DEPLOYED ✅ (Phase 3C)
+- On Contact insert, if ULBC_Trust_ID__c is blank, auto-assigns next sequential ULBC-XXXX
+- Queries highest existing TrustID and increments
+- Pre-set TrustIDs (migration) are NOT overwritten
+- Handles bulk inserts (200+ contacts)
 
 ### Validation Rules — DEPLOYED ✅
 - ULBC_VolunteerSince_RequiresIsVolunteer: Volunteer Since cannot be set unless Is Volunteer = true
@@ -215,34 +236,97 @@ Auto-number: TYR-{0000}. Sharing: ReadWrite.
 
 ---
 
-## 9. Campaign Model — NOT YET BUILT (Phase 3)
+## 9. Campaign Model — DEPLOYED ✅ (Phase 3A)
 
-### Standing Campaigns (Funds)
-- Unrestricted / General
-- ULBC Women's Group
-- Equipment / Fleet
-- Event (one Campaign record per named event)
-- Scholarship
-- Bursary
-- Coaching
+### BUILD STATUS: ✅ PHASE 3A COMPLETE — 7 STANDING FUND CAMPAIGNS LIVE
+
+### Standing Campaigns (Funds) — ALL DEPLOYED ✅
+| Campaign Name | Type | Status | Salesforce ID |
+|---|---|---|---|
+| Unrestricted / General | Fund | In Progress | 701Sk00000z6KAeIAM |
+| ULBC Women's Group | Fund | In Progress | 701Sk00000z6KAfIAM |
+| Equipment / Fleet | Fund | In Progress | 701Sk00000z6KAgIAM |
+| Event | Fund | In Progress | 701Sk00000z6KAhIAM |
+| Scholarship | Fund | In Progress | 701Sk00000z6KAiIAM |
+| Bursary | Fund | In Progress | 701Sk00000z6KAjIAM |
+| Coaching | Fund | In Progress | 701Sk00000z6KAkIAM |
+
+- Campaign object added to ULBC_Full_Access permission set ✅
+- Opportunities can be linked to Campaigns via CampaignId (donation → fund allocation) ✅
+- Campaign Members supported for future event attendance tracking ✅
+- Additional funds can be added as new Campaign records at any time
 
 ---
 
-## 10. Event Model — NOT YET BUILT (Phase 3)
+## 10. Event Model — DEPLOYED ✅ (Phase 3D)
+
+### BUILD STATUS: ✅ PHASE 3D COMPLETE — EVENT MODEL LIVE
 
 - 5-6 events per year, up to 200 attendees
-- Each event = one Salesforce Campaign record
+- Each event = one Salesforce Campaign record (Type = 'Event')
 - Attendance tracked as Campaign Members
-- Registration flow: HTML form → Stripe → Salesforce API → Contact matched on email
+- Registration flow: HTML form → Stripe → Salesforce API → Contact matched on email (deferred — OQ-015)
+
+### Campaign Custom Fields (Event) — ALL DEPLOYED ✅
+| Field | API Name | Type | Notes |
+|---|---|---|---|
+| Start Time | ULBC_Start_Time__c | Time | Pairs with standard StartDate |
+| End Time | ULBC_End_Time__c | Time | Pairs with standard EndDate |
+| Venue | ULBC_Venue__c | Text(255) | Event location |
+| Ticket Price | ULBC_Ticket_Price__c | Currency(8,2) | Price per attendee |
+
+Standard Campaign fields also used: Name, Description, StartDate, EndDate.
+
+### CampaignMember Statuses (per event campaign — manual setup)
+| Status | HasResponded | Notes |
+|---|---|---|
+| Invited | false | Initial status when attendee is added |
+| Registered | true | Attendee has confirmed/paid |
+| Attended | true | Post-event confirmation |
+| No-Show | false | Registered but did not attend |
+
+Statuses are created per-campaign (not deployable metadata). Set up manually when creating each event campaign. Decision 3.20.
 
 ---
 
-## 11. Recruitment Pipeline — NOT YET BUILT (Phase 3)
+## 11. Recruitment Pipeline — DEPLOYED ✅ (Phase 3B)
 
-- Coach-only visibility (+ Admin)
+### BUILD STATUS: ✅ PHASE 3B COMPLETE — LEAD DATA MODEL AND PIPELINE LIVE
+
+- Coach-only visibility (+ Admin) — enforcement deferred to Phase 3C (permission sets)
 - ~400 prospects per year, targeting 10-20 accepted athletes
-- Pipeline stages: Prospect → Emailed → Spoken To → Applied → Accepted
-- On Accepted: Lead converts to Contact, Type = Athlete-Student, TrustID assigned
+- Pipeline stages: Prospect → Emailed → Spoken To → Applied → Accepted → Not Progressed
+- On Accepted: Lead converts to Contact (standard fields map automatically)
+- Post-conversion: Admin manually sets Primary Contact Type = Athlete-Student and assigns TrustID
+
+### Lead Custom Fields — ALL DEPLOYED ✅
+| Field | API Name | Type | Notes |
+|---|---|---|---|
+| Current School / University | ULBC_Current_Institution__c | Text(100) | Where they are now, pre-ULBC |
+| Graduation Year | ULBC_Graduation_Year__c | Number(4,0) | Expected graduation from current institution |
+| Gender | ULBC_Gender__c | Picklist (Male/Female) | |
+| Current Rowing Event | ULBC_Current_Rowing_Event__c | Text(100) | What they row now, pre-ULBC |
+| Recruitment Source | ULBC_Recruitment_Source__c | Picklist | BUCS Results / Referral / Direct Inquiry / Trials / Other |
+| Coach Notes | ULBC_Coach_Notes__c | Long Text Area(5000) | Free-text notes |
+
+### Lead Status (Pipeline Stages) — DEPLOYED ✅
+| Status | Closed | Converted | Notes |
+|---|---|---|---|
+| Prospect | No | No | Default for new leads |
+| Emailed | No | No | |
+| Spoken To | No | No | |
+| Applied | No | No | |
+| Accepted | Yes | Yes | Triggers Lead conversion |
+| Not Progressed | Yes | No | Closed without conversion |
+
+### Lead Conversion Mapping — MANUAL SETUP REQUIRED ⚠️
+Standard fields (Name, Email, Phone) map automatically. Custom field mapping must be configured in Setup → Object Manager → Lead → Fields & Relationships → Map Lead Fields:
+- Lead.ULBC_Gender__c → Contact.ULBC_Gender__c
+- After conversion: manually set Contact.ULBC_Primary_Contact_Type__c = 'Athlete-Student' and assign ULBC_Trust_ID__c
+
+### Permission Set — UPDATED ✅
+- Lead object added to ULBC_Full_Access (read/write, no delete)
+- All 6 Lead custom fields added to ULBC_Full_Access FLS
 
 ---
 
@@ -285,7 +369,13 @@ Registered under ULBC Trust Limited.
 | Phase 1 | Contact data model, 3 related lists, page layout, Jade Smith test record | 33 | ✅ Complete |
 | Phase 2A | Gone Away → HasOptedOutOfEmail trigger | 12 | ✅ Complete |
 | Phase 2B | Donor tier engine, opportunity trigger, upgrade prospect fields, email template | 18 | ✅ Complete |
-| Phase 2C | Opportunity fields, Gift Aid fields, ULBC Subscription object, Tyrian Membership object | 7 | ✅ Complete |
+| Phase 2C | Opportunity fields, Gift Aid fields, ULBC Subscription object, Tyrian Membership object | 8 | ✅ Complete |
+| Phase 3A | Campaign model — 7 standing fund campaigns, permission set update | 5 | ✅ Complete |
+| Phase 3B | Recruitment pipeline — Lead custom fields, pipeline stages, conversion, permission set | 9 | ✅ Complete |
+| Phase 3C | Profiles & FLS — 5 permission sets, auto-TrustID trigger, Current Athletes list view | 15 | ✅ Complete |
+| Phase 3D | Event model — 4 Campaign custom fields, CampaignMember statuses, permission set updates | 8 | ✅ Complete |
+| Phase 4A | Migration metadata — 4 Contact fields, Rowing Position on Crew History, permission sets | 4 | ✅ Complete |
+| Phase 4B | FileMaker migration — 1,345 Contacts, 24,940 Opportunities, 2,050 Crew History, 1,270 Education History, 26 Events, 2,038 Attendance, 399 Notes, 17 Partner Relationships | — | ✅ Complete |
 
 ### In Progress
 | Item | Status |
@@ -296,18 +386,25 @@ Registered under ULBC Trust Limited.
 ### Remaining
 | Phase | Description |
 |---|---|
-| Phase 2C | Opportunity custom fields, Gift Aid fields, ULBC Subscription object, Tyrian Membership object | 7 | ✅ Complete |
-| Phase 3 | Profiles & FLS, Campaign model, Event model, Recruitment pipeline, Email comms setup |
-| Phase 4 | Full 1,500 record migration from FileMaker |
+| Phase 3B | ~~Recruitment pipeline~~ | ✅ Complete |
+| Phase 3B (manual) | Lead conversion field mapping in Setup UI | ✅ Complete |
+| Phase 3C | ~~Profiles & FLS~~ | ✅ Complete |
+| Phase 3D | ~~Event model~~ | ✅ Complete |
+| Phase 3D | Email comms setup (Marketing User licences — manual Setup step) |
+| Phase 3D | Upgrade Alert Flow — blocked on OQ-023 |
+| Phase 4 | ~~Full 1,500 record migration from FileMaker~~ | ✅ Complete |
+| **Phase 5A** | **Stripe webhook receiver + event ticketing flow (Salesforce Site + LWC). ~3 sessions.** |
+| **Phase 5B** | **Donation flow on Stripe webhook — deferred until website rebuild decided (OQ-026)** |
+| **Phase 6A** | **Xero invoice creation on Opportunity Closed Won. ~1.5 sessions. Blocked on OQ-030 (account mapping) and OQ-033 (Connected App).** |
+| **Phase 6C** | **Native Xero Stripe feed — manual config in Xero by Finance Person. ~30 mins.** |
 
 ### Source tables
 | FileMaker Table | Salesforce Target | Notes |
 |----------------|-------------------|-------|
-| Members (~1,500) | Contact | Exclude Bank Account no. Map Mem Type: A=Athlete→Alumni, O=Other |
-| Accounts_transactions | Opportunity | Map to donations with fund allocation |
-| Crew_data | Crew History (related list) | Link via TrustID |
-| Crew_names | Crew History (related list) | Regatta/event detail |
-| EventID table | Campaign | Map EventID, Year, Event Name |
+| Members (~1,500) | Contact | ✅ 1,345 migrated. 9 failed (data quality). Mem Type: A→Alumni, S/O/P/D→Other. |
+| Accounts_transactions | Opportunity | ✅ 24,940 migrated. 2,040 skipped (no TrustId). |
+| Crew_data + Crew_names | Crew History (related list) | ✅ 2,050 migrated. Joined on Crew Code. |
+| EventID table | Campaign | ✅ 26 events migrated. 2,038 attendance records. |
 
 ### Key migration rules
 - All imported contacts: Primary Type = Alumni, Legal Basis = Legitimate Interests
@@ -317,10 +414,82 @@ Registered under ULBC Trust Limited.
 
 ---
 
-## 15. Stripe Integration (Deferred — v2)
+## 15. Stripe Integration — Phase 5 (Planned 2026-04-27)
 
-- Stripe Payment ID placeholder fields on Opportunity, ULBC Subscription, Tyrian Membership
-- Full integration deferred until data model is built and tested
+### Scope
+Stripe handles **website donations** and **event ticketing** (dinners, BBQs, etc.). Recurring subscriptions (Tyrian, ULBC) come through bank account, ingested via Xero — NOT Stripe. See Decision 5.1.
+
+### Architecture
+- **Public Apex REST endpoint** on Salesforce Site receives Stripe webhooks
+- **Stripe signature verification** on every payload (Decision 5.11)
+- **Event handler** dispatches by `metadata.intent` to typed handlers:
+  - `donation` → creates Opportunity, matches/creates Contact, populates Gift Aid fields
+  - `event_ticket` → creates CampaignMember on the Event Campaign
+  - `subscription` → reserved for future use (currently bank-only)
+- **Salesforce Site + LWC** for public event registration pages at `ulbctrust.my.site.com/events/<campaign>` (Decision 5.4)
+
+### Sub-phases
+| Sub-phase | Scope | Status |
+|---|---|---|
+| 5A.1 | Data model — ULBC_Stripe_Customer_ID__c on Contact, ULBC_Stripe_Payment_ID__c on CampaignMember, permission set updates | Not started |
+| 5A.2 | Apex webhook receiver (signature verification, logging only, deployed to Salesforce Site) | Not started |
+| 5A.3 | Webhook business logic for event tickets (`intent=event_ticket` handler) | Not started |
+| 5A.4 | Salesforce Site + event registration LWC with TrustID-personalised links | Not started |
+| 5B | Donation flow (`intent=donation` handler) — added when website donate page is rebuilt | Deferred |
+
+### Stripe metadata contract (Decision 5.9)
+Every Stripe Checkout Session must pass:
+- `intent`: "donation" | "event_ticket" | "subscription"
+- `fund`: Campaign ID or fund slug (donations only)
+- `trust_id`: ULBC-XXXX (if known)
+- `gift_aid`: "true" | "false" (donations only)
+- `gift_aid_postcode`: postcode string (if gift_aid=true)
+- `gift_type`: "One-Off" | "Recurring" (donations only)
+- `campaign_id`: Salesforce Campaign 18-char ID (event tickets only)
+
+### Contact matching priority (Decision 5.8)
+1. TrustID from metadata
+2. Stripe Customer ID match
+3. Email match
+4. Create new with Acquisition Channel = "Stripe Donation" or "Stripe Event Registration"
+
+### Existing Stripe footprint (as of April 2026)
+- Stripe account registered to ULBC Trust Limited ✅
+- 1 active legacy subscription (Bethany Welch, £80/yr from 2014) — grandfathered (Decision 5.12)
+- 3 payments in last 12 months (£200 donation, £5 donation, £80 subscription renewal)
+- Existing donate page: WordPress + WP Simple Pay (managed by third party) — fixed £25, no Gift Aid capture, no fund selection. To be rebuilt at later date (OQ-026).
+
+---
+
+## 15a. Xero Integration — Phase 6 (Planned 2026-04-27)
+
+### Scope
+Bridge the workflow boundary between Fundraiser/Admin (Salesforce) and Finance Person (Xero). Two flows:
+1. **Salesforce → Xero invoices**: Closed Won Opportunity creates a paid invoice in Xero (custom Apex)
+2. **Stripe → Xero bank deposits**: native Xero Stripe feed, configured by Finance Person (NOT in Salesforce — Decision 6.4)
+
+### Architecture
+- **Trigger**: Opportunity after-insert/update on StageName change to Closed Won (Decision 6.5)
+- **Auth**: OAuth 2.0 via Named Credential `ULBC_Xero` (Decision 6.6)
+- **Account mapping**: Custom Metadata Records (`ULBC_Xero_Account_Mapping__mdt`) — Finance Person specifies, Adrian encodes (Decision 6.7)
+- **Contact sync**: Lazy creation — `ULBC_Xero_Contact_ID__c` on Salesforce Contact, populated on first invoice (Decision 6.8)
+
+### Sub-phases
+| Sub-phase | Scope | Status |
+|---|---|---|
+| 6A.1 | Xero Connected App registration (one-time, Adrian) | Not started — OQ-033 |
+| 6A.2 | Named Credential setup, OAuth 2.0 flow tested | Not started |
+| 6A.3 | Custom Metadata Type for account mapping | Not started — blocked on OQ-030 |
+| 6A.4 | ULBC_XeroInvoiceService Apex class — create invoice from Opportunity | Not started |
+| 6A.5 | ULBC_OpportunityXeroSync trigger | Not started |
+| 6A.6 | ULBC_Xero_Contact_ID__c field + Contact sync logic | Not started |
+| 6B | Refund handling via Credit Notes | Not started — OQ-035 |
+| 6C | Finance Person configures native Xero Stripe feed | Not started — manual, in Xero |
+
+### Out of scope (v1)
+- Backfilling historical Opportunities into Xero (OQ-034 — recommendation: do not backfill)
+- Two-way sync from Xero back to Salesforce (one-way only: Salesforce → Xero)
+- Gift Aid reclaims as Xero line items (OQ-032 — recommendation: handle separately on HMRC payout)
 
 ---
 
@@ -343,20 +512,23 @@ Registered under ULBC Trust Limited.
 ### Deployed Apex Classes
 | Class | Purpose | Coverage |
 |---|---|---|
-| ULBC_ContactTriggerHandler | Gone Away logic | 100% |
+| ULBC_ContactTriggerHandler | Gone Away logic + auto-TrustID | 100% |
 | ULBC_DonorTierEngine | Tier calculation engine | 100% |
 | ULBC_ContactDataModel_Test | Phase 1 tests | — |
 | ULBC_GoneAwayTrigger_Test | Phase 2A tests | — |
 | ULBC_DonorTierEngine_Test | Phase 2B tests | — |
 | ULBC_Phase2C_DataModel_Test | Phase 2C tests | — |
+| ULBC_Phase3A_Campaign_Test | Phase 3A tests | — |
+| ULBC_Phase3B_Recruitment_Test | Phase 3B tests | — |
+| ULBC_Phase3C_Access_Test | Phase 3C tests | — |
 
 ### Deployed Triggers
 | Trigger | Object | Events | Purpose |
 |---|---|---|---|
-| ULBC_ContactTrigger | Contact | before insert, before update | Gone Away → HasOptedOutOfEmail |
+| ULBC_ContactTrigger | Contact | before insert, before update | Gone Away → HasOptedOutOfEmail + auto-TrustID on insert |
 | ULBC_OpportunityTrigger | Opportunity | after insert/update/delete/undelete | Fire donor tier recalculation |
 
-### Total test count: 70 passing, 0 failing
+### Total test count: 99 passing, 0 failing
 
 ---
 

@@ -1,0 +1,40 @@
+<template>
+    <lightning-card title={cardTitle} icon-name="standard:event">
+        <template if:true={hasAttendees}>
+            <table class="slds-table slds-table_cell-buffer slds-table_bordered slds-table_striped">
+                <thead>
+                    <tr class="slds-line-height_reset">
+                        <th scope="col"><div class="slds-truncate">Name</div></th>
+                        <th scope="col"><div class="slds-truncate">Guests</div></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <template for:each={attendees} for:item="attendee">
+                        <tr key={attendee.id}>
+                            <td>
+                                <div class="slds-truncate">
+                                    <template if:true={attendee.contactId}>
+                                        <a href="#" data-id={attendee.contactId} onclick={navigateToContact}>
+                                            {attendee.firstName} {attendee.lastName}
+                                        </a>
+                                    </template>
+                                    <template if:false={attendee.contactId}>
+                                        {attendee.firstName} {attendee.lastName}
+                                    </template>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="slds-truncate">{attendee.guests}</div>
+                            </td>
+                        </tr>
+                    </template>
+                </tbody>
+            </table>
+        </template>
+        <template if:false={hasAttendees}>
+            <div class="slds-p-around_medium slds-text-align_center slds-text-color_weak">
+                No attendees found.
+            </div>
+        </template>
+    </lightning-card>
+</template>

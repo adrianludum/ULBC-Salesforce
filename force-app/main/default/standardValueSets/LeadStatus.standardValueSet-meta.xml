@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<StandardValueSet xmlns="http://soap.sforce.com/2006/04/metadata">
+    <sorted>false</sorted>
+    <standardValue>
+        <fullName>Prospect</fullName>
+        <default>true</default>
+        <label>Prospect</label>
+        <closed>false</closed>
+        <converted>false</converted>
+        <forecastCategory>Pipeline</forecastCategory>
+    </standardValue>
+    <standardValue>
+        <fullName>Emailed</fullName>
+        <default>false</default>
+        <label>Emailed</label>
+        <closed>false</closed>
+        <converted>false</converted>
+        <forecastCategory>Pipeline</forecastCategory>
+    </standardValue>
+    <standardValue>
+        <fullName>Spoken To</fullName>
+        <default>false</default>
+        <label>Spoken To</label>
+        <closed>false</closed>
+        <converted>false</converted>
+        <forecastCategory>Pipeline</forecastCategory>
+    </standardValue>
+    <standardValue>
+        <fullName>Applied</fullName>
+        <default>false</default>
+        <label>Applied</label>
+        <closed>false</closed>
+        <converted>false</converted>
+        <forecastCategory>Pipeline</forecastCategory>
+    </standardValue>
+    <standardValue>
+        <fullName>Accepted</fullName>
+        <default>false</default>
+        <label>Accepted</label>
+        <closed>true</closed>
+        <converted>true</converted>
+        <forecastCategory>Closed</forecastCategory>
+    </standardValue>
+    <standardValue>
+        <fullName>Not Progressed</fullName>
+        <default>false</default>
+        <label>Not Progressed</label>
+        <closed>true</closed>
+        <converted>false</converted>
+        <forecastCategory>Omitted</forecastCategory>
+    </standardValue>
+</StandardValueSet>

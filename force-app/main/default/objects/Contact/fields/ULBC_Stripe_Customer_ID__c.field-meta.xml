@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>ULBC_Stripe_Customer_ID__c</fullName>
+    <description>Stripe Customer ID (cus_XXX) for this Contact. Populated by the Stripe webhook receiver on first payment. Used as one of the matching keys in Decision 5.8 (priority 2).</description>
+    <externalId>true</externalId>
+    <label>Stripe Customer ID</label>
+    <length>255</length>
+    <required>false</required>
+    <trackTrending>false</trackTrending>
+    <type>Text</type>
+    <unique>true</unique>
+    <caseSensitive>true</caseSensitive>
+</CustomField>

@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>ULBC_Donor_Status__c</fullName>
+    <label>Donor Status</label>
+    <type>Text</type>
+    <description>Auto-derived donor status: Non-Donor, Current Donor, or Lapsed Donor. Based on Is_Donor flag and Donor Tier.</description>
+    <formula>IF(NOT(ULBC_Is_Donor__c), "Non-Donor",
+  IF(ISPICKVAL(ULBC_Donor_Tier__c, "Lapsed"), "Lapsed Donor",
+    "Current Donor"))</formula>
+    <formulaTreatBlanksAs>BlankAsZero</formulaTreatBlanksAs>
+    <externalId>false</externalId>
+</CustomField>

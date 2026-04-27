@@ -1,0 +1,127 @@
+<template>
+    <!-- Button to open wizard -->
+    <lightning-card title="Landing Page" icon-name="standard:web_page">
+        <div class="slds-p-around_medium">
+            <template if:true={hasExistingPage}>
+                <p class="slds-m-bottom_small slds-text-color_success">
+                    <lightning-icon icon-name="utility:check" size="x-small" variant="success" class="slds-m-right_x-small"></lightning-icon>
+                    Landing page generated
+                </p>
+                <lightning-button-group>
+                    <lightning-button label="Edit Landing Page" onclick={openWizard}></lightning-button>
+                    <lightning-button label="Copy HTML" icon-name="utility:copy" onclick={handleCopyHtml}></lightning-button>
+                    <lightning-button label="Download HTML" icon-name="utility:download" onclick={handleDownloadHtml}></lightning-button>
+                </lightning-button-group>
+            </template>
+            <template if:false={hasExistingPage}>
+                <p class="slds-m-bottom_small slds-text-color_weak">No landing page generated yet.</p>
+                <lightning-button variant="brand" label="Create Landing Page" onclick={openWizard}></lightning-button>
+            </template>
+        </div>
+    </lightning-card>
+
+    <!-- Hidden download anchor -->
+    <a class="ev-download-link" style="display:none;" aria-hidden="true"></a>
+
+    <!-- Wizard Modal -->
+    <template if:true={isOpen}>
+        <section class="slds-modal slds-fade-in-open slds-modal_large" role="dialog">
+            <div class="slds-modal__container">
+                <header class="slds-modal__header">
+                    <button class="slds-button slds-button_icon slds-modal__close slds-button_icon-inverse" onclick={closeWizard}>
+                        <lightning-icon icon-name="utility:close" size="small" variant="inverse"></lightning-icon>
+                    </button>
+                    <h2 class="slds-modal__title">Create Landing Page</h2>
+
+                    <!-- Progress -->
+                    <div class="slds-p-top_medium wizard-progress">
+                        <template for:each={progressItems} for:item="step">
+                            <span key={step.num} class={step.cls}>
+                                <span class="step-num">{step.num}</span> {step.label}
+                            </span>
+                        </template>
+                    </div>
+                </header>
+
+                <div class="slds-modal__content slds-p-around_large" style="min-height:400px;">
+
+                    <!-- Step 1: Event Details -->
+                    <template if:true={isDetailsStep}>
+                        <div class="slds-grid slds-wrap slds-gutters">
+                            <div class="slds-col slds-size_1-of-1 slds-m-bottom_small">
+                                <lightning-input label="Event Name" value={eventName} data-field="eventName" onchange={handleFieldChange}></lightning-input>
+                            </div>
+                            <div class="slds-col slds-size_1-of-2 slds-m-bottom_small">
+                                <lightning-input type="date" label="Event Date" value={startDate} data-field="startDate" onchange={handleFieldChange}></lightning-input>
+                            </div>
+                            <div class="slds-col slds-size_1-of-2 slds-m-bottom_small">
+                                <lightning-input label="Venue" value={venue} data-field="venue" onchange={handleFieldChange}></lightning-input>
+                            </div>
+                            <div class="slds-col slds-size_1-of-2 slds-m-bottom_small">
+                                <lightning-input type="time" label="Start Time" value={startTime} data-field="startTime" onchange={handleFieldChange}></lightning-input>
+                            </div>
+                            <div class="slds-col slds-size_1-of-2 slds-m-bottom_small">
+                                <lightning-input type="time" label="End Time (optional)" value={endTime} data-field="endTime" onchange={handleFieldChange}></lightning-input>
+                            </div>
+                            <div class="slds-col slds-size_1-of-2 slds-m-bottom_small">
+                                <lightning-combobox label="Dress Code" value={dressCode} options={dressCodeOptions} data-field="dressCode" onchange={handleFieldChange}></lightning-combobox>
+                            </div>
+                        </div>
+                    </template>
+
+                    <!-- Step 2: Menu & Description -->
+                    <template if:true={isMenuStep}>
+                        <div class="slds-grid slds-wrap slds-gutters">
+                            <div class="slds-col slds-size_1-of-1 slds-m-bottom_small">
+                                <lightning-textarea label="Event Description" value={eventDescription} data-field="eventDescription" onchange={handleFieldChange} max-length="5000"></lightning-textarea>
+                            </div>
+                            <div class="slds-col slds-size_1-of-1 slds-m-bottom_small">
+                                <lightning-textarea label="Menu (one course per line, use 'Course: Description' format)" value={menu} data-field="menu" onchange={handleFieldChange} max-length="10000" placeholder="Starter: Smoked salmon &amp; crab tian&#10;Main: Slow-roasted beef fillet&#10;Dessert: Dark chocolate fondant&#10;To Finish: Coffee, petit fours"></lightning-textarea>
+                            </div>
+                            <div class="slds-col slds-size_1-of-1 slds-m-bottom_small">
+                                <lightning-textarea label="Transport / Getting There" value={transportInfo} data-field="transportInfo" onchange={handleFieldChange} max-length="5000" placeholder="The venue is a short walk from..."></lightning-textarea>
+                            </div>
+                        </div>
+                    </template>
+
+                    <!-- Step 3: Tickets -->
+                    <template if:true={isTicketsStep}>
+                        <div class="slds-grid slds-wrap slds-gutters">
+                            <div class="slds-col slds-size_1-of-2 slds-m-bottom_small">
+                                <lightning-input type="number" label="Ticket Price (GBP)" value={ticketPrice} step="0.01" onchange={handlePriceChange}></lightning-input>
+                            </div>
+                            <div class="slds-col slds-size_1-of-2 slds-m-bottom_small">
+                                <lightning-input label="Stripe Price ID" value={stripePriceId} data-field="stripePriceId" onchange={handleFieldChange} placeholder="price_1ABC123"></lightning-input>
+                            </div>
+                            <div class="slds-col slds-size_1-of-1 slds-m-bottom_small">
+                                <lightning-textarea label="What's Included" value={ticketIncludes} data-field="ticketIncludes" onchange={handleFieldChange}></lightning-textarea>
+                            </div>
+                        </div>
+                    </template>
+
+                    <!-- Step 4: Preview -->
+                    <template if:true={isPreviewStep}>
+                        <div class="preview-frame">
+                            <iframe lwc:dom="manual" class="ev-preview-iframe" sandbox="allow-same-origin" title="Landing page preview"></iframe>
+                        </div>
+                        <template if:true={copied}>
+                            <p class="slds-text-color_success slds-text-align_center slds-m-top_medium">
+                                <lightning-icon icon-name="utility:check" size="x-small" variant="success"></lightning-icon>
+                                HTML copied to clipboard — paste it into WordPress
+                            </p>
+                        </template>
+                    </template>
+                </div>
+
+                <footer class="slds-modal__footer">
+                    <lightning-button label="Cancel" onclick={closeWizard} class="slds-m-right_small"></lightning-button>
+                    <template if:false={isFirstStep}>
+                        <lightning-button label="Previous" onclick={handlePrevious} class="slds-m-right_small"></lightning-button>
+                    </template>
+                    <lightning-button variant="brand" label={nextLabel} onclick={handleNext} disabled={isSaving}></lightning-button>
+                </footer>
+            </div>
+        </section>
+        <div class="slds-backdrop slds-backdrop_open"></div>
+    </template>
+</template>

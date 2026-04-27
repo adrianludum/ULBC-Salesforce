@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>ULBC_Graduation_Year__c</fullName>
+    <label>Graduation Year</label>
+    <type>Number</type>
+    <precision>4</precision>
+    <scale>0</scale>
+    <required>false</required>
+    <description>Expected graduation year from current institution. Indicates when the prospect would be available to join ULBC.</description>
+    <trackFeedHistory>false</trackFeedHistory>
+</CustomField>

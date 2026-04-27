@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>ULBC_Year_Group__c</fullName>
+    <label>Year Group</label>
+    <type>Text</type>
+    <length>10</length>
+    <required>false</required>
+    <description>Graduation or cohort year from FileMaker.</description>
+    <trackHistory>false</trackHistory>
+</CustomField>

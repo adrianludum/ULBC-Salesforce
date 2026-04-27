@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>ULBC_Stripe_Price_ID__c</fullName>
+    <label>Stripe Price ID</label>
+    <type>Text</type>
+    <length>50</length>
+    <required>false</required>
+    <description>Stripe Price ID for the event ticket (e.g. price_1ABC123).</description>
+    <trackHistory>false</trackHistory>
+</CustomField>

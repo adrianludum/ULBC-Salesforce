@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>ULBC_Coach_Notes__c</fullName>
+    <label>Coach Notes</label>
+    <type>LongTextArea</type>
+    <length>5000</length>
+    <visibleLines>5</visibleLines>
+    <required>false</required>
+    <description>Free-text notes from the coach about the recruitment prospect.</description>
+    <trackFeedHistory>false</trackFeedHistory>
+</CustomField>

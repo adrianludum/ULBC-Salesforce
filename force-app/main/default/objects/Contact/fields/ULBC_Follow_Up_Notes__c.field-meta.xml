@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>ULBC_Follow_Up_Notes__c</fullName>
+    <label>Follow Up Notes</label>
+    <type>LongTextArea</type>
+    <length>10000</length>
+    <visibleLines>4</visibleLines>
+    <required>false</required>
+    <description>Follow-up notes for fundraising or engagement actions. Migrated from FileMaker. Phase 4.</description>
+</CustomField>

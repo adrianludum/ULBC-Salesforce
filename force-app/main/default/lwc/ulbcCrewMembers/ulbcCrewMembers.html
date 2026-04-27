@@ -1,0 +1,48 @@
+<template>
+    <lightning-card title={cardTitle} icon-name="standard:people">
+        <template if:true={hasMembers}>
+            <table class="slds-table slds-table_cell-buffer slds-table_bordered slds-table_striped">
+                <thead>
+                    <tr class="slds-line-height_reset">
+                        <th scope="col"><div class="slds-truncate">Seat</div></th>
+                        <th scope="col"><div class="slds-truncate">Name</div></th>
+                        <th scope="col"><div class="slds-truncate">College</div></th>
+                        <th scope="col"><div class="slds-truncate">Year</div></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <template for:each={members} for:item="member">
+                        <tr key={member.id}>
+                            <td>
+                                <div class="slds-truncate">
+                                    <template if:true={member.position}>{member.position}</template>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="slds-truncate">
+                                    <a href="#" data-id={member.contactId} onclick={navigateToContact}>
+                                        {member.firstName} {member.lastName}
+                                    </a>
+                                    <template if:true={member.isSelf}>
+                                        <lightning-badge label="This record" class="slds-m-left_x-small"></lightning-badge>
+                                    </template>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="slds-truncate">{member.college}</div>
+                            </td>
+                            <td>
+                                <div class="slds-truncate">{member.yearGroup}</div>
+                            </td>
+                        </tr>
+                    </template>
+                </tbody>
+            </table>
+        </template>
+        <template if:false={hasMembers}>
+            <div class="slds-p-around_medium slds-text-align_center slds-text-color_weak">
+                No crew members found.
+            </div>
+        </template>
+    </lightning-card>
+</template>

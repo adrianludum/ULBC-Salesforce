@@ -1,244 +1,494 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <PermissionSet xmlns="http://soap.sforce.com/2006/04/metadata">
     <label>ULBC Full Access</label>
-    <description>Grants read/write access to all ULBC custom fields on Contact, Opportunity, and all ULBC custom objects.</description>
+    <description>Grants read/write access to all ULBC custom fields on Contact, Opportunity, Lead, and all ULBC custom objects.</description>
     <hasActivationRequired>false</hasActivationRequired>
-
-    <!-- ── Phase 2C: Contact Gift Aid fields ────────────────────────── -->
+    <fieldPermissions>
+        <editable>true</editable>
+        <field>CampaignMember.ULBC_Stripe_Payment_ID__c</field>
+        <readable>true</readable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <editable>false</editable>
+        <field>Contact.ULBC_Donation_Link__c</field>
+        <readable>true</readable>
+    </fieldPermissions>
     <fieldPermissions>
         <field>Contact.ULBC_Gift_Aid_Eligible__c</field>
-        <readable>true</readable><editable>true</editable>
+        <readable>true</readable>
+        <editable>true</editable>
     </fieldPermissions>
     <fieldPermissions>
         <field>Contact.ULBC_Gift_Aid_Declaration_Date__c</field>
-        <readable>true</readable><editable>true</editable>
+        <readable>true</readable>
+        <editable>true</editable>
     </fieldPermissions>
     <fieldPermissions>
         <field>Contact.ULBC_Gift_Aid_Declaration_Source__c</field>
-        <readable>true</readable><editable>true</editable>
+        <readable>true</readable>
+        <editable>true</editable>
     </fieldPermissions>
     <fieldPermissions>
         <field>Contact.ULBC_Gift_Aid_Postcode__c</field>
-        <readable>true</readable><editable>true</editable>
+        <readable>true</readable>
+        <editable>true</editable>
     </fieldPermissions>
     <fieldPermissions>
         <field>Contact.ULBC_Gift_Aid_Valid_From__c</field>
-        <readable>true</readable><editable>true</editable>
+        <readable>true</readable>
+        <editable>true</editable>
     </fieldPermissions>
     <fieldPermissions>
         <field>Contact.ULBC_Gift_Aid_Valid_To__c</field>
-        <readable>true</readable><editable>true</editable>
+        <readable>true</readable>
+        <editable>true</editable>
     </fieldPermissions>
-
-    <!-- ── Phase 2C: Opportunity fields ────────────────────────────── -->
+    <fieldPermissions>
+        <editable>true</editable>
+        <field>Contact.ULBC_Stripe_Customer_ID__c</field>
+        <readable>true</readable>
+    </fieldPermissions>
     <fieldPermissions>
         <field>Opportunity.ULBC_Gift_Type__c</field>
-        <readable>true</readable><editable>true</editable>
+        <readable>true</readable>
+        <editable>true</editable>
     </fieldPermissions>
     <fieldPermissions>
         <field>Opportunity.ULBC_Fund_Type__c</field>
-        <readable>true</readable><editable>true</editable>
+        <readable>true</readable>
+        <editable>true</editable>
     </fieldPermissions>
     <fieldPermissions>
         <field>Opportunity.ULBC_Gift_Aid_Eligible__c</field>
-        <readable>true</readable><editable>true</editable>
+        <readable>true</readable>
+        <editable>true</editable>
     </fieldPermissions>
     <fieldPermissions>
         <field>Opportunity.ULBC_Gift_Aid_Claimed_Date__c</field>
-        <readable>true</readable><editable>true</editable>
+        <readable>true</readable>
+        <editable>true</editable>
     </fieldPermissions>
     <fieldPermissions>
         <field>Opportunity.ULBC_Gift_Source__c</field>
-        <readable>true</readable><editable>true</editable>
+        <readable>true</readable>
+        <editable>true</editable>
     </fieldPermissions>
     <fieldPermissions>
         <field>Opportunity.ULBC_Stripe_Payment_ID__c</field>
-        <readable>true</readable><editable>true</editable>
+        <readable>true</readable>
+        <editable>true</editable>
     </fieldPermissions>
-
-    <!-- ── Phase 2C: ULBC_Subscription__c fields ────────────────────── -->
+    <fieldPermissions>
+        <field>Opportunity.ULBC_Gift_Year__c</field>
+        <readable>true</readable>
+        <editable>false</editable>
+    </fieldPermissions>
     <fieldPermissions>
         <field>ULBC_Subscription__c.ULBC_Contact__c</field>
-        <readable>true</readable><editable>true</editable>
+        <readable>true</readable>
+        <editable>true</editable>
     </fieldPermissions>
     <fieldPermissions>
         <field>ULBC_Subscription__c.ULBC_Last_Payment_Date__c</field>
-        <readable>true</readable><editable>true</editable>
+        <readable>true</readable>
+        <editable>true</editable>
     </fieldPermissions>
     <fieldPermissions>
         <field>ULBC_Subscription__c.ULBC_Next_Payment_Date__c</field>
-        <readable>true</readable><editable>true</editable>
+        <readable>true</readable>
+        <editable>true</editable>
     </fieldPermissions>
     <fieldPermissions>
         <field>ULBC_Subscription__c.ULBC_Stripe_Payment_ID__c</field>
-        <readable>true</readable><editable>true</editable>
+        <readable>true</readable>
+        <editable>true</editable>
     </fieldPermissions>
-
-    <!-- ── Phase 2C: ULBC_Tyrian_Membership__c fields ───────────────── -->
     <fieldPermissions>
         <field>ULBC_Tyrian_Membership__c.ULBC_Contact__c</field>
-        <readable>true</readable><editable>true</editable>
+        <readable>true</readable>
+        <editable>true</editable>
     </fieldPermissions>
     <fieldPermissions>
         <field>ULBC_Tyrian_Membership__c.ULBC_Last_Payment_Date__c</field>
-        <readable>true</readable><editable>true</editable>
+        <readable>true</readable>
+        <editable>true</editable>
     </fieldPermissions>
     <fieldPermissions>
         <field>ULBC_Tyrian_Membership__c.ULBC_Next_Payment_Date__c</field>
-        <readable>true</readable><editable>true</editable>
+        <readable>true</readable>
+        <editable>true</editable>
     </fieldPermissions>
     <fieldPermissions>
         <field>ULBC_Tyrian_Membership__c.ULBC_Stripe_Payment_ID__c</field>
-        <readable>true</readable><editable>true</editable>
+        <readable>true</readable>
+        <editable>true</editable>
     </fieldPermissions>
-
-    <!-- ── Phase 2B: Donor Tier fields ─────────────────────────────── -->
+    <fieldPermissions>
+        <field>Contact.ULBC_Patron_Status__c</field>
+        <readable>true</readable>
+        <editable>true</editable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <field>Contact.ULBC_Donor_Status__c</field>
+        <readable>true</readable>
+        <editable>false</editable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <field>Contact.ULBC_Legacy_Membership__c</field>
+        <readable>true</readable>
+        <editable>true</editable>
+    </fieldPermissions>
     <fieldPermissions>
         <field>Contact.ULBC_Donor_Tier__c</field>
-        <readable>true</readable><editable>true</editable>
+        <readable>true</readable>
+        <editable>true</editable>
     </fieldPermissions>
     <fieldPermissions>
         <field>Contact.ULBC_Rolling_12m_Giving__c</field>
-        <readable>true</readable><editable>true</editable>
+        <readable>true</readable>
+        <editable>true</editable>
     </fieldPermissions>
     <fieldPermissions>
         <field>Contact.ULBC_Last_Gift_Date__c</field>
-        <readable>true</readable><editable>true</editable>
+        <readable>true</readable>
+        <editable>true</editable>
     </fieldPermissions>
     <fieldPermissions>
         <field>Contact.ULBC_Upgrade_Prospect__c</field>
-        <readable>true</readable><editable>true</editable>
+        <readable>true</readable>
+        <editable>true</editable>
     </fieldPermissions>
     <fieldPermissions>
         <field>Contact.ULBC_Next_Tier_Threshold__c</field>
-        <readable>true</readable><editable>true</editable>
+        <readable>true</readable>
+        <editable>true</editable>
     </fieldPermissions>
     <fieldPermissions>
         <field>Contact.ULBC_Gap_To_Next_Tier__c</field>
-        <readable>true</readable><editable>true</editable>
+        <readable>true</readable>
+        <editable>true</editable>
     </fieldPermissions>
     <fieldPermissions>
         <field>Contact.ULBC_Tier_Progress_Pct__c</field>
-        <readable>true</readable><editable>true</editable>
+        <readable>true</readable>
+        <editable>true</editable>
     </fieldPermissions>
-
-    <!-- ── Phase 1: Core Contact fields ─────────────────────────────── -->
     <fieldPermissions>
         <field>Contact.ULBC_Acquisition_Channel__c</field>
-        <readable>true</readable><editable>true</editable>
+        <readable>true</readable>
+        <editable>true</editable>
     </fieldPermissions>
     <fieldPermissions>
         <field>Contact.ULBC_Alumni_Type__c</field>
-        <readable>true</readable><editable>true</editable>
+        <readable>true</readable>
+        <editable>true</editable>
     </fieldPermissions>
     <fieldPermissions>
         <field>Contact.ULBC_Birth_Name__c</field>
-        <readable>true</readable><editable>true</editable>
+        <readable>true</readable>
+        <editable>true</editable>
     </fieldPermissions>
     <fieldPermissions>
         <field>Contact.ULBC_GDPR_Legal_Basis__c</field>
-        <readable>true</readable><editable>true</editable>
+        <readable>true</readable>
+        <editable>true</editable>
     </fieldPermissions>
     <fieldPermissions>
         <field>Contact.ULBC_Gender__c</field>
-        <readable>true</readable><editable>true</editable>
+        <readable>true</readable>
+        <editable>true</editable>
     </fieldPermissions>
     <fieldPermissions>
         <field>Contact.ULBC_Gone_Away__c</field>
-        <readable>true</readable><editable>true</editable>
+        <readable>true</readable>
+        <editable>true</editable>
     </fieldPermissions>
     <fieldPermissions>
         <field>Contact.ULBC_Is_Donor__c</field>
-        <readable>true</readable><editable>true</editable>
+        <readable>true</readable>
+        <editable>true</editable>
     </fieldPermissions>
     <fieldPermissions>
         <field>Contact.ULBC_Is_Tyrian_Member__c</field>
-        <readable>true</readable><editable>true</editable>
+        <readable>true</readable>
+        <editable>true</editable>
     </fieldPermissions>
     <fieldPermissions>
         <field>Contact.ULBC_Is_Volunteer__c</field>
-        <readable>true</readable><editable>true</editable>
+        <readable>true</readable>
+        <editable>true</editable>
     </fieldPermissions>
     <fieldPermissions>
         <field>Contact.ULBC_Secondary_Email__c</field>
-        <readable>true</readable><editable>true</editable>
+        <readable>true</readable>
+        <editable>true</editable>
     </fieldPermissions>
     <fieldPermissions>
         <field>Contact.ULBC_Trust_ID__c</field>
-        <readable>true</readable><editable>true</editable>
+        <readable>true</readable>
+        <editable>true</editable>
     </fieldPermissions>
     <fieldPermissions>
         <field>Contact.ULBC_Volunteer_Since__c</field>
-        <readable>true</readable><editable>true</editable>
+        <readable>true</readable>
+        <editable>true</editable>
     </fieldPermissions>
-
-    <!-- ── Phase 1: Related list object fields ──────────────────────── -->
     <fieldPermissions>
         <field>ULBC_Education_History__c.ULBC_Institution__c</field>
-        <readable>true</readable><editable>true</editable>
+        <readable>true</readable>
+        <editable>true</editable>
     </fieldPermissions>
     <fieldPermissions>
         <field>ULBC_Education_History__c.ULBC_Degree_Type__c</field>
-        <readable>true</readable><editable>true</editable>
+        <readable>true</readable>
+        <editable>true</editable>
     </fieldPermissions>
     <fieldPermissions>
         <field>ULBC_Education_History__c.ULBC_Subject__c</field>
-        <readable>true</readable><editable>true</editable>
+        <readable>true</readable>
+        <editable>true</editable>
     </fieldPermissions>
     <fieldPermissions>
         <field>ULBC_Education_History__c.ULBC_Start_Year__c</field>
-        <readable>true</readable><editable>true</editable>
+        <readable>true</readable>
+        <editable>true</editable>
     </fieldPermissions>
     <fieldPermissions>
         <field>ULBC_Education_History__c.ULBC_End_Year__c</field>
-        <readable>true</readable><editable>true</editable>
+        <readable>true</readable>
+        <editable>true</editable>
     </fieldPermissions>
     <fieldPermissions>
         <field>ULBC_International_Competition__c.ULBC_Year__c</field>
-        <readable>true</readable><editable>true</editable>
+        <readable>true</readable>
+        <editable>true</editable>
     </fieldPermissions>
     <fieldPermissions>
         <field>ULBC_International_Competition__c.ULBC_Competition__c</field>
-        <readable>true</readable><editable>true</editable>
+        <readable>true</readable>
+        <editable>true</editable>
     </fieldPermissions>
     <fieldPermissions>
         <field>ULBC_International_Competition__c.ULBC_Event__c</field>
-        <readable>true</readable><editable>true</editable>
+        <readable>true</readable>
+        <editable>true</editable>
     </fieldPermissions>
     <fieldPermissions>
         <field>ULBC_International_Competition__c.ULBC_Result__c</field>
-        <readable>true</readable><editable>true</editable>
+        <readable>true</readable>
+        <editable>true</editable>
     </fieldPermissions>
     <fieldPermissions>
         <field>ULBC_International_Competition__c.ULBC_Country_Represented__c</field>
-        <readable>true</readable><editable>true</editable>
+        <readable>true</readable>
+        <editable>true</editable>
     </fieldPermissions>
     <fieldPermissions>
         <field>ULBC_Crew_History__c.ULBC_Crew_Code__c</field>
-        <readable>true</readable><editable>true</editable>
+        <readable>true</readable>
+        <editable>true</editable>
     </fieldPermissions>
     <fieldPermissions>
         <field>ULBC_Crew_History__c.ULBC_Year__c</field>
-        <readable>true</readable><editable>true</editable>
+        <readable>true</readable>
+        <editable>true</editable>
     </fieldPermissions>
     <fieldPermissions>
         <field>ULBC_Crew_History__c.ULBC_Regatta__c</field>
-        <readable>true</readable><editable>true</editable>
+        <readable>true</readable>
+        <editable>true</editable>
     </fieldPermissions>
     <fieldPermissions>
         <field>ULBC_Crew_History__c.ULBC_Event__c</field>
-        <readable>true</readable><editable>true</editable>
+        <readable>true</readable>
+        <editable>true</editable>
     </fieldPermissions>
     <fieldPermissions>
         <field>ULBC_Crew_History__c.ULBC_Crew_Name__c</field>
-        <readable>true</readable><editable>true</editable>
+        <readable>true</readable>
+        <editable>true</editable>
     </fieldPermissions>
     <fieldPermissions>
         <field>ULBC_Crew_History__c.ULBC_Result__c</field>
-        <readable>true</readable><editable>true</editable>
+        <readable>true</readable>
+        <editable>true</editable>
     </fieldPermissions>
-
-    <!-- ── Object permissions ───────────────────────────────────────── -->
+    <fieldPermissions>
+        <field>Lead.ULBC_Current_Institution__c</field>
+        <readable>true</readable>
+        <editable>true</editable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <field>Lead.ULBC_Graduation_Year__c</field>
+        <readable>true</readable>
+        <editable>true</editable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <field>Lead.ULBC_Gender__c</field>
+        <readable>true</readable>
+        <editable>true</editable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <field>Lead.ULBC_Current_Rowing_Event__c</field>
+        <readable>true</readable>
+        <editable>true</editable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <field>Lead.ULBC_Recruitment_Source__c</field>
+        <readable>true</readable>
+        <editable>true</editable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <field>Lead.ULBC_Coach_Notes__c</field>
+        <readable>true</readable>
+        <editable>true</editable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <field>Contact.ULBC_Profession__c</field>
+        <readable>true</readable>
+        <editable>true</editable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <field>Contact.ULBC_Other_Interests__c</field>
+        <readable>true</readable>
+        <editable>true</editable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <field>Contact.ULBC_Special_Skills__c</field>
+        <readable>true</readable>
+        <editable>true</editable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <field>Contact.ULBC_Follow_Up_Notes__c</field>
+        <readable>true</readable>
+        <editable>true</editable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <field>Campaign.ULBC_Dress_Code__c</field>
+        <readable>true</readable>
+        <editable>true</editable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <field>Campaign.ULBC_Menu__c</field>
+        <readable>true</readable>
+        <editable>true</editable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <field>Campaign.ULBC_Landing_Page_HTML__c</field>
+        <readable>true</readable>
+        <editable>true</editable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <field>Campaign.ULBC_Stripe_Price_ID__c</field>
+        <readable>true</readable>
+        <editable>true</editable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <field>Campaign.ULBC_Transport_Info__c</field>
+        <readable>true</readable>
+        <editable>true</editable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <field>Account_Transaction__c.ULBC_Contact__c</field>
+        <readable>true</readable>
+        <editable>true</editable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <field>Contact.ULBC_Year_Group__c</field>
+        <readable>true</readable>
+        <editable>true</editable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <field>Contact.ULBC_School__c</field>
+        <readable>true</readable>
+        <editable>true</editable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <field>Contact.ULBC_Subscription_Start_Date__c</field>
+        <readable>true</readable>
+        <editable>true</editable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <field>Contact.ULBC_Subscription_Last_Change__c</field>
+        <readable>true</readable>
+        <editable>true</editable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <field>Contact.ULBC_Subscription_Lapsed_Date__c</field>
+        <readable>true</readable>
+        <editable>true</editable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <field>ULBC_Crew_History__c.ULBC_Rowing_Position__c</field>
+        <readable>true</readable>
+        <editable>true</editable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <field>Campaign.ULBC_Start_Time__c</field>
+        <readable>true</readable>
+        <editable>true</editable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <field>Campaign.ULBC_End_Time__c</field>
+        <readable>true</readable>
+        <editable>true</editable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <field>Campaign.ULBC_Venue__c</field>
+        <readable>true</readable>
+        <editable>true</editable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <field>Campaign.ULBC_Ticket_Price__c</field>
+        <readable>true</readable>
+        <editable>true</editable>
+    </fieldPermissions>
+    <classAccesses>
+        <apexClass>ULBC_DashboardController</apexClass>
+        <enabled>true</enabled>
+    </classAccesses>
+    <classAccesses>
+        <apexClass>ULBC_CrewMembersController</apexClass>
+        <enabled>true</enabled>
+    </classAccesses>
+    <classAccesses>
+        <apexClass>ULBC_EventAttendeesController</apexClass>
+        <enabled>true</enabled>
+    </classAccesses>
+    <classAccesses>
+        <apexClass>ULBC_LandingPageController</apexClass>
+        <enabled>true</enabled>
+    </classAccesses>
+    <classAccesses>
+        <apexClass>ULBC_StripeWebhook</apexClass>
+        <enabled>true</enabled>
+    </classAccesses>
+    <classAccesses>
+        <apexClass>ULBC_DonorTierEngine</apexClass>
+        <enabled>true</enabled>
+    </classAccesses>
+    <classAccesses>
+        <apexClass>ULBC_ContactTriggerHandler</apexClass>
+        <enabled>true</enabled>
+    </classAccesses>
+    <objectPermissions>
+        <object>Lead</object>
+        <allowCreate>true</allowCreate>
+        <allowRead>true</allowRead>
+        <allowEdit>true</allowEdit>
+        <allowDelete>false</allowDelete>
+        <viewAllRecords>true</viewAllRecords>
+        <modifyAllRecords>false</modifyAllRecords>
+    </objectPermissions>
+    <objectPermissions>
+        <object>Campaign</object>
+        <allowCreate>true</allowCreate>
+        <allowRead>true</allowRead>
+        <allowEdit>true</allowEdit>
+        <allowDelete>false</allowDelete>
+        <viewAllRecords>true</viewAllRecords>
+        <modifyAllRecords>false</modifyAllRecords>
+    </objectPermissions>
     <objectPermissions>
         <object>Contact</object>
         <allowCreate>true</allowCreate>

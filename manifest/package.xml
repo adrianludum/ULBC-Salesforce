@@ -29,6 +29,9 @@
         <members>Contact.ULBC_Next_Tier_Threshold__c</members>
         <members>Contact.ULBC_Gap_To_Next_Tier__c</members>
         <members>Contact.ULBC_Tier_Progress_Pct__c</members>
+        <members>Contact.ULBC_Patron_Status__c</members>
+        <members>Contact.ULBC_Donor_Status__c</members>
+        <members>Contact.ULBC_Legacy_Membership__c</members>
         <members>Contact.ULBC_Gift_Aid_Eligible__c</members>
         <members>Contact.ULBC_Gift_Aid_Declaration_Date__c</members>
         <members>Contact.ULBC_Gift_Aid_Declaration_Source__c</members>
@@ -41,6 +44,7 @@
         <members>Opportunity.ULBC_Gift_Aid_Claimed_Date__c</members>
         <members>Opportunity.ULBC_Gift_Source__c</members>
         <members>Opportunity.ULBC_Stripe_Payment_ID__c</members>
+        <members>Opportunity.ULBC_Gift_Year__c</members>
         <name>CustomField</name>
     </types>
     <types>
@@ -54,6 +58,8 @@
         <members>ULBC_DonorTierEngine_Test</members>
         <members>ULBC_GoneAwayTrigger_Test</members>
         <members>ULBC_Phase2C_DataModel_Test</members>
+        <members>ULBC_Phase3A_Campaign_Test</members>
+        <members>ULBC_PatronDonorStatus_Test</members>
         <name>ApexClass</name>
     </types>
     <types>
@@ -64,6 +70,14 @@
     <types>
         <members>ULBC_Full_Access</members>
         <name>PermissionSet</name>
+    </types>
+    <types>
+        <members>ULBC</members>
+        <name>CustomApplication</name>
+    </types>
+    <types>
+        <members>Admin</members>
+        <name>Profile</name>
     </types>
     <types>
         <members>ULBC_Logo</members>

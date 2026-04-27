@@ -1,0 +1,366 @@
+<!--
+  ULBC Fundraising Dinner — Ticket Purchase Page
+
+  WordPress instructions:
+  1. Create a new Page in WordPress
+  2. Switch to "Custom HTML" block (or paste into Code Editor)
+  3. Paste this content
+  4. Replace STRIPE_PUBLISHABLE_KEY with your Stripe publishable key
+  5. Replace STRIPE_PRICE_ID with the Price ID from your Stripe Dashboard
+  6. Replace CAMPAIGN_ID with the Salesforce Campaign ID
+  7. Update event details (date, venue, price, menu etc.)
+-->
+
+<style>
+  .ulbc-event {
+    max-width: 800px;
+    margin: 0 auto;
+    font-family: 'IBM Plex Sans', sans-serif;
+    color: #2c2828;
+    line-height: 1.7;
+  }
+  .ulbc-event h1 {
+    font-family: 'Archivo Narrow', sans-serif;
+    color: #532580;
+    font-size: 2.4em;
+    font-weight: 700;
+    margin-bottom: 0.2em;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+  .ulbc-event h2 {
+    font-family: 'Archivo Narrow', sans-serif;
+    color: #532580;
+    font-size: 1.5em;
+    font-weight: 600;
+    margin-top: 1.5em;
+    margin-bottom: 0.5em;
+  }
+  .ulbc-event .event-date {
+    font-family: 'Archivo Narrow', sans-serif;
+    font-size: 1.2em;
+    color: #b2a8b8;
+    margin-bottom: 1.5em;
+  }
+  .ulbc-event .event-hero {
+    width: 100%;
+    height: 300px;
+    background: linear-gradient(135deg, #532580 0%, #3a1a5c 100%);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 2em;
+    position: relative;
+    overflow: hidden;
+  }
+  .ulbc-event .event-hero::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: #b84a2c;
+  }
+  .ulbc-event .event-hero h1 {
+    color: #ffffff;
+    text-align: center;
+    padding: 1em;
+  }
+  .ulbc-event .event-details {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5em;
+    margin: 2em 0;
+    padding: 1.5em;
+    background: #f8f6fa;
+    border-radius: 8px;
+    border-left: 4px solid #532580;
+  }
+  .ulbc-event .event-details dt {
+    font-weight: 600;
+    color: #532580;
+    font-size: 0.85em;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .ulbc-event .event-details dd {
+    margin: 0 0 1em 0;
+    font-size: 1.05em;
+  }
+  .ulbc-event .ticket-section {
+    background: #ffffff;
+    border: 2px solid #532580;
+    border-radius: 8px;
+    padding: 2em;
+    margin: 2em 0;
+    text-align: center;
+  }
+  .ulbc-event .ticket-price {
+    font-family: 'Archivo Narrow', sans-serif;
+    font-size: 2.5em;
+    font-weight: 700;
+    color: #532580;
+    margin: 0.3em 0;
+  }
+  .ulbc-event .ticket-price span {
+    font-size: 0.5em;
+    color: #b2a8b8;
+    font-weight: 400;
+  }
+  .ulbc-event .qty-selector {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1em;
+    margin: 1.5em 0;
+  }
+  .ulbc-event .qty-selector button {
+    width: 40px;
+    height: 40px;
+    border: 2px solid #532580;
+    background: #ffffff;
+    color: #532580;
+    font-size: 1.3em;
+    font-weight: 700;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .ulbc-event .qty-selector button:hover {
+    background: #532580;
+    color: #ffffff;
+  }
+  .ulbc-event .qty-selector .qty-value {
+    font-size: 1.5em;
+    font-weight: 600;
+    min-width: 2em;
+    text-align: center;
+  }
+  .ulbc-event .buy-button {
+    display: inline-block;
+    background: #532580;
+    color: #ffffff;
+    font-family: 'Archivo Narrow', sans-serif;
+    font-size: 1.3em;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    padding: 0.8em 3em;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.3s;
+    margin-top: 0.5em;
+  }
+  .ulbc-event .buy-button:hover {
+    background: #3a1a5c;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(83, 37, 128, 0.3);
+  }
+  .ulbc-event .buy-button:disabled {
+    background: #b2a8b8;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+  }
+  .ulbc-event .menu-section {
+    margin: 2em 0;
+  }
+  .ulbc-event .menu-course {
+    margin: 1em 0;
+    padding: 1em;
+    border-bottom: 1px solid #e8e4eb;
+  }
+  .ulbc-event .menu-course:last-child {
+    border-bottom: none;
+  }
+  .ulbc-event .menu-course h3 {
+    font-family: 'Archivo Narrow', sans-serif;
+    color: #b84a2c;
+    font-size: 1em;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 0.3em;
+  }
+  .ulbc-event .info-note {
+    font-size: 0.9em;
+    color: #666;
+    margin-top: 1em;
+  }
+  .ulbc-event .double-hr {
+    border: none;
+    border-top: 3px double #b2a8b8;
+    margin: 2em 0;
+  }
+  @media (max-width: 600px) {
+    .ulbc-event .event-details {
+      grid-template-columns: 1fr;
+    }
+    .ulbc-event h1 { font-size: 1.8em; }
+    .ulbc-event .ticket-price { font-size: 2em; }
+  }
+</style>
+
+<div class="ulbc-event">
+
+  <div class="event-hero">
+    <h1>ULBC Annual<br>Fundraising Dinner</h1>
+  </div>
+
+  <p class="event-date">Saturday 15th November 2025 — 7:00pm</p>
+
+  <p>
+    Join us for an evening of celebration at the University of London Boat Club's
+    annual fundraising dinner. All proceeds support the continued development of
+    rowing at the University of London.
+  </p>
+
+  <dl class="event-details">
+    <div>
+      <dt>Date</dt>
+      <dd>Saturday 15th November 2025</dd>
+    </div>
+    <div>
+      <dt>Time</dt>
+      <dd>7:00pm — Reception<br>7:30pm — Dinner</dd>
+    </div>
+    <div>
+      <dt>Venue</dt>
+      <dd>ULBC Boathouse<br>81 Hartington Road<br>Chiswick, London W4 3TU</dd>
+    </div>
+    <div>
+      <dt>Dress Code</dt>
+      <dd>Black Tie</dd>
+    </div>
+  </dl>
+
+  <hr class="double-hr">
+
+  <h2>Menu</h2>
+  <div class="menu-section">
+    <div class="menu-course">
+      <h3>Starter</h3>
+      <p>Smoked salmon &amp; crab tian, pickled cucumber, dill crème fraîche</p>
+    </div>
+    <div class="menu-course">
+      <h3>Main</h3>
+      <p>Slow-roasted beef fillet, dauphinoise potatoes, seasonal vegetables, red wine jus</p>
+    </div>
+    <div class="menu-course">
+      <h3>Dessert</h3>
+      <p>Dark chocolate fondant, salted caramel ice cream</p>
+    </div>
+    <div class="menu-course">
+      <h3>To Finish</h3>
+      <p>Coffee, petit fours</p>
+    </div>
+  </div>
+  <p class="info-note">Dietary requirements can be accommodated — please email <a href="mailto:boathouse@ulbc.co.uk" style="color:#b84a2c;">boathouse@ulbc.co.uk</a> after booking.</p>
+
+  <hr class="double-hr">
+
+  <div class="ticket-section">
+    <h2 style="margin-top:0;">Buy Tickets</h2>
+    <div class="ticket-price">£75 <span>per person</span></div>
+    <p>Includes reception drinks, three-course dinner, and half a bottle of wine per guest.</p>
+
+    <div class="qty-selector">
+      <button type="button" onclick="changeQty(-1)" aria-label="Decrease quantity">−</button>
+      <span class="qty-value" id="qty-display">1</span>
+      <button type="button" onclick="changeQty(1)" aria-label="Increase quantity">+</button>
+    </div>
+    <p style="color:#532580;font-weight:600;">Total: <span id="total-display">£75</span></p>
+
+    <button class="buy-button" id="checkout-btn" onclick="checkout()">
+      Buy Tickets
+    </button>
+
+    <p class="info-note">You will receive a confirmation email with your digital ticket after payment.</p>
+  </div>
+
+  <hr class="double-hr">
+
+  <h2>Getting There</h2>
+  <p>
+    The ULBC Boathouse is a short walk from Chiswick station (South Western Railway)
+    or Turnham Green (District &amp; Piccadilly lines). Limited parking is available nearby.
+  </p>
+
+</div>
+
+<!-- Stripe Checkout -->
+<script src="https://js.stripe.com/v3/"></script>
+<script>
+  // ══════════════════════════════════════════════════════════════
+  // CONFIGURATION — Replace these values
+  // ══════════════════════════════════════════════════════════════
+  const STRIPE_PUBLISHABLE_KEY = 'pk_test_REPLACE_ME';
+  const STRIPE_PRICE_ID = 'price_REPLACE_ME';
+  const CAMPAIGN_ID = 'REPLACE_WITH_SALESFORCE_CAMPAIGN_ID';
+  const TICKET_PRICE = 75;
+  // ══════════════════════════════════════════════════════════════
+
+  const stripe = Stripe(STRIPE_PUBLISHABLE_KEY);
+  let quantity = 1;
+
+  function changeQty(delta) {
+    quantity = Math.max(1, Math.min(10, quantity + delta));
+    document.getElementById('qty-display').textContent = quantity;
+    document.getElementById('total-display').textContent = '£' + (quantity * TICKET_PRICE);
+  }
+
+  async function checkout() {
+    const btn = document.getElementById('checkout-btn');
+    btn.disabled = true;
+    btn.textContent = 'Processing...';
+
+    try {
+      const response = await fetch('https://api.stripe.com/v1/checkout/sessions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: new URLSearchParams({
+          'mode': 'payment',
+          'line_items[0][price]': STRIPE_PRICE_ID,
+          'line_items[0][quantity]': quantity,
+          'success_url': window.location.href + '?success=true',
+          'cancel_url': window.location.href + '?cancelled=true',
+          'metadata[campaign_id]': CAMPAIGN_ID,
+          'metadata[quantity]': quantity,
+        }),
+      });
+
+      // NOTE: In production, create the Checkout Session from your
+      // server (e.g. a Cloudflare Worker or small backend) to keep
+      // your Stripe secret key safe. The frontend should call YOUR
+      // server, which creates the session and returns the URL.
+      //
+      // For now, use Stripe Payment Links as the simplest approach:
+      // 1. Create a Payment Link in Stripe Dashboard
+      // 2. Replace the checkout() function with:
+      //    window.location.href = 'https://buy.stripe.com/YOUR_LINK';
+
+    } catch (err) {
+      console.error('Checkout error:', err);
+    }
+
+    btn.disabled = false;
+    btn.textContent = 'Buy Tickets';
+  }
+
+  // Show success/cancel messages
+  const params = new URLSearchParams(window.location.search);
+  if (params.get('success') === 'true') {
+    document.querySelector('.ticket-section').innerHTML =
+      '<h2 style="margin-top:0;color:#532580;">🎉 Thank You!</h2>' +
+      '<p style="font-size:1.1em;">Your tickets have been booked. Check your email for your digital ticket.</p>' +
+      '<p>If you have any questions, please contact <a href="mailto:boathouse@ulbc.co.uk" style="color:#b84a2c;">boathouse@ulbc.co.uk</a></p>';
+  }
+  if (params.get('cancelled') === 'true') {
+    document.querySelector('.buy-button').textContent = 'Try Again';
+  }
+</script>

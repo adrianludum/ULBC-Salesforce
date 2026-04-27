@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>ULBC_Menu__c</fullName>
+    <label>Menu</label>
+    <type>LongTextArea</type>
+    <length>10000</length>
+    <visibleLines>6</visibleLines>
+    <required>false</required>
+    <description>Menu details for the event. Use one line per course, e.g. "Starter: Smoked salmon"</description>
+    <trackHistory>false</trackHistory>
+</CustomField>
