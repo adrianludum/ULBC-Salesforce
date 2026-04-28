@@ -3,7 +3,12 @@
  * Phase 2A: Gone Away → HasOptedOutOfEmail (one-way)
  * Phase 3C: Auto-assign TrustID on insert (ULBC-XXXX sequential)
  */
-public with sharing class ULBC_ContactTriggerHandler {
+// without sharing: assignTrustId queries the global max ULBC_Trust_ID__c
+// to compute the next sequential ID. Guest users (used by the Stripe
+// webhook to insert Contacts) cannot see existing Contacts under
+// private-OWD orgs, which made the query return empty and caused
+// "ULBC-0001" to be reassigned to every new Contact.
+public without sharing class ULBC_ContactTriggerHandler {
 
     public static void handleGoneAway(List<Contact> newContacts, Map<Id, Contact> oldMap) {
         for (Contact c : newContacts) {

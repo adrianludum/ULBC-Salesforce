@@ -16,7 +16,10 @@
  *
  * Phase 5A.3.
  */
-public with sharing class ULBC_DonationHandler {
+// without sharing: invoked only via signature-verified Stripe webhook
+// dispatch (security boundary already enforced). Guest user sharing
+// would block the Contact re-query and the Opportunity insert.
+public without sharing class ULBC_DonationHandler {
 
     public class Result {
         public Boolean success;

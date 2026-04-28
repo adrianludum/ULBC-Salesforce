@@ -8,8 +8,8 @@
 ULBC_Stripe_Settings__c s = ULBC_Stripe_Settings__c.getOrgDefaults();
 if (s == null) s = new ULBC_Stripe_Settings__c();
 if (s.SetupOwnerId == null) s.SetupOwnerId = UserInfo.getOrganizationId();
-s.DonationBaseURL__c = 'https://ulbctrustlimited.my.site.com/donate';
-s.EventsBaseURL__c   = 'https://ulbctrustlimited.my.site.com/events';
+s.DonationBaseURL__c = 'https://ulbctrustlimited.my.salesforce-sites.com/donate';
+s.EventsBaseURL__c   = 'https://ulbctrustlimited.my.salesforce-sites.com/events';
 upsert s;
 
 System.debug('DonationBaseURL__c = ' + s.DonationBaseURL__c);

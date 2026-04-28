@@ -18,7 +18,12 @@
  *   Patron ceiling £1,000  → alert at £800
  *   Major has no ceiling   → no alert
  */
-public with sharing class ULBC_DonorTierEngine {
+// without sharing: this is an aggregation engine that needs to read all
+// of a Contact's giving history regardless of the running user's
+// sharing rules. Called from ULBC_OpportunityTrigger, which can fire in
+// a guest-user context (Stripe webhook chain) where the guest user
+// can't see the parent Account or other cross-references.
+public without sharing class ULBC_DonorTierEngine {
 
     private static final Decimal STANDARD_MAX = 240;
     private static final Decimal PATRON_MIN   = 241;

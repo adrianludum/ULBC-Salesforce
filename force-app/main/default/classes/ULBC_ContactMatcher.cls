@@ -10,7 +10,11 @@
  *
  * Phase 5A.3.
  */
-public with sharing class ULBC_ContactMatcher {
+// without sharing: invoked only via signature-verified Stripe webhook
+// dispatch. Guest users (the Site running user) cannot see records they
+// just created or other Contacts in private-OWD orgs, which would block
+// the post-insert re-query and the match-priority lookups.
+public without sharing class ULBC_ContactMatcher {
 
     public class MatchResult {
         public Contact contact;

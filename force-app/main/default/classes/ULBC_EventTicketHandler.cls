@@ -12,7 +12,10 @@
  *
  * Phase 5A.3.
  */
-public with sharing class ULBC_EventTicketHandler {
+// without sharing: invoked only via signature-verified Stripe webhook
+// dispatch (security boundary already enforced). Guest user sharing
+// would block the CampaignMember and Opportunity inserts.
+public without sharing class ULBC_EventTicketHandler {
 
     private static final String CM_STATUS_PURCHASED = 'Purchased';
 
