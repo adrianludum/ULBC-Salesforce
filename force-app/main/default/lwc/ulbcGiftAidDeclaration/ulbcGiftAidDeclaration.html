@@ -1,0 +1,28 @@
+<template>
+    <div class="slds-box slds-theme_default slds-m-vertical_medium">
+        <lightning-input
+            type="checkbox"
+            label="Yes — please claim Gift Aid on my donation"
+            checked={giftAid}
+            onchange={handleToggle}>
+        </lightning-input>
+        <template if:true={giftAid}>
+            <p class="slds-text-body_small slds-m-top_small">
+                I am a UK taxpayer and understand that if I pay less Income Tax and/or Capital Gains Tax
+                in the current tax year than the amount of Gift Aid claimed on all my donations, it is my
+                responsibility to pay any difference. I confirm I would like ULBC Trust Limited
+                (charity no. 1174721) to claim Gift Aid on my donation.
+            </p>
+            <div class="slds-form-element slds-m-top_small">
+                <lightning-input
+                    type="text"
+                    label="Home postcode"
+                    placeholder="e.g. SW1A 1AA"
+                    value={postcode}
+                    required
+                    onchange={handlePostcode}>
+                </lightning-input>
+            </div>
+        </template>
+    </div>
+</template>

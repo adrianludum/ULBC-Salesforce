@@ -1,0 +1,104 @@
+<template>
+    <article class="slds-card slds-p-around_large slds-m-around_medium">
+
+        <template if:true={isSuccess}>
+            <div class="slds-notify slds-notify_alert slds-theme_success slds-m-bottom_medium" role="alert">
+                Booking confirmed — see you at the event. A confirmation email is on its way.
+            </div>
+        </template>
+        <template if:true={isCancelled}>
+            <div class="slds-notify slds-notify_alert slds-theme_warning slds-m-bottom_medium" role="alert">
+                Booking cancelled. You haven't been charged.
+            </div>
+        </template>
+
+        <template if:true={loading}>
+            <lightning-spinner alternative-text="Loading event details" size="medium"></lightning-spinner>
+        </template>
+
+        <template if:true={loadError}>
+            <div class="slds-text-color_error" role="alert">
+                {loadError}
+            </div>
+        </template>
+
+        <template if:true={event}>
+            <h1 class="slds-text-heading_large slds-m-bottom_medium">{event.name}</h1>
+
+            <dl class="slds-list_horizontal slds-wrap slds-m-bottom_medium">
+                <template if:true={event.startTime}>
+                    <dt class="slds-item_label slds-text-color_weak slds-truncate">Starts</dt>
+                    <dd class="slds-item_detail">
+                        <lightning-formatted-date-time value={event.startTime}></lightning-formatted-date-time>
+                    </dd>
+                </template>
+                <template if:true={event.endTime}>
+                    <dt class="slds-item_label slds-text-color_weak slds-truncate">Ends</dt>
+                    <dd class="slds-item_detail">
+                        <lightning-formatted-date-time value={event.endTime}></lightning-formatted-date-time>
+                    </dd>
+                </template>
+                <template if:true={event.venue}>
+                    <dt class="slds-item_label slds-text-color_weak slds-truncate">Venue</dt>
+                    <dd class="slds-item_detail">{event.venue}</dd>
+                </template>
+                <template if:true={event.dressCode}>
+                    <dt class="slds-item_label slds-text-color_weak slds-truncate">Dress code</dt>
+                    <dd class="slds-item_detail">{event.dressCode}</dd>
+                </template>
+                <template if:true={event.menu}>
+                    <dt class="slds-item_label slds-text-color_weak slds-truncate">Menu</dt>
+                    <dd class="slds-item_detail">{event.menu}</dd>
+                </template>
+                <template if:true={event.transportInfo}>
+                    <dt class="slds-item_label slds-text-color_weak slds-truncate">Transport</dt>
+                    <dd class="slds-item_detail">{event.transportInfo}</dd>
+                </template>
+                <dt class="slds-item_label slds-text-color_weak slds-truncate">Ticket price</dt>
+                <dd class="slds-item_detail">
+                    <lightning-formatted-number
+                        value={event.ticketPrice}
+                        format-style="currency"
+                        currency-code="GBP">
+                    </lightning-formatted-number>
+                </dd>
+            </dl>
+
+            <div class="slds-form-element slds-m-bottom_medium">
+                <lightning-input
+                    type="number"
+                    label="Number of tickets"
+                    value={qty}
+                    min="1"
+                    max="20"
+                    step="1"
+                    onchange={handleQtyChange}>
+                </lightning-input>
+            </div>
+
+            <div class="slds-text-heading_medium slds-m-vertical_medium">
+                Total: £{total}
+            </div>
+
+            <template if:true={errorMessage}>
+                <div class="slds-text-color_error slds-m-bottom_small" role="alert">{errorMessage}</div>
+            </template>
+
+            <lightning-button
+                variant="brand"
+                label="Continue to secure checkout"
+                disabled={submitDisabled}
+                onclick={handleSubmit}>
+            </lightning-button>
+
+            <template if:true={submitting}>
+                <div class="slds-m-top_small slds-text-body_small">Redirecting to Stripe…</div>
+            </template>
+
+            <p class="slds-text-body_small slds-m-top_large slds-text-color_weak">
+                Payments are processed securely by Stripe. ULBC Trust Limited is a registered charity
+                (no. 1174721) in England &amp; Wales.
+            </p>
+        </template>
+    </article>
+</template>

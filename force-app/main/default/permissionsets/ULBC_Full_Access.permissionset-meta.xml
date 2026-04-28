@@ -495,6 +495,10 @@
         <enabled>true</enabled>
     </classAccesses>
     <classAccesses>
+        <apexClass>ULBC_StripeCheckoutController</apexClass>
+        <enabled>true</enabled>
+    </classAccesses>
+    <classAccesses>
         <apexClass>ULBC_StripeWebhook</apexClass>
         <enabled>true</enabled>
     </classAccesses>

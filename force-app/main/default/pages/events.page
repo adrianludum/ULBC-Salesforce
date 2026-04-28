@@ -1,0 +1,39 @@
+<apex:page showHeader="false"
+           sidebar="false"
+           standardStylesheets="false"
+           applyHtmlTag="false"
+           applyBodyTag="false"
+           docType="html-5.0"
+           cache="false">
+<html lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1"/>
+    <title>Event registration — ULBC Trust</title>
+    <apex:slds />
+    <apex:includeLightning />
+    <style>
+        body { margin: 0; background: #f3f3f3; min-height: 100vh; font-family: 'Salesforce Sans', Arial, sans-serif; }
+        #lwc-mount { max-width: 720px; margin: 2rem auto; }
+    </style>
+</head>
+<body>
+    <div id="lwc-mount"></div>
+    <script>
+        $Lightning.use("c:ULBCEventRegisterApp", function() {
+            var params = new URLSearchParams(window.location.search);
+            $Lightning.createComponent(
+                "c:ulbcEventRegister",
+                {
+                    campaignId: params.get("id"),
+                    trustId: params.get("ulbc_trust_id"),
+                    status: params.get("status")
+                },
+                "lwc-mount",
+                function() { /* mounted */ }
+            );
+        });
+    </script>
+</body>
+</html>
+</apex:page>
