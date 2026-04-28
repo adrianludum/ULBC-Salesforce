@@ -1,6 +1,6 @@
 # ULBC Trust Salesforce — Decision Log
 *Last updated: 2026-04-28*
-*Current phase: Phase 5A.2 Complete — typed handlers next (5A.3)*
+*Current phase: Phase 5A.3 Complete — Site + LWCs next (5A.4)*
 
 ---
 
@@ -511,4 +511,24 @@
 - **Implementation**: `ULBC_StripeWebhook` (Apex REST `/services/apexrest/stripe/webhook`) verifies HMAC-SHA256 of `t.body` against secret, enforces 5-minute tolerance window. 9 unit tests cover happy path, signature failures, stale timestamps, malformed JSON, replay handling, and rotation header (multiple `v1=` candidates). 92% class coverage. Permission set field grants on ULBC_Full_Access only — no other role needs read access.
 - **Date**: 2026-04-28
 - **Note on legacy webhook code**: The previous `ULBC_StripeWebhook` class (event-ticket-only logic from before Decision 5.9) is fully replaced. v0 logic remains in git history (commit b9f7ff4) for reference when Phase 5A.3 implements typed handlers.
+
+### Decision 5.19 — Phase 5A.3 typed handlers + Decision 5.9 mapping rules
+- **What**: Phase 5A.3 introduces typed handlers dispatched off `metadata.intent`:
+  - `intent=donation` → `ULBC_DonationHandler` — find/create Contact, optional Gift Aid declaration capture, Closed Won Opportunity linked to fund Campaign.
+  - `intent=event_ticket` → `ULBC_EventTicketHandler` — find/create Contact, CampaignMember on event Campaign with `Status=Purchased`, Closed Won Opportunity for ticket revenue, Stripe Payment ID stamped on the CampaignMember.
+  - `intent=subscription` → `Status=Ignored` (per Decision 5.1, recurring giving is bank-only).
+  - Missing or unknown intent → `Status=Error`, response 400.
+  - Non-checkout event types (e.g. `payment_intent.succeeded`) → `Status=Ignored`. v1 only processes `checkout.session.completed`.
+- **Mapping decisions** (Decision 5.9 → schema):
+  - `metadata.fund` accepts a Salesforce Campaign 18-char Id only in v1. Slug→Campaign lookup deferred (the donate LWC in 5A.4 will pass the Id directly). If `fund` is missing or doesn't match a Campaign, the Opportunity is still created (so the donor's payment is captured) with a note in `Description`.
+  - `gift_type="One-Off"` → `ULBC_Gift_Type__c="One-off"`; `"Recurring"` → `"Regular"`. New picklist values added: "Event Ticket" on `Opportunity.ULBC_Gift_Type__c`; "Stripe Donation" + "Stripe Event Registration" on `Contact.ULBC_Acquisition_Channel__c`. New status values "Processed" + "Ignored" on `ULBC_Webhook_Log__c.ULBC_Status__c`.
+  - Currency stored as Stripe sends it (no validation — GBP in practice).
+  - **No email sending yet** — donor thank-you / attendee confirmation comms deferred to a later sub-phase, scoped with the fundraiser once data flow is proven in production.
+- **Gift Aid (reaffirms Decision 2.10)**: when `metadata.gift_aid="true"`:
+  - `Opportunity.ULBC_Gift_Aid_Eligible__c = true` always.
+  - Contact declaration fields (`ULBC_Gift_Aid_Declaration_Date__c`, `Source`, `Postcode`, `Valid_From`) populated only if the Contact had no prior declaration. Existing declarations are NOT overwritten — protects the integrity of the original declaration date for HMRC audit.
+- **Stripe Customer ID linking**: when `session.customer` is present and `Contact.ULBC_Stripe_Customer_ID__c` is blank, the Customer ID is linked. Existing values are not overwritten.
+- **Known limitation**: handler exceptions after signature verification log `Status=Error` with `event_id` stored. Stripe retries hit the Unique constraint and become `Status=Duplicate` — the handler is NOT re-run automatically. Failed events require manual investigation (admin reads `ULBC_Error_Message__c`, fixes root cause, manually creates records or uses Stripe Dashboard "Resend" with a fresh event_id). Acceptable for v1 given low volume; revisit if production shows churn.
+- **Implementation**: 4 new Apex classes (`ULBC_ContactMatcher`, `ULBC_DonationHandler`, `ULBC_EventTicketHandler`, dispatch logic in `ULBC_StripeWebhook`). 25 new tests (8 ContactMatcher, 7 DonationHandler, 4 EventTicketHandler, 6 dispatch). Org-wide tests: 194 passing, 94% coverage.
+- **Date**: 2026-04-28
 

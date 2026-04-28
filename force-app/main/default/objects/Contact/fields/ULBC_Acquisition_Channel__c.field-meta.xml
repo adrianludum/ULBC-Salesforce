@@ -13,6 +13,8 @@
             <value><fullName>Event</fullName><default>false</default><label>Event</label></value>
             <value><fullName>Referral</fullName><default>false</default><label>Referral</label></value>
             <value><fullName>Digital</fullName><default>false</default><label>Digital</label></value>
+            <value><fullName>Stripe Donation</fullName><default>false</default><label>Stripe Donation</label></value>
+            <value><fullName>Stripe Event Registration</fullName><default>false</default><label>Stripe Event Registration</label></value>
         </valueSetDefinition>
     </valueSet>
     <trackHistory>false</trackHistory>

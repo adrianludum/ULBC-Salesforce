@@ -60,8 +60,9 @@ private class ULBC_StripeWebhook_Test {
     // ── Tests ──────────────────────────────────────────────────────────
 
     @IsTest
-    static void test_validSignature_logsAndReturns200() {
-        String body = sampleEvent('evt_test_001', 'checkout.session.completed');
+    static void test_validSignature_unhandledEventType_isIgnored() {
+        // 'ping' is not checkout.session.completed → Ignored under 5A.3 dispatch.
+        String body = sampleEvent('evt_test_001', 'ping');
         Long ts = System.now().getTime() / 1000;
         mockRequest(body, buildSignatureHeader(body, ts, SECRET));
 
@@ -69,15 +70,13 @@ private class ULBC_StripeWebhook_Test {
         ULBC_StripeWebhook.handlePost();
         Test.stopTest();
 
-        System.assertEquals(200, RestContext.response.statusCode, 'Valid signature should return 200');
-
+        System.assertEquals(200, RestContext.response.statusCode);
         ULBC_Webhook_Log__c log = latestLog();
-        System.assertEquals('Verified', log.ULBC_Status__c);
+        System.assertEquals('Ignored', log.ULBC_Status__c);
         System.assertEquals('evt_test_001', log.ULBC_Stripe_Event_ID__c);
-        System.assertEquals('checkout.session.completed', log.ULBC_Stripe_Event_Type__c);
-        System.assertEquals(body, log.ULBC_Raw_Payload__c, 'Full payload should be stored');
-        System.assertEquals(false, log.ULBC_Payload_Truncated__c);
-        System.assertNotEquals(null, log.ULBC_Stripe_Timestamp__c, 'Stripe ts should be parsed');
+        System.assertEquals('ping', log.ULBC_Stripe_Event_Type__c);
+        System.assertEquals(body, log.ULBC_Raw_Payload__c);
+        System.assertNotEquals(null, log.ULBC_Stripe_Timestamp__c);
     }
 
     @IsTest
@@ -167,7 +166,7 @@ private class ULBC_StripeWebhook_Test {
     @IsTest
     static void test_signatureWithExtraSchemes_acceptsV1Match() {
         // Stripe headers can contain v0= and additional v1= entries during rotation.
-        String body = sampleEvent('evt_rot', 'checkout.session.completed');
+        String body = sampleEvent('evt_rot', 'ping');
         Long ts = System.now().getTime() / 1000;
         String correctV1 = ULBC_StripeWebhook_Test.hmacHex(body, ts, SECRET);
         String header = 't=' + ts +
@@ -182,13 +181,14 @@ private class ULBC_StripeWebhook_Test {
 
         System.assertEquals(200, RestContext.response.statusCode,
             'Should accept when any v1 candidate matches');
-        System.assertEquals('Verified', latestLog().ULBC_Status__c);
+        System.assertEquals('Ignored', latestLog().ULBC_Status__c);
     }
 
     @IsTest
     static void test_duplicateEventId_returns200WithDuplicateStatus() {
-        // First delivery succeeds, second with same event_id is a Stripe replay.
-        String body = sampleEvent('evt_dup_001', 'checkout.session.completed');
+        // First delivery succeeds (Ignored — non-checkout type), second with same
+        // event_id is a Stripe replay; Unique violation caught and marked Duplicate.
+        String body = sampleEvent('evt_dup_001', 'ping');
         Long ts = System.now().getTime() / 1000;
         String sig = buildSignatureHeader(body, ts, SECRET);
 
@@ -197,7 +197,7 @@ private class ULBC_StripeWebhook_Test {
         mockRequest(body, sig);
         ULBC_StripeWebhook.handlePost();
         System.assertEquals(200, RestContext.response.statusCode);
-        System.assertEquals('Verified', latestLog().ULBC_Status__c);
+        System.assertEquals('Ignored', latestLog().ULBC_Status__c);
 
         // Second delivery (replay)
         mockRequest(body, sig);
@@ -219,5 +219,121 @@ private class ULBC_StripeWebhook_Test {
         System.assert(!ULBC_StripeWebhook.constantTimeEquals('x', null));
         System.assert(ULBC_StripeWebhook.constantTimeEquals('abc', 'abc'));
         System.assert(!ULBC_StripeWebhook.constantTimeEquals('abc', 'abd'));
+    }
+
+    // ── Dispatch tests (Phase 5A.3) ────────────────────────────────────
+
+    /**
+     * Build a checkout.session.completed event with arbitrary metadata.
+     * The session.id, customer email and amount are fixed to keep tests terse.
+     */
+    private static String buildCheckoutEvent(String eventId, Map<String, String> meta) {
+        String metaJson = (meta == null) ? '{}' : JSON.serialize(meta);
+        return '{"id":"' + eventId + '","object":"event","type":"checkout.session.completed",' +
+               '"data":{"object":{' +
+                   '"id":"cs_test_xyz",' +
+                   '"payment_intent":"pi_test_xyz",' +
+                   '"customer":"cus_test_xyz",' +
+                   '"amount_total":5000,' +
+                   '"currency":"gbp",' +
+                   '"customer_details":{"email":"buyer@example.com","name":"Test Buyer"},' +
+                   '"metadata":' + metaJson +
+               '}}}';
+    }
+
+    private static void postCheckout(String eventId, Map<String, String> meta) {
+        String body = buildCheckoutEvent(eventId, meta);
+        Long ts = System.now().getTime() / 1000;
+        mockRequest(body, buildSignatureHeader(body, ts, SECRET));
+        ULBC_StripeWebhook.handlePost();
+    }
+
+    @IsTest
+    static void test_dispatch_donation_marksProcessed() {
+        Test.startTest();
+        postCheckout('evt_donation_1', new Map<String, String>{
+            'intent' => 'donation',
+            'gift_type' => 'One-Off',
+            'gift_aid' => 'false'
+        });
+        Test.stopTest();
+
+        System.assertEquals(200, RestContext.response.statusCode);
+        ULBC_Webhook_Log__c log = latestLog();
+        System.assertEquals('Processed', log.ULBC_Status__c);
+
+        Integer oppCount = [SELECT COUNT() FROM Opportunity
+                            WHERE ULBC_Stripe_Payment_ID__c = 'pi_test_xyz'];
+        System.assertEquals(1, oppCount, 'Donation Opportunity should be created');
+    }
+
+    @IsTest
+    static void test_dispatch_eventTicket_marksProcessed() {
+        Campaign camp = new Campaign(Name = 'Test Dispatch Event', Type = 'Event',
+                                     Status = 'Planned', IsActive = true);
+        insert camp;
+
+        Test.startTest();
+        postCheckout('evt_ticket_1', new Map<String, String>{
+            'intent' => 'event_ticket',
+            'campaign_id' => camp.Id
+        });
+        Test.stopTest();
+
+        System.assertEquals(200, RestContext.response.statusCode);
+        System.assertEquals('Processed', latestLog().ULBC_Status__c);
+
+        Integer cmCount = [SELECT COUNT() FROM CampaignMember
+                           WHERE CampaignId = :camp.Id];
+        System.assertEquals(1, cmCount, 'CampaignMember should be created');
+    }
+
+    @IsTest
+    static void test_dispatch_subscription_isIgnored() {
+        Test.startTest();
+        postCheckout('evt_sub_1', new Map<String, String>{ 'intent' => 'subscription' });
+        Test.stopTest();
+
+        System.assertEquals(200, RestContext.response.statusCode);
+        System.assertEquals('Ignored', latestLog().ULBC_Status__c);
+        System.assertEquals(0, [SELECT COUNT() FROM Opportunity
+                                WHERE ULBC_Stripe_Payment_ID__c = 'pi_test_xyz']);
+    }
+
+    @IsTest
+    static void test_dispatch_missingIntent_returnsError() {
+        Test.startTest();
+        postCheckout('evt_no_intent', new Map<String, String>());
+        Test.stopTest();
+
+        System.assertEquals(400, RestContext.response.statusCode);
+        ULBC_Webhook_Log__c log = latestLog();
+        System.assertEquals('Error', log.ULBC_Status__c);
+        System.assert(log.ULBC_Error_Message__c.contains('intent'));
+    }
+
+    @IsTest
+    static void test_dispatch_unknownIntent_returnsError() {
+        Test.startTest();
+        postCheckout('evt_bad_intent', new Map<String, String>{ 'intent' => 'unknown_thing' });
+        Test.stopTest();
+
+        System.assertEquals(400, RestContext.response.statusCode);
+        ULBC_Webhook_Log__c log = latestLog();
+        System.assertEquals('Error', log.ULBC_Status__c);
+        System.assert(log.ULBC_Error_Message__c.contains('Unknown'));
+    }
+
+    @IsTest
+    static void test_dispatch_eventTicketHandlerThrows_marksError() {
+        // event_ticket handler requires campaign_id — omit it to force an exception.
+        Test.startTest();
+        postCheckout('evt_ticket_no_camp', new Map<String, String>{ 'intent' => 'event_ticket' });
+        Test.stopTest();
+
+        System.assertEquals(500, RestContext.response.statusCode);
+        ULBC_Webhook_Log__c log = latestLog();
+        System.assertEquals('Error', log.ULBC_Status__c);
+        System.assert(log.ULBC_Error_Message__c.contains('campaign_id'));
     }
 }

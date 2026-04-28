@@ -16,6 +16,7 @@
             <value><fullName>Gift-in-Kind</fullName><default>false</default><label>Gift-in-Kind</label></value>
             <value><fullName>In Memory</fullName><default>false</default><label>In Memory</label></value>
             <value><fullName>Tribute Fund</fullName><default>false</default><label>Tribute Fund</label></value>
+            <value><fullName>Event Ticket</fullName><default>false</default><label>Event Ticket</label></value>
         </valueSetDefinition>
     </valueSet>
     <trackHistory>false</trackHistory>

@@ -3,19 +3,22 @@
  *
  * Public Apex REST endpoint receiving Stripe webhook deliveries.
  * Verifies the Stripe-Signature header (HMAC-SHA256 over `t.body`)
- * against the signing secret in ULBC_Stripe_Settings__c, then writes
- * a ULBC_Webhook_Log__c row for every delivery attempt.
+ * against the signing secret in ULBC_Stripe_Settings__c, then dispatches
+ * by metadata.intent to a typed handler. Every delivery attempt is
+ * logged in ULBC_Webhook_Log__c.
  *
- * Phase 5A.2: signature verification + logging only — no business logic.
- * Phase 5A.3 will add typed handlers (intent=donation / event_ticket)
- * dispatched off the verified payload.
+ * Phase 5A.2 added signature verification + logging.
+ * Phase 5A.3 added intent dispatch:
+ *   - intent=donation       → ULBC_DonationHandler
+ *   - intent=event_ticket   → ULBC_EventTicketHandler
+ *   - intent=subscription   → Ignored (Decision 5.1, bank-only)
  *
  * Idempotency: ULBC_Stripe_Event_ID__c is Unique. Replays of an already
- * logged event_id raise a DUPLICATE_VALUE error which is caught and
- * recorded as Status = Duplicate, response 200 (Stripe should stop retrying).
+ * logged event_id raise a DUPLICATE_VALUE error caught by finish() and
+ * recorded as Status = Duplicate, response 200 (Stripe stops retrying).
  *
  * Endpoint: /services/apexrest/stripe/webhook
- * Decisions: 5.9 (metadata contract), 5.11 (public REST + signature verify).
+ * Decisions: 5.1, 5.8, 5.9, 5.11, 5.18.
  */
 @RestResource(urlMapping='/stripe/webhook')
 global with sharing class ULBC_StripeWebhook {
@@ -81,9 +84,10 @@ global with sharing class ULBC_StripeWebhook {
                 return;
             }
 
-            // Signature verified. Pull event id + type for the log row.
+            // Signature verified. Parse and dispatch.
+            Map<String, Object> evt;
             try {
-                Map<String, Object> evt = (Map<String, Object>) JSON.deserializeUntyped(body);
+                evt = (Map<String, Object>) JSON.deserializeUntyped(body);
                 log.ULBC_Stripe_Event_ID__c = (String) evt.get('id');
                 log.ULBC_Stripe_Event_Type__c = (String) evt.get('type');
             } catch (Exception parseErr) {
@@ -93,15 +97,80 @@ global with sharing class ULBC_StripeWebhook {
                 return;
             }
 
-            finish(log, 'Verified',
-                'Signature verified. Phase 5A.2 logs only — no handler dispatched yet.',
-                result, res, 200, true,
-                'Received ' + log.ULBC_Stripe_Event_Type__c);
+            dispatch(evt, log, result, res);
 
         } catch (Exception e) {
             finish(log, 'Error',
                 'Unexpected error: ' + e.getMessage() + '\n' + e.getStackTraceString(),
                 result, res, 500, false, e.getMessage());
+        }
+    }
+
+    // ── Intent dispatch ─────────────────────────────────────────────────
+
+    private static void dispatch(Map<String, Object> evt, ULBC_Webhook_Log__c log,
+                                  WebhookResult result, RestResponse res) {
+        String eventType = (String) evt.get('type');
+
+        // We only act on checkout.session.completed in v1. Other event
+        // types are signature-verified and logged as Ignored so we can
+        // see what's coming through without processing.
+        if (!'checkout.session.completed'.equals(eventType)) {
+            finish(log, 'Ignored',
+                'Event type ' + eventType + ' is not handled in v1. ' +
+                'Phase 5A.3 only processes checkout.session.completed.',
+                result, res, 200, true,
+                'Event type ' + eventType + ' ignored');
+            return;
+        }
+
+        Map<String, Object> data = (Map<String, Object>) evt.get('data');
+        Map<String, Object> session = (data == null) ? null
+            : (Map<String, Object>) data.get('object');
+        if (session == null) {
+            finish(log, 'Malformed',
+                'Event payload missing data.object',
+                result, res, 400, false, 'Missing session object');
+            return;
+        }
+
+        Map<String, Object> meta = (Map<String, Object>) session.get('metadata');
+        String intent = (meta == null) ? null : (String) meta.get('intent');
+
+        if (String.isBlank(intent)) {
+            finish(log, 'Error',
+                'metadata.intent is missing. Decision 5.9 requires every Checkout ' +
+                'Session to declare intent (donation | event_ticket | subscription).',
+                result, res, 400, false, 'metadata.intent missing');
+            return;
+        }
+
+        try {
+            if ('donation'.equalsIgnoreCase(intent)) {
+                ULBC_DonationHandler.Result r = ULBC_DonationHandler.handle(session);
+                finish(log, 'Processed', r.message, result, res, 200, true, r.message);
+                return;
+            }
+            if ('event_ticket'.equalsIgnoreCase(intent)) {
+                ULBC_EventTicketHandler.Result r = ULBC_EventTicketHandler.handle(session);
+                finish(log, 'Processed', r.message, result, res, 200, true, r.message);
+                return;
+            }
+            if ('subscription'.equalsIgnoreCase(intent)) {
+                finish(log, 'Ignored',
+                    'intent=subscription is intentionally not processed in v1 ' +
+                    '(Decision 5.1 — recurring giving comes via bank, not Stripe).',
+                    result, res, 200, true, 'Subscription intent ignored');
+                return;
+            }
+            finish(log, 'Error',
+                'Unknown metadata.intent value: "' + intent + '"',
+                result, res, 400, false, 'Unknown intent: ' + intent);
+        } catch (Exception handlerErr) {
+            finish(log, 'Error',
+                'Handler failed for intent=' + intent + ': ' + handlerErr.getMessage() +
+                '\n' + handlerErr.getStackTraceString(),
+                result, res, 500, false, handlerErr.getMessage());
         }
     }
 

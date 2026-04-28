@@ -40,6 +40,16 @@
                 <label>Duplicate</label>
             </value>
             <value>
+                <fullName>Processed</fullName>
+                <default>false</default>
+                <label>Processed</label>
+            </value>
+            <value>
+                <fullName>Ignored</fullName>
+                <default>false</default>
+                <label>Ignored</label>
+            </value>
+            <value>
                 <fullName>Error</fullName>
                 <default>true</default>
                 <label>Error</label>
