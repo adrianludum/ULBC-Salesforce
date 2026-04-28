@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>ULBC_Stripe_Event_ID__c</fullName>
+    <caseSensitive>false</caseSensitive>
+    <description>Stripe event.id from the payload (e.g. evt_1Ab2Cd3Ef4Gh5Ij6Kl7Mn). Unique + External ID enforces idempotency at the database layer — Stripe webhook retries cannot create duplicate log rows. Blank when payload is malformed and ID cannot be parsed.</description>
+    <externalId>true</externalId>
+    <label>Stripe Event ID</label>
+    <length>255</length>
+    <required>false</required>
+    <trackTrending>false</trackTrending>
+    <type>Text</type>
+    <unique>true</unique>
+</CustomField>

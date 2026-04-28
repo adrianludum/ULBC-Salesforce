@@ -1,253 +1,223 @@
+/**
+ * ULBC_StripeWebhook_Test
+ *
+ * Phase 5A.2 tests — signature verification + log-row writing.
+ * Phase 5A.3 will add tests for typed handlers (donation / event_ticket).
+ */
 @IsTest
 private class ULBC_StripeWebhook_Test {
 
+    private static final String SECRET = 'whsec_test_secret_for_unit_tests_only_0123456789abcdef';
+
     @TestSetup
     static void setup() {
-        Campaign c = new Campaign(
-            Name = 'Test Dinner 2025',
-            Type = 'Event',
-            Status = 'Planned',
-            IsActive = true
-        );
-        insert c;
+        // Seed a Custom Setting org-default with the test signing secret.
+        ULBC_Stripe_Settings__c s = ULBC_Stripe_Settings__c.getOrgDefaults();
+        if (s == null || s.Id == null) {
+            s = new ULBC_Stripe_Settings__c(SetupOwnerId = UserInfo.getOrganizationId());
+        }
+        s.WebhookSigningSecret__c = SECRET;
+        upsert s;
     }
 
-    private static String buildCheckoutEvent(String campaignId, String eventType) {
-        return buildCheckoutEventWithGuests(campaignId, eventType, '');
+    // ── Helpers ────────────────────────────────────────────────────────
+
+    private static String sampleEvent(String eventId, String eventType) {
+        return '{"id":"' + eventId + '","object":"event","type":"' + eventType +
+               '","data":{"object":{"id":"cs_test_001"}}}';
     }
 
-    private static String buildCheckoutEventWithGuests(String campaignId, String eventType, String guestMeta) {
-        String metaExtra = String.isNotBlank(guestMeta) ? ',' + guestMeta : '';
-        return '{' +
-            '"type": "' + eventType + '",' +
-            '"data": {' +
-                '"object": {' +
-                    '"id": "cs_test_123",' +
-                    '"payment_intent": "pi_test_456",' +
-                    '"amount_total": 7500,' +
-                    '"currency": "gbp",' +
-                    '"customer_details": {' +
-                        '"email": "test@example.com",' +
-                        '"name": "Jane Smith"' +
-                    '},' +
-                    '"metadata": {' +
-                        '"campaign_id": "' + campaignId + '",' +
-                        '"quantity": "3"' +
-                        metaExtra +
-                    '}' +
-                '}' +
-            '}' +
-        '}';
+    private static String hmacHex(String body, Long ts, String secret) {
+        Blob mac = Crypto.generateMac('HmacSHA256',
+            Blob.valueOf(ts + '.' + body),
+            Blob.valueOf(secret));
+        return EncodingUtil.convertToHex(mac);
     }
 
-    @IsTest
-    static void test_checkoutCompleted_createsContactAndOpportunity() {
-        Campaign camp = [SELECT Id FROM Campaign WHERE Name = 'Test Dinner 2025' LIMIT 1];
-        String body = buildCheckoutEvent(camp.Id, 'checkout.session.completed');
+    private static String buildSignatureHeader(String body, Long ts, String secret) {
+        return 't=' + ts + ',v1=' + hmacHex(body, ts, secret);
+    }
 
+    private static void mockRequest(String body, String sigHeader) {
         RestRequest req = new RestRequest();
         req.requestURI = '/services/apexrest/stripe/webhook';
         req.httpMethod = 'POST';
-        req.requestBody = Blob.valueOf(body);
+        req.requestBody = (body == null) ? null : Blob.valueOf(body);
+        if (sigHeader != null) req.headers.put('Stripe-Signature', sigHeader);
         RestContext.request = req;
         RestContext.response = new RestResponse();
+    }
+
+    private static ULBC_Webhook_Log__c latestLog() {
+        return [
+            SELECT Id, ULBC_Status__c, ULBC_Stripe_Event_ID__c, ULBC_Stripe_Event_Type__c,
+                   ULBC_Raw_Payload__c, ULBC_Error_Message__c, ULBC_Stripe_Timestamp__c,
+                   ULBC_Payload_Truncated__c
+            FROM ULBC_Webhook_Log__c ORDER BY CreatedDate DESC LIMIT 1
+        ];
+    }
+
+    // ── Tests ──────────────────────────────────────────────────────────
+
+    @IsTest
+    static void test_validSignature_logsAndReturns200() {
+        String body = sampleEvent('evt_test_001', 'checkout.session.completed');
+        Long ts = System.now().getTime() / 1000;
+        mockRequest(body, buildSignatureHeader(body, ts, SECRET));
 
         Test.startTest();
         ULBC_StripeWebhook.handlePost();
         Test.stopTest();
 
-        RestResponse res = RestContext.response;
-        System.assertEquals(200, res.statusCode, 'Should return 200');
+        System.assertEquals(200, RestContext.response.statusCode, 'Valid signature should return 200');
 
-        // Verify Contact created
-        List<Contact> contacts = [SELECT Id, FirstName, LastName, Email FROM Contact WHERE Email = 'test@example.com'];
-        System.assertEquals(1, contacts.size(), 'Contact should be created');
-        System.assertEquals('Jane', contacts[0].FirstName);
-        System.assertEquals('Smith', contacts[0].LastName);
-
-        // Verify Opportunity created
-        List<Opportunity> opps = [SELECT Id, Amount, ULBC_Stripe_Payment_ID__c FROM Opportunity WHERE npsp__Primary_Contact__c = :contacts[0].Id];
-        System.assertEquals(1, opps.size(), 'Opportunity should be created');
-        System.assertEquals(75.00, opps[0].Amount, 'Amount should be £75');
-        System.assertEquals('pi_test_456', opps[0].ULBC_Stripe_Payment_ID__c);
-
-        // Verify CampaignMember created
-        List<CampaignMember> members = [SELECT Id, Status FROM CampaignMember WHERE ContactId = :contacts[0].Id AND CampaignId = :camp.Id];
-        System.assertEquals(1, members.size(), 'CampaignMember should be created');
-        System.assertEquals('Purchased', members[0].Status);
+        ULBC_Webhook_Log__c log = latestLog();
+        System.assertEquals('Verified', log.ULBC_Status__c);
+        System.assertEquals('evt_test_001', log.ULBC_Stripe_Event_ID__c);
+        System.assertEquals('checkout.session.completed', log.ULBC_Stripe_Event_Type__c);
+        System.assertEquals(body, log.ULBC_Raw_Payload__c, 'Full payload should be stored');
+        System.assertEquals(false, log.ULBC_Payload_Truncated__c);
+        System.assertNotEquals(null, log.ULBC_Stripe_Timestamp__c, 'Stripe ts should be parsed');
     }
 
     @IsTest
-    static void test_existingContact_doesNotDuplicate() {
-        Contact existing = new Contact(
-            FirstName = 'Jane',
-            LastName = 'Smith',
-            Email = 'test@example.com',
-            ULBC_Trust_ID__c = 'ULBC-STRIPE-1'
-        );
-        insert existing;
-
-        Campaign camp = [SELECT Id FROM Campaign WHERE Name = 'Test Dinner 2025' LIMIT 1];
-        String body = buildCheckoutEvent(camp.Id, 'checkout.session.completed');
-
-        RestRequest req = new RestRequest();
-        req.requestURI = '/services/apexrest/stripe/webhook';
-        req.httpMethod = 'POST';
-        req.requestBody = Blob.valueOf(body);
-        RestContext.request = req;
-        RestContext.response = new RestResponse();
+    static void test_invalidSignature_returns400AndLogsFailure() {
+        String body = sampleEvent('evt_test_002', 'checkout.session.completed');
+        Long ts = System.now().getTime() / 1000;
+        // Sign with the WRONG secret on purpose
+        mockRequest(body, buildSignatureHeader(body, ts, 'whsec_some_other_secret'));
 
         Test.startTest();
         ULBC_StripeWebhook.handlePost();
         Test.stopTest();
 
-        List<Contact> contacts = [SELECT Id FROM Contact WHERE Email = 'test@example.com'];
-        System.assertEquals(1, contacts.size(), 'Should not create duplicate contact');
+        System.assertEquals(400, RestContext.response.statusCode);
+        ULBC_Webhook_Log__c log = latestLog();
+        System.assertEquals('Signature Invalid', log.ULBC_Status__c);
+        System.assert(log.ULBC_Error_Message__c.toLowerCase().contains('signature'),
+            'Error should mention signature mismatch. Got: ' + log.ULBC_Error_Message__c);
     }
 
     @IsTest
-    static void test_ignoredEventType() {
-        String body = '{"type": "payment_intent.created", "data": {"object": {}}}';
-
-        RestRequest req = new RestRequest();
-        req.requestURI = '/services/apexrest/stripe/webhook';
-        req.httpMethod = 'POST';
-        req.requestBody = Blob.valueOf(body);
-        RestContext.request = req;
-        RestContext.response = new RestResponse();
+    static void test_missingSignatureHeader_returns400() {
+        mockRequest(sampleEvent('evt_x', 'a.b'), null);
 
         Test.startTest();
         ULBC_StripeWebhook.handlePost();
         Test.stopTest();
 
-        System.assertEquals(200, RestContext.response.statusCode, 'Should return 200 for ignored events');
+        System.assertEquals(400, RestContext.response.statusCode);
+        System.assertEquals('Signature Missing', latestLog().ULBC_Status__c);
     }
 
     @IsTest
-    static void test_missingEmail_returns400() {
-        String body = '{' +
-            '"type": "checkout.session.completed",' +
-            '"data": {' +
-                '"object": {' +
-                    '"id": "cs_test_999",' +
-                    '"amount_total": 5000,' +
-                    '"customer_details": {' +
-                        '"name": "No Email"' +
-                    '},' +
-                    '"metadata": {}' +
-                '}' +
-            '}' +
-        '}';
-
-        RestRequest req = new RestRequest();
-        req.requestURI = '/services/apexrest/stripe/webhook';
-        req.httpMethod = 'POST';
-        req.requestBody = Blob.valueOf(body);
-        RestContext.request = req;
-        RestContext.response = new RestResponse();
+    static void test_staleTimestamp_returns400() {
+        String body = sampleEvent('evt_stale', 'checkout.session.completed');
+        Long staleTs = (System.now().getTime() / 1000) - (6 * 60 * 60);  // 6 hours ago
+        mockRequest(body, buildSignatureHeader(body, staleTs, SECRET));
 
         Test.startTest();
         ULBC_StripeWebhook.handlePost();
         Test.stopTest();
 
-        System.assertEquals(400, RestContext.response.statusCode, 'Should return 400 for missing email');
+        System.assertEquals(400, RestContext.response.statusCode);
+        ULBC_Webhook_Log__c log = latestLog();
+        System.assertEquals('Signature Expired', log.ULBC_Status__c);
+        System.assert(log.ULBC_Error_Message__c.contains('tolerance'),
+            'Error should mention tolerance window. Got: ' + log.ULBC_Error_Message__c);
     }
 
     @IsTest
-    static void test_duplicateCampaignMember_noDuplicate() {
-        Campaign camp = [SELECT Id FROM Campaign WHERE Name = 'Test Dinner 2025' LIMIT 1];
+    static void test_missingSecret_returns500() {
+        // Wipe the secret seeded in setup
+        ULBC_Stripe_Settings__c s = ULBC_Stripe_Settings__c.getOrgDefaults();
+        s.WebhookSigningSecret__c = null;
+        update s;
 
-        Contact c = new Contact(FirstName = 'Repeat', LastName = 'Buyer', Email = 'repeat@example.com', ULBC_Trust_ID__c = 'ULBC-STRIPE-2');
-        insert c;
-
-        // Ensure Purchased status exists
-        insert new CampaignMemberStatus(CampaignId = camp.Id, Label = 'Purchased', SortOrder = 4, IsDefault = false, HasResponded = true);
-        insert new CampaignMember(CampaignId = camp.Id, ContactId = c.Id, Status = 'Purchased');
-
-        String body = buildCheckoutEvent(camp.Id, 'checkout.session.completed');
-        // Override email to match existing
-        body = body.replace('test@example.com', 'repeat@example.com');
-        body = body.replace('Jane Smith', 'Repeat Buyer');
-
-        RestRequest req = new RestRequest();
-        req.requestURI = '/services/apexrest/stripe/webhook';
-        req.httpMethod = 'POST';
-        req.requestBody = Blob.valueOf(body);
-        RestContext.request = req;
-        RestContext.response = new RestResponse();
+        mockRequest(sampleEvent('evt_x', 'checkout.session.completed'),
+                    't=1700000000,v1=abc');
 
         Test.startTest();
         ULBC_StripeWebhook.handlePost();
         Test.stopTest();
 
-        List<CampaignMember> members = [SELECT Id FROM CampaignMember WHERE ContactId = :c.Id AND CampaignId = :camp.Id];
-        System.assertEquals(1, members.size(), 'Should not create duplicate CampaignMember');
+        System.assertEquals(500, RestContext.response.statusCode);
+        ULBC_Webhook_Log__c log = latestLog();
+        System.assertEquals('Error', log.ULBC_Status__c);
+        System.assert(log.ULBC_Error_Message__c.contains('WebhookSigningSecret__c'),
+            'Error should mention the missing setting field. Got: ' + log.ULBC_Error_Message__c);
     }
 
     @IsTest
-    static void test_guestsCreatedFromMetadata() {
-        Campaign camp = [SELECT Id FROM Campaign WHERE Name = 'Test Dinner 2025' LIMIT 1];
-
-        String guestMeta =
-            '"guest_1_name": "Bob Jones",' +
-            '"guest_1_email": "bob@example.com",' +
-            '"guest_2_name": "Alice Green",' +
-            '"guest_2_email": "alice@example.com"';
-
-        String body = buildCheckoutEventWithGuests(camp.Id, 'checkout.session.completed', guestMeta);
-
-        RestRequest req = new RestRequest();
-        req.requestURI = '/services/apexrest/stripe/webhook';
-        req.httpMethod = 'POST';
-        req.requestBody = Blob.valueOf(body);
-        RestContext.request = req;
-        RestContext.response = new RestResponse();
+    static void test_malformedJsonBody_returns400AfterSignaturePass() {
+        // Signature is computed on the raw bytes — malformed JSON can still verify.
+        String body = '{not valid json';
+        Long ts = System.now().getTime() / 1000;
+        mockRequest(body, buildSignatureHeader(body, ts, SECRET));
 
         Test.startTest();
         ULBC_StripeWebhook.handlePost();
         Test.stopTest();
 
+        System.assertEquals(400, RestContext.response.statusCode);
+        ULBC_Webhook_Log__c log = latestLog();
+        System.assertEquals('Malformed', log.ULBC_Status__c);
+    }
+
+    @IsTest
+    static void test_signatureWithExtraSchemes_acceptsV1Match() {
+        // Stripe headers can contain v0= and additional v1= entries during rotation.
+        String body = sampleEvent('evt_rot', 'checkout.session.completed');
+        Long ts = System.now().getTime() / 1000;
+        String correctV1 = ULBC_StripeWebhook_Test.hmacHex(body, ts, SECRET);
+        String header = 't=' + ts +
+            ',v0=should_be_ignored' +
+            ',v1=0000000000000000000000000000000000000000000000000000000000000000' +
+            ',v1=' + correctV1;
+        mockRequest(body, header);
+
+        Test.startTest();
+        ULBC_StripeWebhook.handlePost();
+        Test.stopTest();
+
+        System.assertEquals(200, RestContext.response.statusCode,
+            'Should accept when any v1 candidate matches');
+        System.assertEquals('Verified', latestLog().ULBC_Status__c);
+    }
+
+    @IsTest
+    static void test_duplicateEventId_returns200WithDuplicateStatus() {
+        // First delivery succeeds, second with same event_id is a Stripe replay.
+        String body = sampleEvent('evt_dup_001', 'checkout.session.completed');
+        Long ts = System.now().getTime() / 1000;
+        String sig = buildSignatureHeader(body, ts, SECRET);
+
+        Test.startTest();
+
+        mockRequest(body, sig);
+        ULBC_StripeWebhook.handlePost();
         System.assertEquals(200, RestContext.response.statusCode);
+        System.assertEquals('Verified', latestLog().ULBC_Status__c);
 
-        // Buyer + 2 guests = 3 CampaignMembers
-        List<CampaignMember> members = [SELECT Id, Status, ContactId FROM CampaignMember WHERE CampaignId = :camp.Id];
-        System.assertEquals(3, members.size(), 'Should have buyer + 2 guests');
+        // Second delivery (replay)
+        mockRequest(body, sig);
+        ULBC_StripeWebhook.handlePost();
 
-        // Verify guest contacts created
-        List<Contact> bob = [SELECT Id, ULBC_Acquisition_Channel__c FROM Contact WHERE Email = 'bob@example.com'];
-        System.assertEquals(1, bob.size(), 'Guest Bob should be created');
-        System.assertEquals('Event Guest', bob[0].ULBC_Acquisition_Channel__c);
+        Test.stopTest();
 
-        List<Contact> alice = [SELECT Id FROM Contact WHERE Email = 'alice@example.com'];
-        System.assertEquals(1, alice.size(), 'Guest Alice should be created');
+        System.assertEquals(200, RestContext.response.statusCode,
+            'Replay should ack with 200 so Stripe stops retrying');
+        Integer logCount = [SELECT COUNT() FROM ULBC_Webhook_Log__c
+                            WHERE ULBC_Stripe_Event_ID__c = 'evt_dup_001'];
+        System.assertEquals(1, logCount, 'Unique constraint should prevent duplicate row');
     }
 
     @IsTest
-    static void test_guestWithNameOnly_noEmail() {
-        Campaign camp = [SELECT Id FROM Campaign WHERE Name = 'Test Dinner 2025' LIMIT 1];
-
-        String guestMeta = '"guest_1_name": "Charlie NoEmail"';
-
-        String body = buildCheckoutEventWithGuests(camp.Id, 'checkout.session.completed', guestMeta);
-
-        RestRequest req = new RestRequest();
-        req.requestURI = '/services/apexrest/stripe/webhook';
-        req.httpMethod = 'POST';
-        req.requestBody = Blob.valueOf(body);
-        RestContext.request = req;
-        RestContext.response = new RestResponse();
-
-        Test.startTest();
-        ULBC_StripeWebhook.handlePost();
-        Test.stopTest();
-
-        System.assertEquals(200, RestContext.response.statusCode);
-
-        // Buyer + 1 guest = 2 CampaignMembers
-        List<CampaignMember> members = [SELECT Id FROM CampaignMember WHERE CampaignId = :camp.Id];
-        System.assertEquals(2, members.size(), 'Should have buyer + 1 name-only guest');
-
-        List<Contact> charlie = [SELECT Id, LastName FROM Contact WHERE LastName = 'NoEmail' AND FirstName = 'Charlie'];
-        System.assertEquals(1, charlie.size(), 'Name-only guest should be created');
+    static void test_constantTimeEquals_lengthMismatchAndDiffPaths() {
+        System.assert(!ULBC_StripeWebhook.constantTimeEquals('abc', 'abcd'));
+        System.assert(!ULBC_StripeWebhook.constantTimeEquals(null, 'x'));
+        System.assert(!ULBC_StripeWebhook.constantTimeEquals('x', null));
+        System.assert(ULBC_StripeWebhook.constantTimeEquals('abc', 'abc'));
+        System.assert(!ULBC_StripeWebhook.constantTimeEquals('abc', 'abd'));
     }
 }

@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>ULBC_Processed_At__c</fullName>
+    <description>When the webhook was processed by Salesforce (server time, UTC). Distinct from Stripe Timestamp (when Stripe signed it) — the difference is network + Salesforce queue latency.</description>
+    <label>Processed At</label>
+    <required>true</required>
+    <trackTrending>false</trackTrending>
+    <type>DateTime</type>
+</CustomField>

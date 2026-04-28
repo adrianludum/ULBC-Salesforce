@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>ULBC_Payload_Truncated__c</fullName>
+    <defaultValue>false</defaultValue>
+    <description>True when the original request body exceeded 131,072 characters and was truncated before storage in ULBC_Raw_Payload__c.</description>
+    <label>Payload Truncated</label>
+    <trackTrending>false</trackTrending>
+    <type>Checkbox</type>
+</CustomField>

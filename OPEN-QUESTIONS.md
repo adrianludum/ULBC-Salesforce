@@ -1,5 +1,5 @@
 # ULBC Trust Salesforce — Open Questions
-*Last updated: 2026-04-15*
+*Last updated: 2026-04-28*
 
 ---
 
@@ -63,8 +63,7 @@
 
 **OQ-020** ✅ — Gift Aid tracked at both levels. Declaration data on Contact; per-donation eligibility + claimed date on Opportunity. Decision 2.10.
 
-**OQ-021**: What is the ULBC Trust charity registration number? Needed for Gift Aid configuration.
-*Blocking: Phase 3 (HMRC Gift Aid claim submissions)*
+**OQ-021** ✅ [CLOSED 2026-04-28] — ULBC Trust Charity Commission no. **1174721** (England & Wales). Recorded in PRD §2 and Decision 5.17. Will be referenced when Gift Aid HMRC R68 submission tooling is built (separate phase, not v1).
 
 ---
 
@@ -73,7 +72,7 @@
 **OQ-022**: Should the Contact lookup on ULBC_Subscription__c and ULBC_Tyrian_Membership__c be enforced as required via a Validation Rule (since the metadata-level required=true conflicts with Salesforce's deleteConstraint rules)?
 *Recommendation: Yes — add a Validation Rule to both objects: ISBLANK(ULBC_Contact__c) → error "A contact must be selected". Low priority — add in Phase 3 alongside other validation rules.*
 
-**OQ-023**: Is noreply@ulbctrust.org now verified in Setup → Organization-Wide Email Addresses? Blocks the Upgrade Prospect Record-Triggered Flow (last remaining Phase 2B item).
+**OQ-023** ✅ [CLOSED 2026-04-28] — `noreply@ulbctrust.org` verified as an Organization-Wide Email Address. Phase 2B Upgrade Prospect Record-Triggered Flow is now unblocked and can be built (still scheduled under Phase 3D email comms).
 
 ---
 
@@ -98,8 +97,7 @@
 **OQ-027**: Stripe webhook signing secret. Adrian needs to generate a new endpoint in Stripe Dashboard (Developers → Webhooks → Add endpoint) once the Salesforce Site URL is known, and store the signing secret as a Custom Metadata Record or Protected Custom Setting.
 *Blocking: Phase 5A.2 (webhook receiver deployment).*
 
-**OQ-028**: Salesforce Site URL slug. Default would be something like `ulbctrust-developer-edition.my.site.com` — long and ugly. Custom domain (e.g. `events.ulbctrust.org`) requires DNS access. Acceptable to ship with default Salesforce Site URL in v1, configure custom domain later.
-*Recommendation: Ship with default in v1. Custom domain in v2.*
+**OQ-028** ✅ [CLOSED 2026-04-28] — Decision 5.16: v1 uses existing My Domain `ulbctrustlimited.my.site.com` (confirmed in Setup, enhanced domains enabled), Site URL Path Prefix blank. Custom domain (`events.ulbctrust.org`) deferred to v2 — requires DNS access. `DonationBaseURL__c` will be updated from the placeholder to `https://ulbctrustlimited.my.site.com/donate` once the Site is deployed in 5A.4.
 
 **OQ-029**: Stripe test mode vs live mode flip. Build entirely in Stripe test mode. Production go-live requires:
 (a) New Stripe webhook endpoint pointed at the same Salesforce Site URL but with the LIVE signing secret.

@@ -443,6 +443,41 @@
         <readable>true</readable>
         <editable>true</editable>
     </fieldPermissions>
+    <fieldPermissions>
+        <editable>true</editable>
+        <field>ULBC_Webhook_Log__c.ULBC_Error_Message__c</field>
+        <readable>true</readable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <editable>true</editable>
+        <field>ULBC_Webhook_Log__c.ULBC_Payload_Truncated__c</field>
+        <readable>true</readable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <editable>true</editable>
+        <field>ULBC_Webhook_Log__c.ULBC_Raw_Payload__c</field>
+        <readable>true</readable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <editable>true</editable>
+        <field>ULBC_Webhook_Log__c.ULBC_Signature_Header__c</field>
+        <readable>true</readable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <editable>true</editable>
+        <field>ULBC_Webhook_Log__c.ULBC_Stripe_Event_ID__c</field>
+        <readable>true</readable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <editable>true</editable>
+        <field>ULBC_Webhook_Log__c.ULBC_Stripe_Event_Type__c</field>
+        <readable>true</readable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <editable>true</editable>
+        <field>ULBC_Webhook_Log__c.ULBC_Stripe_Timestamp__c</field>
+        <readable>true</readable>
+    </fieldPermissions>
     <classAccesses>
         <apexClass>ULBC_DashboardController</apexClass>
         <enabled>true</enabled>
@@ -545,6 +580,15 @@
     </objectPermissions>
     <objectPermissions>
         <object>ULBC_International_Competition__c</object>
+        <allowCreate>true</allowCreate>
+        <allowRead>true</allowRead>
+        <allowEdit>true</allowEdit>
+        <allowDelete>true</allowDelete>
+        <viewAllRecords>true</viewAllRecords>
+        <modifyAllRecords>true</modifyAllRecords>
+    </objectPermissions>
+    <objectPermissions>
+        <object>ULBC_Webhook_Log__c</object>
         <allowCreate>true</allowCreate>
         <allowRead>true</allowRead>
         <allowEdit>true</allowEdit>

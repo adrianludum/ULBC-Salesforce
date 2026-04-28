@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>ULBC_Raw_Payload__c</fullName>
+    <description>Full request body as received from Stripe. Capped at 131,072 characters (Salesforce LTA max). If exceeded, ULBC_Payload_Truncated__c is set true and only the leading 131,072 chars are stored. Stripe payloads are typically 2–8 KB so truncation is rare. Decision 5.17.</description>
+    <label>Raw Payload</label>
+    <length>131072</length>
+    <trackTrending>false</trackTrending>
+    <type>LongTextArea</type>
+    <visibleLines>20</visibleLines>
+</CustomField>

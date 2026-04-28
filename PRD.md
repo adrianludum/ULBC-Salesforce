@@ -12,8 +12,8 @@ ULBC Trust Limited is the fundraising arm of the University of London Boat Club 
 
 ## 2. Legal & Organisational Context
 
-- **Data Controller**: ULBC Trust Limited (registered charity)
-- **Gift Aid Entity**: ULBC Trust Limited (registered with HMRC)
+- **Data Controller**: ULBC Trust Limited (registered charity, Charity Commission no. **1174721**)
+- **Gift Aid Entity**: ULBC Trust Limited (registered with HMRC, charity no. 1174721)
 - **GDPR Legal Basis**: Legitimate Interests — membership relationship. Documented on every contact record. Unsubscribe link mandatory in all bulk emails.
 - **Out of scope**: The ULBC limited company (operating club entity) and boathouse income — funded by the Trust but not modelled in Salesforce
 - **Jurisdiction**: England & Wales, UK GDPR applies
@@ -432,7 +432,7 @@ Stripe handles **website donations** and **event ticketing** (dinners, BBQs, etc
 | Sub-phase | Scope | Status |
 |---|---|---|
 | 5A.1 | Data model — `ULBC_Stripe_Customer_ID__c` on Contact, `ULBC_Donation_Link__c` formula on Contact, `ULBC_Stripe_Payment_ID__c` on CampaignMember, `ULBC_Stripe_Settings__c` Custom Setting, permission set + layout updates | **Deployed ✅ 2026-04-27** |
-| 5A.2 | Apex webhook receiver (signature verification, logging only, deployed to Salesforce Site) | Not started |
+| 5A.2 | Apex webhook receiver: HMAC-SHA256 signature verify, `ULBC_Webhook_Log__c` audit object (Unique event_id for DB-level idempotency), `WebhookSigningSecret__c` on Custom Setting, 9 tests | **Deployed ✅ 2026-04-28** |
 | 5A.3 | Webhook business logic for event tickets AND donations (`intent=event_ticket` + `intent=donation` handlers) | Not started |
 | 5A.4 | Salesforce Site + LWCs: `ulbcEventRegister` (event ticketing) AND `ulbcDonate` (personalised donations), per Decisions 5.4 + 5.15 | Not started |
 | ~~5B~~ | ~~Donation flow~~ | **Closed — merged into 5A.3 + 5A.4 by Decision 5.15** |

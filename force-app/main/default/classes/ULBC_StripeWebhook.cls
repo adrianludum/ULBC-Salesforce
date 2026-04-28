@@ -1,22 +1,38 @@
 /**
  * ULBC_StripeWebhook
- * REST endpoint for Stripe checkout.session.completed webhooks.
- * Creates or finds Contacts for buyer + guests, adds CampaignMembers,
- * and creates a Closed Won Opportunity for the ticket purchase.
  *
- * Guest metadata format: guest_1_name, guest_1_email, guest_2_name, guest_2_email, etc.
+ * Public Apex REST endpoint receiving Stripe webhook deliveries.
+ * Verifies the Stripe-Signature header (HMAC-SHA256 over `t.body`)
+ * against the signing secret in ULBC_Stripe_Settings__c, then writes
+ * a ULBC_Webhook_Log__c row for every delivery attempt.
+ *
+ * Phase 5A.2: signature verification + logging only — no business logic.
+ * Phase 5A.3 will add typed handlers (intent=donation / event_ticket)
+ * dispatched off the verified payload.
+ *
+ * Idempotency: ULBC_Stripe_Event_ID__c is Unique. Replays of an already
+ * logged event_id raise a DUPLICATE_VALUE error which is caught and
+ * recorded as Status = Duplicate, response 200 (Stripe should stop retrying).
  *
  * Endpoint: /services/apexrest/stripe/webhook
+ * Decisions: 5.9 (metadata contract), 5.11 (public REST + signature verify).
  */
 @RestResource(urlMapping='/stripe/webhook')
 global with sharing class ULBC_StripeWebhook {
 
+    @TestVisible
+    private static final Integer TIMESTAMP_TOLERANCE_SECONDS = 300;
+
+    @TestVisible
+    private static final Integer PAYLOAD_MAX_LENGTH = 131072;
+
+    @TestVisible
+    private static final String SIGNATURE_HEADER = 'Stripe-Signature';
+
     global class WebhookResult {
         global Boolean success;
         global String message;
-        global String contactId;
-        global String opportunityId;
-        global Integer guestsRegistered;
+        global String logId;
     }
 
     @HttpPost
@@ -25,396 +41,211 @@ global with sharing class ULBC_StripeWebhook {
         RestResponse res = RestContext.response;
         res.addHeader('Content-Type', 'application/json');
 
+        String body = (req.requestBody != null) ? req.requestBody.toString() : '';
+        String sigHeader = readHeader(req, SIGNATURE_HEADER);
+
+        Boolean truncated = body.length() > PAYLOAD_MAX_LENGTH;
+        ULBC_Webhook_Log__c log = new ULBC_Webhook_Log__c(
+            ULBC_Processed_At__c = System.now(),
+            ULBC_Signature_Header__c = sigHeader,
+            ULBC_Raw_Payload__c = truncated ? body.substring(0, PAYLOAD_MAX_LENGTH) : body,
+            ULBC_Payload_Truncated__c = truncated,
+            ULBC_Status__c = 'Error'
+        );
+
         WebhookResult result = new WebhookResult();
-        result.guestsRegistered = 0;
 
         try {
-            String body = req.requestBody.toString();
-            Map<String, Object> event = (Map<String, Object>) JSON.deserializeUntyped(body);
-
-            String eventType = (String) event.get('type');
-
-            if (eventType != 'checkout.session.completed') {
-                result.success = true;
-                result.message = 'Event type ' + eventType + ' ignored';
-                res.statusCode = 200;
-                res.responseBody = Blob.valueOf(JSON.serialize(result));
+            String secret = getSigningSecret();
+            if (String.isBlank(secret)) {
+                finish(log, 'Error',
+                    'ULBC_Stripe_Settings__c.WebhookSigningSecret__c is empty — webhook cannot be verified.',
+                    result, res, 500, false, 'Webhook signing secret not configured');
                 return;
             }
 
-            Map<String, Object> data = (Map<String, Object>) event.get('data');
-            Map<String, Object> session = (Map<String, Object>) data.get('object');
-
-            // Extract customer details
-            Map<String, Object> customerDetails = (Map<String, Object>) session.get('customer_details');
-            String email = (String) customerDetails.get('email');
-            String fullName = (String) customerDetails.get('name');
-
-            // Extract payment details
-            Integer amountTotal = (Integer) session.get('amount_total');
-            Decimal amount = (amountTotal != null) ? Decimal.valueOf(amountTotal) / 100 : 0;
-            String currencyCode = (String) session.get('currency');
-            String paymentIntentId = (String) session.get('payment_intent');
-            String sessionId = (String) session.get('id');
-
-            // Extract metadata
-            Map<String, Object> metadata = (Map<String, Object>) session.get('metadata');
-            String campaignId = (metadata != null) ? (String) metadata.get('campaign_id') : null;
-            String ticketQty = (metadata != null) ? (String) metadata.get('quantity') : '1';
-            Integer qty = (ticketQty != null) ? Integer.valueOf(ticketQty) : 1;
-
-            if (String.isBlank(email)) {
-                result.success = false;
-                result.message = 'No email in checkout session';
-                res.statusCode = 400;
-                res.responseBody = Blob.valueOf(JSON.serialize(result));
+            if (String.isBlank(sigHeader)) {
+                finish(log, 'Signature Missing',
+                    'No Stripe-Signature header on the request.',
+                    result, res, 400, false, 'Missing Stripe-Signature header');
                 return;
             }
 
-            // Parse buyer name
-            String firstName = '';
-            String lastName = fullName;
-            if (String.isNotBlank(fullName) && fullName.contains(' ')) {
-                Integer spaceIdx = fullName.lastIndexOf(' ');
-                firstName = fullName.substring(0, spaceIdx).trim();
-                lastName = fullName.substring(spaceIdx + 1).trim();
+            VerifyResult v = verifySignature(body, sigHeader, secret, System.now());
+            if (v.tsParsed != null) {
+                log.ULBC_Stripe_Timestamp__c = Datetime.newInstance(v.tsParsed * 1000L);
+            }
+            if (!v.ok) {
+                finish(log, v.status, v.reason, result, res, 400,
+                       false, 'Signature verification failed: ' + v.reason);
+                return;
             }
 
-            // Find or create buyer Contact
-            Contact contact = findOrCreateContact(email, firstName, lastName, 'Event');
-            result.contactId = contact.Id;
-
-            // Create Opportunity (ticket purchase)
-            Opportunity opp = new Opportunity(
-                AccountId = contact.AccountId,
-                npsp__Primary_Contact__c = contact.Id,
-                Name = fullName + ' — Event Ticket',
-                StageName = 'Closed Won',
-                CloseDate = Date.today(),
-                Amount = amount,
-                ULBC_Gift_Type__c = 'Event Ticket',
-                ULBC_Gift_Source__c = 'Online',
-                ULBC_Stripe_Payment_ID__c = paymentIntentId,
-                Description = 'Stripe Session: ' + sessionId +
-                              ' | Qty: ' + qty +
-                              ' | Currency: ' + (currencyCode != null ? currencyCode.toUpperCase() : 'GBP')
-            );
-            insert opp;
-            result.opportunityId = opp.Id;
-
-            // Add buyer as CampaignMember
-            if (String.isNotBlank(campaignId)) {
-                ensureCampaignMemberStatus(campaignId);
-                addCampaignMember(contact.Id, campaignId, 'Purchased');
-
-                // Process guests from metadata
-                if (metadata != null) {
-                    result.guestsRegistered = processGuests(metadata, campaignId);
-                }
-            }
-
-            // Send notification emails
+            // Signature verified. Pull event id + type for the log row.
             try {
-                if (String.isNotBlank(campaignId)) {
-                    String campaignName = [SELECT Name FROM Campaign WHERE Id = :campaignId LIMIT 1].Name;
-                    List<Contact> guestContacts = getGuestContacts(metadata);
-
-                    // Email buyer with confirmation + guest list
-                    if (String.isNotBlank(email)) {
-                        sendBuyerConfirmation(contact, campaignName, guestContacts, qty);
-                    }
-
-                    // Email each guest who has an email
-                    for (Contact g : guestContacts) {
-                        if (String.isNotBlank(g.Email)) {
-                            sendGuestTicket(g, contact, campaignName);
-                        }
-                    }
-
-                    flushEmails();
-                }
-            } catch (Exception emailErr) {
-                System.debug(LoggingLevel.ERROR, 'Email notification failed: ' + emailErr.getMessage());
+                Map<String, Object> evt = (Map<String, Object>) JSON.deserializeUntyped(body);
+                log.ULBC_Stripe_Event_ID__c = (String) evt.get('id');
+                log.ULBC_Stripe_Event_Type__c = (String) evt.get('type');
+            } catch (Exception parseErr) {
+                finish(log, 'Malformed',
+                    'Body verified by signature but is not valid JSON: ' + parseErr.getMessage(),
+                    result, res, 400, false, 'Body not valid JSON');
+                return;
             }
 
-            result.success = true;
-            result.message = 'Ticket purchase recorded — ' + qty + ' ticket(s), ' +
-                             result.guestsRegistered + ' guest(s) registered';
-            res.statusCode = 200;
+            finish(log, 'Verified',
+                'Signature verified. Phase 5A.2 logs only — no handler dispatched yet.',
+                result, res, 200, true,
+                'Received ' + log.ULBC_Stripe_Event_Type__c);
 
         } catch (Exception e) {
-            result.success = false;
-            result.message = e.getMessage();
-            res.statusCode = 500;
-        }
-
-        res.responseBody = Blob.valueOf(JSON.serialize(result));
-    }
-
-    private static Integer processGuests(Map<String, Object> metadata, String campaignId) {
-        Integer guestCount = 0;
-
-        for (Integer i = 1; i <= 9; i++) {
-            String guestName = (String) metadata.get('guest_' + i + '_name');
-            String guestEmail = (String) metadata.get('guest_' + i + '_email');
-
-            if (String.isBlank(guestName) && String.isBlank(guestEmail)) {
-                break;
-            }
-
-            // Parse guest name
-            String gFirstName = '';
-            String gLastName = guestName;
-            if (String.isNotBlank(guestName) && guestName.contains(' ')) {
-                Integer spaceIdx = guestName.lastIndexOf(' ');
-                gFirstName = guestName.substring(0, spaceIdx).trim();
-                gLastName = guestName.substring(spaceIdx + 1).trim();
-            }
-
-            // Find or create guest Contact
-            Contact guest;
-            if (String.isNotBlank(guestEmail)) {
-                guest = findOrCreateContact(guestEmail, gFirstName, gLastName, 'Event Guest');
-            } else if (String.isNotBlank(guestName)) {
-                // No email — create Contact with name only
-                guest = createGuestContact(gFirstName, gLastName);
-            } else {
-                continue;
-            }
-
-            addCampaignMember(guest.Id, campaignId, 'Registered');
-            guestCount++;
-        }
-
-        return guestCount;
-    }
-
-    private static Contact findOrCreateContact(String email, String firstName, String lastName, String channel) {
-        List<Contact> existing = [
-            SELECT Id, AccountId, FirstName, LastName
-            FROM Contact
-            WHERE Email = :email
-            LIMIT 1
-        ];
-
-        if (!existing.isEmpty()) {
-            return existing[0];
-        }
-
-        Contact c = new Contact(
-            FirstName = firstName,
-            LastName = String.isBlank(lastName) ? email : lastName,
-            Email = email,
-            ULBC_Acquisition_Channel__c = channel,
-            ULBC_GDPR_Legal_Basis__c = 'Consent'
-        );
-        insert c;
-
-        return [SELECT Id, AccountId, FirstName, LastName FROM Contact WHERE Id = :c.Id];
-    }
-
-    private static Contact createGuestContact(String firstName, String lastName) {
-        Contact c = new Contact(
-            FirstName = firstName,
-            LastName = String.isBlank(lastName) ? 'Guest' : lastName,
-            ULBC_Acquisition_Channel__c = 'Event Guest',
-            ULBC_GDPR_Legal_Basis__c = 'Consent'
-        );
-        insert c;
-        return [SELECT Id, AccountId, FirstName, LastName FROM Contact WHERE Id = :c.Id];
-    }
-
-    private static void addCampaignMember(Id contactId, String campaignId, String status) {
-        List<CampaignMember> existing = [
-            SELECT Id FROM CampaignMember
-            WHERE ContactId = :contactId AND CampaignId = :campaignId
-            LIMIT 1
-        ];
-
-        if (existing.isEmpty()) {
-            insert new CampaignMember(
-                CampaignId = campaignId,
-                ContactId = contactId,
-                Status = status
-            );
+            finish(log, 'Error',
+                'Unexpected error: ' + e.getMessage() + '\n' + e.getStackTraceString(),
+                result, res, 500, false, e.getMessage());
         }
     }
 
-    private static void ensureCampaignMemberStatus(String campaignId) {
-        List<CampaignMemberStatus> existing = [
-            SELECT Label FROM CampaignMemberStatus
-            WHERE CampaignId = :campaignId AND Label IN ('Purchased', 'Registered')
-        ];
+    // ── Signature verification ──────────────────────────────────────────
 
-        Set<String> existingLabels = new Set<String>();
-        for (CampaignMemberStatus s : existing) {
-            existingLabels.add(s.Label);
+    @TestVisible
+    private class VerifyResult {
+        Boolean ok;
+        /** When ok=false, the Status picklist value to record. */
+        String status;
+        String reason;
+        /** Parsed Stripe timestamp (epoch seconds) — populated when t= parsed, regardless of ok. */
+        Long tsParsed;
+        VerifyResult(Boolean ok, String status, String reason, Long tsParsed) {
+            this.ok = ok; this.status = status; this.reason = reason; this.tsParsed = tsParsed;
         }
-
-        List<CampaignMemberStatus> toInsert = new List<CampaignMemberStatus>();
-        if (!existingLabels.contains('Purchased')) {
-            toInsert.add(new CampaignMemberStatus(
-                CampaignId = campaignId, Label = 'Purchased',
-                SortOrder = 4, IsDefault = false, HasResponded = true
-            ));
-        }
-        if (!existingLabels.contains('Registered')) {
-            toInsert.add(new CampaignMemberStatus(
-                CampaignId = campaignId, Label = 'Registered',
-                SortOrder = 5, IsDefault = false, HasResponded = true
-            ));
-        }
-
-        if (!toInsert.isEmpty()) {
-            try {
-                insert toInsert;
-            } catch (DmlException e) {
-                // Statuses may already exist from another thread
-            }
-        }
-    }
-
-    // ── Email notifications ──────────────────────────────────────────
-
-    private static List<Contact> getGuestContacts(Map<String, Object> metadata) {
-        List<String> guestEmails = new List<String>();
-        List<String> guestNames = new List<String>();
-
-        for (Integer i = 1; i <= 9; i++) {
-            String gName = (String) metadata.get('guest_' + i + '_name');
-            String gEmail = (String) metadata.get('guest_' + i + '_email');
-            if (String.isBlank(gName) && String.isBlank(gEmail)) break;
-            if (String.isNotBlank(gEmail)) guestEmails.add(gEmail);
-            if (String.isNotBlank(gName)) guestNames.add(gName);
-        }
-
-        if (guestEmails.isEmpty() && guestNames.isEmpty()) {
-            return new List<Contact>();
-        }
-
-        List<Contact> guests = new List<Contact>();
-        if (!guestEmails.isEmpty()) {
-            guests = [SELECT Id, FirstName, LastName, Email
-                      FROM Contact WHERE Email IN :guestEmails];
-        }
-
-        // Also find name-only guests (created moments ago)
-        if (!guestNames.isEmpty()) {
-            for (String fullName : guestNames) {
-                String lastName = fullName;
-                String firstName = '';
-                if (fullName.contains(' ')) {
-                    Integer idx = fullName.lastIndexOf(' ');
-                    firstName = fullName.substring(0, idx).trim();
-                    lastName = fullName.substring(idx + 1).trim();
-                }
-                // Check if already in the list by email
-                Boolean found = false;
-                for (Contact c : guests) {
-                    if (c.FirstName == firstName && c.LastName == lastName) {
-                        found = true;
-                        break;
-                    }
-                }
-                if (!found) {
-                    List<Contact> nameMatch = [SELECT Id, FirstName, LastName, Email
-                                               FROM Contact
-                                               WHERE FirstName = :firstName AND LastName = :lastName
-                                               ORDER BY CreatedDate DESC LIMIT 1];
-                    if (!nameMatch.isEmpty()) guests.add(nameMatch[0]);
-                }
-            }
-        }
-
-        return guests;
-    }
-
-    private static void sendBuyerConfirmation(Contact buyer, String eventName,
-                                               List<Contact> guests, Integer qty) {
-        String guestListHtml = '';
-        if (!guests.isEmpty()) {
-            guestListHtml = '<div style="background:#f4f1f8;border-left:4px solid #784ca8;border-radius:3px;padding:16px 20px;margin:20px 0;">' +
-                '<p style="font-family:Arial,sans-serif;font-size:13px;color:#666;text-transform:uppercase;letter-spacing:1px;margin:0 0 8px;">Guests registered</p>';
-            for (Contact g : guests) {
-                String name = (String.isNotBlank(g.FirstName) ? g.FirstName + ' ' : '') + g.LastName;
-                String emailNote = String.isNotBlank(g.Email) ? ' — ticket sent to ' + g.Email : ' — no email on file';
-                guestListHtml += '<p style="font-family:Arial,sans-serif;font-size:14px;margin:4px 0;color:#040008;">' +
-                    name + '<span style="color:#888;">' + emailNote + '</span></p>';
-            }
-            guestListHtml += '</div>';
-        }
-
-        String html = buildEmailWrapper(
-            'Booking Confirmed',
-            '<p style="font-size:22px;font-weight:bold;color:#040008;margin:0 0 8px;">Thank you, ' +
-                String.valueOf(buyer.FirstName) + '!</p>' +
-            '<p style="font-size:15px;color:#333;line-height:1.7;font-family:Arial,sans-serif;">Your ' +
-                qty + ' ticket(s) for <strong>' + eventName + '</strong> have been confirmed.</p>' +
-            guestListHtml +
-            '<p style="font-size:14px;color:#333;line-height:1.7;font-family:Arial,sans-serif;">Your digital ticket will be sent separately. If you have any questions, please contact <a href="mailto:boathouse@ulbc.co.uk" style="color:#784ca8;">boathouse@ulbc.co.uk</a>.</p>'
-        );
-
-        sendEmail(buyer.Email, 'Booking Confirmed — ' + eventName, html);
-    }
-
-    private static void sendGuestTicket(Contact guest, Contact buyer, String eventName) {
-        String buyerName = (String.isNotBlank(buyer.FirstName) ? buyer.FirstName + ' ' : '') + buyer.LastName;
-
-        String html = buildEmailWrapper(
-            'Your Ticket',
-            '<p style="font-size:22px;font-weight:bold;color:#040008;margin:0 0 8px;">You\'re invited!</p>' +
-            '<p style="font-size:15px;color:#333;line-height:1.7;font-family:Arial,sans-serif;">' +
-                buyerName + ' has purchased a ticket for you to attend <strong>' + eventName + '</strong>.</p>' +
-            '<div style="background:#f4f1f8;border-left:4px solid #784ca8;border-radius:3px;padding:16px 20px;margin:20px 0;">' +
-                '<p style="font-family:Arial,sans-serif;font-size:14px;margin:0;color:#040008;">' +
-                '<strong>Event:</strong> ' + eventName + '<br>' +
-                '<strong>Purchased by:</strong> ' + buyerName + '</p>' +
-            '</div>' +
-            '<p style="font-size:14px;color:#333;line-height:1.7;font-family:Arial,sans-serif;">Your digital ticket will follow shortly. If you have any questions, contact <a href="mailto:boathouse@ulbc.co.uk" style="color:#784ca8;">boathouse@ulbc.co.uk</a>.</p>'
-        );
-
-        sendEmail(guest.Email, 'Your Ticket — ' + eventName, html);
-    }
-
-    private static String buildEmailWrapper(String bannerText, String bodyContent) {
-        return '<html><head><meta charset="UTF-8"/></head><body style="margin:0;padding:0;background-color:#f4f1f8;font-family:Georgia,serif;color:#040008;">' +
-            '<div style="max-width:620px;margin:40px auto;background-color:#fbfafc;border-radius:4px;overflow:hidden;box-shadow:0 2px 12px rgba(4,0,8,0.12);">' +
-            '<div style="background-color:#040008;padding:36px 40px 28px;text-align:center;">' +
-                '<p style="color:#fbfafc;font-size:13px;letter-spacing:3px;text-transform:uppercase;margin:0;font-family:Arial,sans-serif;">University of London Boat Club</p>' +
-            '</div>' +
-            '<div style="background-color:#784ca8;padding:18px 40px;text-align:center;">' +
-                '<p style="margin:0;color:#fbfafc;font-size:15px;font-family:Arial,sans-serif;letter-spacing:1px;text-transform:uppercase;font-weight:bold;">' + bannerText + '</p>' +
-            '</div>' +
-            '<div style="padding:40px 40px 32px;">' + bodyContent + '</div>' +
-            '<div style="background-color:#040008;padding:24px 40px;text-align:center;border-top:3px solid #784ca8;">' +
-                '<p style="color:#888;font-family:Arial,sans-serif;font-size:12px;margin:0;line-height:1.6;">ULBC Trust — Registered Charity No. 1174721<br><a href="https://ulbc.co.uk" style="color:#784ca8;text-decoration:none;">ulbc.co.uk</a></p>' +
-            '</div>' +
-            '</div></body></html>';
     }
 
     @TestVisible
-    private static List<Messaging.SingleEmailMessage> pendingEmails = new List<Messaging.SingleEmailMessage>();
+    private static VerifyResult verifySignature(String body, String header, String secret, Datetime now) {
+        Map<String, List<String>> parts = parseSigHeader(header);
 
-    private static void sendEmail(String toAddress, String subject, String htmlBody) {
-        if (String.isBlank(toAddress)) return;
+        if (!parts.containsKey('t') || parts.get('t').isEmpty()) {
+            return new VerifyResult(false, 'Signature Invalid', 'Header missing t= timestamp', null);
+        }
+        if (!parts.containsKey('v1') || parts.get('v1').isEmpty()) {
+            return new VerifyResult(false, 'Signature Invalid', 'Header missing v1= signature', null);
+        }
 
-        Messaging.SingleEmailMessage mail = new Messaging.SingleEmailMessage();
-        mail.setToAddresses(new List<String>{ toAddress });
-        mail.setSubject(subject);
-        mail.setHtmlBody(htmlBody);
-        mail.setSaveAsActivity(false);
+        Long ts;
+        try {
+            ts = Long.valueOf(parts.get('t')[0]);
+        } catch (Exception e) {
+            return new VerifyResult(false, 'Signature Invalid', 'Header t= not a valid integer', null);
+        }
 
-        pendingEmails.add(mail);
+        Long nowSeconds = now.getTime() / 1000;
+        if (Math.abs(nowSeconds - ts) > TIMESTAMP_TOLERANCE_SECONDS) {
+            return new VerifyResult(false, 'Signature Expired',
+                'Timestamp outside tolerance window (' + TIMESTAMP_TOLERANCE_SECONDS + 's). Header t=' + ts + ', now=' + nowSeconds,
+                ts);
+        }
+
+        String signedPayload = String.valueOf(ts) + '.' + body;
+        Blob mac = Crypto.generateMac('HmacSHA256',
+            Blob.valueOf(signedPayload), Blob.valueOf(secret));
+        String expected = EncodingUtil.convertToHex(mac);
+
+        for (String candidate : parts.get('v1')) {
+            if (constantTimeEquals(expected, candidate)) {
+                return new VerifyResult(true, 'Verified', null, ts);
+            }
+        }
+        return new VerifyResult(false, 'Signature Invalid',
+            'No v1 signature in header matched the computed HMAC', ts);
     }
 
-    private static void flushEmails() {
-        if (!pendingEmails.isEmpty()) {
-            try {
-                Messaging.sendEmail(pendingEmails);
-            } catch (Exception e) {
-                System.debug(LoggingLevel.ERROR, 'Email send failed: ' + e.getMessage());
-            }
-            pendingEmails.clear();
+    @TestVisible
+    private static Map<String, List<String>> parseSigHeader(String header) {
+        Map<String, List<String>> out = new Map<String, List<String>>();
+        if (String.isBlank(header)) return out;
+
+        for (String segment : header.split(',')) {
+            String trimmed = segment.trim();
+            Integer eq = trimmed.indexOf('=');
+            if (eq <= 0) continue;
+            String k = trimmed.substring(0, eq).trim();
+            String v = trimmed.substring(eq + 1).trim();
+            if (!out.containsKey(k)) out.put(k, new List<String>());
+            out.get(k).add(v);
         }
+        return out;
+    }
+
+    /**
+     * Length-aware comparison that does not short-circuit on the first
+     * mismatched character. Apex executes on the server with HTTPS in
+     * front — timing leakage is extremely low — but the cost is trivial.
+     */
+    @TestVisible
+    private static Boolean constantTimeEquals(String a, String b) {
+        if (a == null || b == null) return false;
+        if (a.length() != b.length()) return false;
+        Integer diff = 0;
+        for (Integer i = 0; i < a.length(); i++) {
+            diff |= a.charAt(i) ^ b.charAt(i);
+        }
+        return diff == 0;
+    }
+
+    // ── Helpers ────────────────────────────────────────────────────────
+
+    @TestVisible
+    private static String getSigningSecret() {
+        ULBC_Stripe_Settings__c s = ULBC_Stripe_Settings__c.getOrgDefaults();
+        return (s == null) ? null : s.WebhookSigningSecret__c;
+    }
+
+    private static String readHeader(RestRequest req, String name) {
+        if (req == null || req.headers == null) return null;
+        for (String key : req.headers.keySet()) {
+            if (key.equalsIgnoreCase(name)) return req.headers.get(key);
+        }
+        return null;
+    }
+
+    private static void finish(ULBC_Webhook_Log__c log, String status, String errorMessage,
+                                WebhookResult result, RestResponse res,
+                                Integer statusCode, Boolean success, String message) {
+        log.ULBC_Status__c = status;
+        log.ULBC_Error_Message__c = (errorMessage != null && errorMessage.length() > 4096)
+            ? errorMessage.substring(0, 4096) : errorMessage;
+        try {
+            insert log;
+            result.logId = log.Id;
+        } catch (DmlException dmlErr) {
+            // Unique constraint on event_id catches Stripe replays. Surface as Duplicate.
+            if (dmlErr.getMessage() != null && dmlErr.getMessage().contains('DUPLICATE_VALUE')) {
+                log.Id = null;
+                log.ULBC_Status__c = 'Duplicate';
+                log.ULBC_Error_Message__c = 'Event ID already logged — Stripe replay.';
+                try {
+                    // Cannot reinsert with the same unique value; query the prior row to return its Id.
+                    if (String.isNotBlank(log.ULBC_Stripe_Event_ID__c)) {
+                        List<ULBC_Webhook_Log__c> prior = [
+                            SELECT Id FROM ULBC_Webhook_Log__c
+                            WHERE ULBC_Stripe_Event_ID__c = :log.ULBC_Stripe_Event_ID__c
+                            LIMIT 1
+                        ];
+                        if (!prior.isEmpty()) result.logId = prior[0].Id;
+                    }
+                } catch (Exception ignore) { /* best-effort */ }
+                statusCode = 200;  // Acknowledge replay so Stripe stops retrying.
+                success = true;
+                message = 'Duplicate event — already logged';
+            } else {
+                System.debug(LoggingLevel.ERROR, 'Webhook log insert failed: ' + dmlErr.getMessage());
+                if (Test.isRunningTest()) throw dmlErr;
+            }
+        }
+
+        result.success = success;
+        result.message = message;
+        res.statusCode = statusCode;
+        res.responseBody = Blob.valueOf(JSON.serialize(result));
     }
 }

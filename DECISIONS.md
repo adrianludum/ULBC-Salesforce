@@ -1,6 +1,6 @@
 # ULBC Trust Salesforce — Decision Log
-*Last updated: 2026-04-15*
-*Current phase: Phase 4 Complete — Migration Done*
+*Last updated: 2026-04-28*
+*Current phase: Phase 5A.2 Complete — typed handlers next (5A.3)*
 
 ---
 
@@ -484,4 +484,31 @@
 - **Why**: Xero invoices need a Customer (Contact). Per-donor invoices give the Finance Person full visibility — donor name on every invoice. Creating one Xero Contact per Salesforce Contact keeps the model clean.
 - **Implementation**: New Contact field `ULBC_Xero_Contact_ID__c` (Text 255, External ID, Unique). Created lazily — only when a Contact has a donation that needs invoicing.
 - **Date**: 2026-04-27
+
+---
+
+## Phase 5A Decisions — additions 2026-04-28
+
+### Decision 5.16 — Site URL strategy for v1: My Domain only, custom domain deferred
+- **What**: For v1, Salesforce Site URLs use the existing My Domain hostname `ulbctrustlimited.my.site.com` (org has enhanced domains; My Domain Name = `ulbctrustlimited`, confirmed in Setup 2026-04-28). Site URL Path Prefix is left blank, so URLs are `ulbctrustlimited.my.site.com/events/<campaign>` and `ulbctrustlimited.my.site.com/donate`. A custom domain (e.g. `events.ulbctrust.org`) is deferred to v2 because it requires DNS access for `ulbctrust.org`, which is out of scope for this build window.
+- **Why**: The existing My Domain is already brandable and respectable for fundraising emails — no rename needed. Custom domain can be layered on top later without changing Apex or LWC code; only the Custom Setting `DonationBaseURL__c` gets updated.
+- **Implication**: OQ-028 closed for v1. The Stripe webhook endpoint URL (OQ-027) will be `https://ulbctrustlimited.my.site.com/services/apexrest/stripe/webhook`; `DonationBaseURL__c` will be set to `https://ulbctrustlimited.my.site.com/donate` once the Site is deployed in 5A.4.
+- **Date**: 2026-04-28
+
+### Decision 5.17 — Charity Commission registration number recorded
+- **What**: ULBC Trust Limited is registered with the Charity Commission of England & Wales, charity number **1174721**. Recorded in PRD §2 (Legal & Organisational Context). To be referenced when Gift Aid HMRC R68 submission tooling is built (post-v1, separate phase).
+- **Why**: Required on every HMRC Gift Aid claim. Recording centrally so it's not chased again when the claim flow is built.
+- **Implementation**: PRD §2 updated. No schema change yet — when claim tooling is built, will live in a Custom Metadata Record or a single Custom Setting field alongside the HMRC submission credentials.
+- **Date**: 2026-04-28
+
+### Decision 5.18 — Phase 5A.2 schema: ULBC_Webhook_Log__c + WebhookSigningSecret__c
+- **What**: Webhook receiver writes one `ULBC_Webhook_Log__c` row per delivery. Schema:
+  - `ULBC_Stripe_Event_ID__c` (Text 255, External ID, **Unique**) — DB-level idempotency; replays raise DUPLICATE_VALUE caught by the handler and logged as `Status = Duplicate`.
+  - `ULBC_Stripe_Event_Type__c` (Text 100), `ULBC_Stripe_Timestamp__c` (DateTime, parsed from header `t=`), `ULBC_Processed_At__c` (DateTime, required), `ULBC_Status__c` (Picklist, required: Verified | Signature Invalid | Signature Expired | Signature Missing | Malformed | Duplicate | Error).
+  - `ULBC_Raw_Payload__c` (LTA 131072), `ULBC_Payload_Truncated__c` (Checkbox), `ULBC_Signature_Header__c` (LTA 1024), `ULBC_Error_Message__c` (LTA 4096).
+  - Signing secret stored on `ULBC_Stripe_Settings__c.WebhookSigningSecret__c` (Text 255, hierarchy custom setting). Hierarchy reads bypass FLS — gated only by Setup access (Customize Application).
+- **Why**: Idempotency at the DB layer (Unique on event_id) means even if Apex logic in 5A.3 is buggy, duplicate Stripe deliveries cannot create duplicate Opportunities or CampaignMembers — the log insert fails first. Schema captures both Stripe's signed timestamp and Salesforce's processing time so end-to-end latency can be measured.
+- **Implementation**: `ULBC_StripeWebhook` (Apex REST `/services/apexrest/stripe/webhook`) verifies HMAC-SHA256 of `t.body` against secret, enforces 5-minute tolerance window. 9 unit tests cover happy path, signature failures, stale timestamps, malformed JSON, replay handling, and rotation header (multiple `v1=` candidates). 92% class coverage. Permission set field grants on ULBC_Full_Access only — no other role needs read access.
+- **Date**: 2026-04-28
+- **Note on legacy webhook code**: The previous `ULBC_StripeWebhook` class (event-ticket-only logic from before Decision 5.9) is fully replaced. v0 logic remains in git history (commit b9f7ff4) for reference when Phase 5A.3 implements typed handlers.
 

@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>ULBC_Status__c</fullName>
+    <description>Outcome of webhook processing.</description>
+    <label>Status</label>
+    <required>true</required>
+    <trackTrending>false</trackTrending>
+    <type>Picklist</type>
+    <valueSet>
+        <valueSetDefinition>
+            <sorted>false</sorted>
+            <value>
+                <fullName>Verified</fullName>
+                <default>false</default>
+                <label>Verified</label>
+            </value>
+            <value>
+                <fullName>Signature Invalid</fullName>
+                <default>false</default>
+                <label>Signature Invalid</label>
+            </value>
+            <value>
+                <fullName>Signature Expired</fullName>
+                <default>false</default>
+                <label>Signature Expired</label>
+            </value>
+            <value>
+                <fullName>Signature Missing</fullName>
+                <default>false</default>
+                <label>Signature Missing</label>
+            </value>
+            <value>
+                <fullName>Malformed</fullName>
+                <default>false</default>
+                <label>Malformed</label>
+            </value>
+            <value>
+                <fullName>Duplicate</fullName>
+                <default>false</default>
+                <label>Duplicate</label>
+            </value>
+            <value>
+                <fullName>Error</fullName>
+                <default>true</default>
+                <label>Error</label>
+            </value>
+        </valueSetDefinition>
+    </valueSet>
+</CustomField>

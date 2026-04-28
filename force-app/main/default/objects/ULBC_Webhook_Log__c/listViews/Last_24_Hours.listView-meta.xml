@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ListView xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Last_24_Hours</fullName>
+    <filterScope>Everything</filterScope>
+    <filters>
+        <field>ULBC_Processed_At__c</field>
+        <operation>greaterThan</operation>
+        <value>YESTERDAY</value>
+    </filters>
+    <label>Last 24 Hours</label>
+</ListView>

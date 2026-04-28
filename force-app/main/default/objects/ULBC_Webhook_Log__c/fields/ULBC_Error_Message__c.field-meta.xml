@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>ULBC_Error_Message__c</fullName>
+    <description>Detail when Status is not Verified — e.g. signature mismatch reason, JSON parse error, missing field. Plain text only, no stack traces with secrets.</description>
+    <label>Error Message</label>
+    <length>4096</length>
+    <trackTrending>false</trackTrending>
+    <type>LongTextArea</type>
+    <visibleLines>5</visibleLines>
+</CustomField>
