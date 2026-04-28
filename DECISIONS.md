@@ -1,6 +1,6 @@
 # ULBC Trust Salesforce — Decision Log
-*Last updated: 2026-04-28*
-*Current phase: Phase 5A.3 Complete — Site + LWCs next (5A.4)*
+*Last updated: 2026-04-28 (evening — email auth setup)*
+*Current phase: Phase 5A.3 Complete — Site + LWCs next (5A.4); email deliverability (Decision 5.20) in flight*
 
 ---
 
@@ -530,5 +530,25 @@
 - **Stripe Customer ID linking**: when `session.customer` is present and `Contact.ULBC_Stripe_Customer_ID__c` is blank, the Customer ID is linked. Existing values are not overwritten.
 - **Known limitation**: handler exceptions after signature verification log `Status=Error` with `event_id` stored. Stripe retries hit the Unique constraint and become `Status=Duplicate` — the handler is NOT re-run automatically. Failed events require manual investigation (admin reads `ULBC_Error_Message__c`, fixes root cause, manually creates records or uses Stripe Dashboard "Resend" with a fresh event_id). Acceptable for v1 given low volume; revisit if production shows churn.
 - **Implementation**: 4 new Apex classes (`ULBC_ContactMatcher`, `ULBC_DonationHandler`, `ULBC_EventTicketHandler`, dispatch logic in `ULBC_StripeWebhook`). 25 new tests (8 ContactMatcher, 7 DonationHandler, 4 EventTicketHandler, 6 dispatch). Org-wide tests: 194 passing, 94% coverage.
+- **Date**: 2026-04-28
+
+### Decision 5.20 — Email authentication (SPF / DKIM / DMARC) on `ulbctrust.org`
+- **What**: Authenticate all Salesforce-originated mail from `noreply@ulbctrust.org` with SPF, DKIM and DMARC, hosted at GoDaddy DNS for `ulbctrust.org`.
+- **Why**: Without DKIM and SPF, Salesforce mail fails authentication at Gmail/Outlook and is spam-foldered. Critical for fundraising deliverability against ~1,500 alumni inboxes. Original symptom: bulk fundraising email landing in spam.
+- **Records**:
+  - **DKIM (primary)** — CNAME `salesforce._domainkey.ulbctrust.org` → `salesforce.ng72vp.custdkim.salesforce.com`. Generated in Salesforce Setup → DKIM Keys, RSA 2048, selector `salesforce`, alternate selector `salesforcealt`, domain `ulbctrust.org`, exact-domain match.
+  - **DKIM (alternate)** — CNAME `salesforcealt._domainkey.ulbctrust.org` → `salesforcealt.asnhtx.custdkim.salesforce.com`. Used by Salesforce for key rotation.
+  - **SPF** — TXT `@` `v=spf1 include:_spf.salesforce.com ~all`. Merged with any existing SPF (only one SPF record permitted per domain). If Google Workspace or Microsoft 365 is added later, append `include:_spf.google.com` or `include:spf.protection.outlook.com` respectively before `~all`.
+  - **DMARC** — TXT `_dmarc` `v=DMARC1; p=none; rua=mailto:adrian+dmarc@cassidy.uk.com; pct=100; aspf=r; adkim=r; fo=1`. `p=none` initially (monitor mode) so nothing legitimate is rejected during ramp.
+- **Status (as of 2026-04-28)**:
+  - DKIM keys generated and CNAMEs added to GoDaddy ✅
+  - DKIM primary CNAME verified live via MXToolbox ✅
+  - DKIM alternate CNAME — not yet independently verified, expected live
+  - DKIM **Activate** button in Salesforce — not yet clicked (verify alternate CNAME first)
+  - SPF and DMARC — values agreed but not yet confirmed published in GoDaddy DNS
+  - Mail-tester end-to-end score — pending; first test send did not arrive at mail-tester (root cause not yet diagnosed; could be List Email queue delay or the Activity-tab single-send didn't fire)
+- **DMARC tightening schedule**: hold at `p=none` for 2 weeks, review aggregate reports, move to `p=quarantine; pct=25` and ramp to `pct=100`, then to `p=reject` after 4–6 weeks of clean reports. Aggregate reports go to `adrian+dmarc@cassidy.uk.com` — note `cassidy.uk.com` is a different domain from `ulbctrust.org` so some receivers may require a `_report._dmarc` opt-in record on `cassidy.uk.com`. Switch to an `@ulbctrust.org` reporting address if reports don't arrive within 7 days.
+- **Choice of `noreply@`**: Acknowledged drawback — `noreply@` addresses score worse with spam filters and discourage reply-engagement. Kept as the From for system alerts (Upgrade Prospect, future automation). Fundraising bulk mail SHOULD use a friendlier address (e.g. `info@ulbctrust.org` or `fundraising@ulbctrust.org`) added as a second Org-Wide Email Address — to be addressed in next session alongside template buildout.
+- **Implementation owner**: Adrian. DNS edits made via GoDaddy `dcc.godaddy.com/control/portfolio/ulbctrust.org/settings`. No Salesforce code changes — configuration only.
 - **Date**: 2026-04-28
 

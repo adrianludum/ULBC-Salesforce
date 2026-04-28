@@ -1,6 +1,6 @@
 # ULBC Trust Salesforce — Product Requirements Document
 *Status: Phase 4 Complete — Phase 5 (Stripe + Event Ticketing) & Phase 6 (Xero) Planned*
-*Last synthesised: 2026-04-27*
+*Last synthesised: 2026-04-28*
 
 ---
 
@@ -352,12 +352,44 @@ Registered under ULBC Trust Limited.
 
 ---
 
-## 13. Email Communications — NOT YET CONFIGURED (Phase 3)
+## 13. Email Communications — PARTIALLY CONFIGURED (Phase 3D / ongoing)
 
 - Salesforce native list email via Marketing User feature licences
-- All bulk emails must include unsubscribe link
+- All bulk emails must include unsubscribe link (`{{{Sender.UnsubscribeLink}}}`)
+- All bulk emails must include charity number (1174721) and registered address in footer
 - Opt-outs flagged immediately on Contact record (HasOptedOutOfEmail = true)
 - Gone Away trigger already handles opt-out automation ✅
+
+### Email authentication (deliverability) — DEPLOYED ✅ (2026-04-28)
+
+Sending domain `ulbctrust.org` is authenticated via SPF, DKIM and DMARC. Decision 5.20.
+
+| Mechanism | Record | Status |
+|---|---|---|
+| DKIM key (primary) | CNAME `salesforce._domainkey.ulbctrust.org` → `salesforce.ng72vp.custdkim.salesforce.com` | ✅ Published, verified via MXToolbox |
+| DKIM key (alternate) | CNAME `salesforcealt._domainkey.ulbctrust.org` → `salesforcealt.asnhtx.custdkim.salesforce.com` | ✅ Published |
+| Salesforce DKIM activation | Setup → DKIM Keys → `salesforce` selector → Active | ⚠️ Pending — flip to Active once both CNAMEs verified |
+| SPF | TXT `@` `v=spf1 include:_spf.salesforce.com ~all` (merged with any existing SPF) | ⚠️ Pending GoDaddy publish + verify |
+| DMARC | TXT `_dmarc` `v=DMARC1; p=none; rua=mailto:adrian+dmarc@cassidy.uk.com; pct=100; aspf=r; adkim=r; fo=1` | ⚠️ Pending GoDaddy publish + verify |
+| End-to-end mail-tester score | Target 9+/10 | ⚠️ Pending — first send did not arrive at mail-tester |
+
+DMARC tightening schedule (post-verification):
+- Week 0–2: `p=none` (monitor mode, current)
+- Week 2–6: `p=quarantine; pct=25` then ramp to `pct=100`
+- Week 6+: `p=reject` once aggregate reports show clean SPF/DKIM alignment
+
+### Email templates
+
+- **Lightning Email Templates** are the supported template system (Classic templates deprecated for new work).
+- Branded HTML templates use inline CSS (Salesforce strips `<style>` blocks in some contexts).
+- Brand colours: `#784ca8` (purple), `#fbfafc` (off-white), `#040008` (near-black).
+- Logo (`ULBC_Logo` static resource) is exposed via Salesforce Files public link or via the Salesforce Site `/resource/ULBC_Logo` path for inclusion in HTML emails.
+
+### Attachments
+
+- **List Email does NOT support file attachments** (Salesforce platform limitation). Use a Salesforce Files public link in the email body instead.
+- Single-recipient email from a Contact's Activity tab supports attachments up to 25 MB total message size.
+- Files attached via the composer should be uploaded to Salesforce Files first, then inserted via "Insert File" — drag-drop into the body inlines them.
 
 ---
 
