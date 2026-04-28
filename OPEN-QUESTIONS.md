@@ -94,16 +94,17 @@
 (c) If rebuilding the site: agree on platform and timing.
 *Decision needed by: Adrian + WordPress admin. Does NOT block Phase 5 build (Salesforce-side independent of front-end).*
 
-**OQ-027**: Stripe webhook signing secret. Adrian needs to generate a new endpoint in Stripe Dashboard (Developers → Webhooks → Add endpoint) once the Salesforce Site URL is known, and store the signing secret as a Custom Metadata Record or Protected Custom Setting.
-*Blocking: Phase 5A.2 (webhook receiver deployment).*
+**OQ-027** ✅ [CLOSED 2026-04-28] — Stripe webhook endpoint created in test mode (sandbox), pointed at `https://ulbctrustlimited.my.site.com/services/apexrest/stripe/webhook`. Subscribed to `checkout.session.completed`. Signing secret (`whsec_...`) stored in `ULBC_Stripe_Settings__c.WebhookSigningSecret__c`. The endpoint will return errors until 5A.4 deploys the Site — Stripe retries are harmless.
 
 **OQ-028** ✅ [CLOSED 2026-04-28] — Decision 5.16: v1 uses existing My Domain `ulbctrustlimited.my.site.com` (confirmed in Setup, enhanced domains enabled), Site URL Path Prefix blank. Custom domain (`events.ulbctrust.org`) deferred to v2 — requires DNS access. `DonationBaseURL__c` will be updated from the placeholder to `https://ulbctrustlimited.my.site.com/donate` once the Site is deployed in 5A.4.
 
-**OQ-029**: Stripe test mode vs live mode flip. Build entirely in Stripe test mode. Production go-live requires:
-(a) New Stripe webhook endpoint pointed at the same Salesforce Site URL but with the LIVE signing secret.
-(b) Custom Metadata Record updated to swap test secret for live secret.
-(c) End-to-end test with a real £1 donation, then refund.
+**OQ-029**: Stripe test mode vs live mode flip. Build entirely in Stripe test mode (sandbox). Production go-live requires:
+(a) New Stripe webhook endpoint in **live mode** pointed at the same Salesforce Site URL, with the LIVE signing secret.
+(b) New restricted API key in **live mode** with the same scopes (Checkout Sessions: Write, Customers: Write); update the Named Credential `Stripe_API` to use it.
+(c) `ULBC_Stripe_Settings__c.WebhookSigningSecret__c` updated to the live `whsec_...`.
+(d) End-to-end test with a real £1 donation, then refund.
 *Standard practice — flagged so it's not forgotten on launch day.*
+
 
 ---
 

@@ -133,16 +133,29 @@ This is intentional for v1 — auto-retrying handler errors risks duplicate Oppo
 
 ---
 
-## What's next — Phase 5A.4
+## Admin prep for Phase 5A.4 — completed 2026-04-28
+
+All admin-side prerequisites are in place. No further user action needed before 5A.4 build can start.
+
+| Item | Status | Where it lives |
+|---|---|---|
+| Webhook signing secret | ✅ stored | `ULBC_Stripe_Settings__c.WebhookSigningSecret__c` (Custom Setting org-default) |
+| Stripe webhook endpoint | ✅ created (test/sandbox mode) | Stripe Dashboard → Developers → Webhooks. URL: `https://ulbctrustlimited.my.site.com/services/apexrest/stripe/webhook`. Subscribed to `checkout.session.completed`. Will return errors until 5A.4 deploys the Site — Stripe retries are harmless. |
+| Stripe API restricted key | ✅ stored | Named Credential `Stripe_API` (legacy, Password Authentication, Generate Authorization Header ✓). Test-mode `rk_test_...` with **Checkout Sessions: Write** + **Customers: Write** scopes only. URL `https://api.stripe.com`. Smoke-tested via `POST /v1/customers` → 200. |
+| My Domain | ✅ confirmed | `ulbctrustlimited.my.salesforce.com` (enhanced domains). Site URL will be `ulbctrustlimited.my.site.com`. |
+| Charity registration | ✅ recorded | PRD §2 — Charity Commission no. 1174721. |
+
+## What's next — Phase 5A.4 (build)
+
+Pure code work. No further admin actions needed unless the Site activation step needs an admin click (will flag at deploy time).
 
 | Component | Description |
 |---|---|
-| **Salesforce Site** | Create a public Site at `ulbctrustlimited.my.site.com` with no path prefix. Guest user profile, FLS minimal — only what the LWCs need. |
-| **`ulbcEventRegister` LWC** | Public page at `/events/<campaign-name>` reading the Event Campaign by URL slug, calling `ULBC_StripeCheckoutController.createEventSession(campaignId, qty, ulbc_trust_id?)` to get a Stripe Checkout URL, redirecting. |
-| **`ulbcDonate` LWC** | Public page at `/donate` reading `?ulbc_trust_id=ULBC-XXXX&fund=<campaignId>` from URL, pre-filling Contact data if TrustID matches, calling `createDonationSession(...)` for Checkout. |
-| **`ULBC_StripeCheckoutController`** | Apex class wrapping Stripe Checkout Session creation via HTTP callout (Named Credential `Stripe`). Sets metadata per Decision 5.9. |
-| **Stripe API key** | Test-mode `sk_test_...` API key in a Named Credential — admin sets up, never appears in code. |
-| **Update donation base URL** | Custom Setting `DonationBaseURL__c` from placeholder to `https://ulbctrustlimited.my.site.com/donate`. |
-| **End-to-end test** | Real Stripe Checkout in test mode → real webhook delivery → Opportunity + CampaignMember in Salesforce. |
+| **`ULBC_StripeCheckoutController`** | Apex class. Methods: `createDonationSession(amount, fund, ulbc_trust_id?, gift_aid?, gift_aid_postcode?, gift_type)` and `createEventSession(campaignId, qty, ulbc_trust_id?)`. Each builds a Stripe Checkout Session via HTTP callout to `callout:Stripe_API/v1/checkout/sessions`, sets `metadata` per Decision 5.9 (including the amended `ulbc_trust_id` key), returns the Stripe-hosted Checkout URL. |
+| **`ulbcDonate` LWC** | Public Lightning Web Component. Reads `?ulbc_trust_id=ULBC-XXXX&fund=<campaignId>` URL params. Captures amount, Gift Aid declaration (with postcode), one-off vs recurring. Calls `createDonationSession`, redirects browser to Stripe URL. |
+| **`ulbcEventRegister` LWC** | Public LWC. URL `/events/<campaign-name-slug>`. Pulls Campaign metadata (name, dates, venue, ticket price). Captures quantity. Calls `createEventSession`, redirects to Stripe URL. |
+| **Salesforce Site** | Create public Site at `ulbctrustlimited.my.site.com` (path prefix blank). Site Guest User profile granted: read on Campaign + Event-related custom fields, Apex class access on `ULBC_StripeCheckoutController`, Apex class access on `ULBC_StripeWebhook` (already granted to Full Access — needs guest-user grant). |
+| **Update `DonationBaseURL__c`** | Custom Setting from `https://placeholder.invalid/donate` to `https://ulbctrustlimited.my.site.com/donate`. The `Contact.ULBC_Donation_Link__c` formula starts producing real URLs. |
+| **End-to-end test** | Real Stripe Checkout flow in test mode → webhook delivery → Opportunity + CampaignMember land in Salesforce. The full loop. |
 
-5A.4 needs OQ-027 fully resolved (signing secret already configured ✅) and a Stripe **API key** (not signing secret — different thing) in a Named Credential. The API key is what Salesforce uses to CALL Stripe to create Checkout Sessions; the signing secret is what Stripe uses to PROVE webhook payloads to Salesforce.
+Estimate: one focused session, ~10–15 new tests including Apex callout mocking via `Test.setMock(HttpCalloutMock, ...)`.
