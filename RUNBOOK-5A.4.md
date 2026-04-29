@@ -47,15 +47,29 @@
 
 ---
 
-## Hostname note
+## Hostname + URL Path Prefix note
 
-This org serves Sites at `ulbctrustlimited.my.salesforce-sites.com` (the legacy Salesforce Sites domain), NOT the enhanced-domains `ulbctrustlimited.my.site.com` form despite the runbooks for 5A.2 and 5A.3 documenting the latter. The Stripe Dashboard webhook endpoint URL must point at the working hostname:
+**Hostname.** This org serves Sites at `ulbctrustlimited.my.salesforce-sites.com` (the legacy Salesforce Sites domain), NOT the enhanced-domains `ulbctrustlimited.my.site.com` form despite the runbooks for 5A.2 and 5A.3 documenting the latter. The Stripe Dashboard webhook endpoint URL must point at the working hostname:
 
 ```
 https://ulbctrustlimited.my.salesforce-sites.com/services/apexrest/stripe/webhook
 ```
 
 If a future Salesforce release switches the org over to enhanced-domain Site URLs, both the Stripe webhook URL and the `DonationBaseURL__c` / `EventsBaseURL__c` Custom Setting values will need to flip to `.my.site.com`. Until then, `.my.salesforce-sites.com` is the source of truth.
+
+**URL Path Prefix.** The Site was created with `urlPathPrefix=donate` (visible in the retrieved `force-app/main/default/sites/ULBC_Public.site-meta.xml`). The original 5A.4 walkthrough recommended leaving the path prefix blank, but it ended up as `donate`. Consequence:
+
+| Path | What's served |
+|---|---|
+| `/donate` | Site root → `indexPage` = `donate.page` (no redirect) ✓ |
+| `/donate?status=success&session_id=…` | Same as above with query string preserved ✓ |
+| `/donate/events?id=…` | events.page directly (canonical) ✓ |
+| `/events?id=…` | 301 redirect → `/donate/events?id=…` (works but adds a hop) |
+| `/services/apexrest/stripe/webhook` | Apex REST endpoint (path prefix doesn't apply to system paths) ✓ |
+
+The `DonationBaseURL__c` / `EventsBaseURL__c` Custom Setting values point at the canonical (no-redirect) forms — `/donate` and `/donate/events`. This is what `scripts/apex/set-stripe-urls.apex` writes.
+
+Why not change the Site's `urlPathPrefix` to blank? Could be done in Setup (edit the Site → URL Path Prefix → blank → save), which would let us serve `/events?id=…` directly without the redirect. But the current setup works and changing the prefix on a live Site is a meaningful config change. Documented as a future cleanup; not currently needed.
 
 ---
 
