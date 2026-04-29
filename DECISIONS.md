@@ -1,6 +1,6 @@
 # ULBC Trust Salesforce — Decision Log
-*Last updated: 2026-04-28*
-*Current phase: Phase 5A.3 Complete — Site + LWCs next (5A.4)*
+*Last updated: 2026-04-28 (evening — email auth setup)*
+*Current phase: Phase 5A.3 Complete — Site + LWCs next (5A.4); email deliverability (Decision 5.20) in flight*
 
 ---
 
@@ -532,7 +532,27 @@
 - **Implementation**: 4 new Apex classes (`ULBC_ContactMatcher`, `ULBC_DonationHandler`, `ULBC_EventTicketHandler`, dispatch logic in `ULBC_StripeWebhook`). 25 new tests (8 ContactMatcher, 7 DonationHandler, 4 EventTicketHandler, 6 dispatch). Org-wide tests: 194 passing, 94% coverage.
 - **Date**: 2026-04-28
 
-### Decision 5.20 — Phase 5A.4 implementation choices (Site, LWCs, Stripe Checkout)
+### Decision 5.20 — Email authentication (SPF / DKIM / DMARC) on `ulbctrust.org`
+- **What**: Authenticate all Salesforce-originated mail from `noreply@ulbctrust.org` with SPF, DKIM and DMARC, hosted at GoDaddy DNS for `ulbctrust.org`.
+- **Why**: Without DKIM and SPF, Salesforce mail fails authentication at Gmail/Outlook and is spam-foldered. Critical for fundraising deliverability against ~1,500 alumni inboxes. Original symptom: bulk fundraising email landing in spam.
+- **Records**:
+  - **DKIM (primary)** — CNAME `salesforce._domainkey.ulbctrust.org` → `salesforce.ng72vp.custdkim.salesforce.com`. Generated in Salesforce Setup → DKIM Keys, RSA 2048, selector `salesforce`, alternate selector `salesforcealt`, domain `ulbctrust.org`, exact-domain match.
+  - **DKIM (alternate)** — CNAME `salesforcealt._domainkey.ulbctrust.org` → `salesforcealt.asnhtx.custdkim.salesforce.com`. Used by Salesforce for key rotation.
+  - **SPF** — TXT `@` `v=spf1 include:_spf.salesforce.com ~all`. Merged with any existing SPF (only one SPF record permitted per domain). If Google Workspace or Microsoft 365 is added later, append `include:_spf.google.com` or `include:spf.protection.outlook.com` respectively before `~all`.
+  - **DMARC** — TXT `_dmarc` `v=DMARC1; p=none; rua=mailto:adrian+dmarc@cassidy.uk.com; pct=100; aspf=r; adkim=r; fo=1`. `p=none` initially (monitor mode) so nothing legitimate is rejected during ramp.
+- **Status (as of 2026-04-28)**:
+  - DKIM keys generated and CNAMEs added to GoDaddy ✅
+  - DKIM primary CNAME verified live via MXToolbox ✅
+  - DKIM alternate CNAME — not yet independently verified, expected live
+  - DKIM **Activate** button in Salesforce — not yet clicked (verify alternate CNAME first)
+  - SPF and DMARC — values agreed but not yet confirmed published in GoDaddy DNS
+  - Mail-tester end-to-end score — pending; first test send did not arrive at mail-tester (root cause not yet diagnosed; could be List Email queue delay or the Activity-tab single-send didn't fire)
+- **DMARC tightening schedule**: hold at `p=none` for 2 weeks, review aggregate reports, move to `p=quarantine; pct=25` and ramp to `pct=100`, then to `p=reject` after 4–6 weeks of clean reports. Aggregate reports go to `adrian+dmarc@cassidy.uk.com` — note `cassidy.uk.com` is a different domain from `ulbctrust.org` so some receivers may require a `_report._dmarc` opt-in record on `cassidy.uk.com`. Switch to an `@ulbctrust.org` reporting address if reports don't arrive within 7 days.
+- **Choice of `noreply@`**: Acknowledged drawback — `noreply@` addresses score worse with spam filters and discourage reply-engagement. Kept as the From for system alerts (Upgrade Prospect, future automation). Fundraising bulk mail SHOULD use a friendlier address (e.g. `info@ulbctrust.org` or `fundraising@ulbctrust.org`) added as a second Org-Wide Email Address — to be addressed in next session alongside template buildout.
+- **Implementation owner**: Adrian. DNS edits made via GoDaddy `dcc.godaddy.com/control/portfolio/ulbctrust.org/settings`. No Salesforce code changes — configuration only.
+- **Date**: 2026-04-28
+
+### Decision 5.21 — Phase 5A.4 implementation choices (Site, LWCs, Stripe Checkout)
 - **What**: Implementation choices for the public Site + LWCs + Stripe Checkout layer.
   - **Controller shape**: two `@AuraEnabled` methods (`createDonationSession`, `createEventSession`) on `ULBC_StripeCheckoutController`, sharing private helpers for form-body construction and the Stripe POST. Not a single parameterised method — the two intents take fundamentally different inputs (donation: amount + Gift Aid + fund; event_ticket: campaign + qty), and one-method-per-intent gives type-safe `@AuraEnabled` signatures the LWCs consume directly.
   - **LWC structure**: three components — `ulbcDonate` (page-level), `ulbcEventRegister` (page-level, self-contained), and `ulbcGiftAidDeclaration` (reusable child consumed by `ulbcDonate`). Gift Aid is split out because the HMRC declaration wording is legally fixed and the same component will be reused by any future donate flow.
@@ -543,11 +563,11 @@
   - **Success / cancel pages**: the same LWC renders a banner on return (`?status=success` or `?status=cancelled`). No separate thank-you / cancelled LWCs in v1.
   - **Custom Setting addition**: new field `EventsBaseURL__c` on `ULBC_Stripe_Settings__c` alongside the existing `DonationBaseURL__c`. Two separate fields keep the URL construction explicit; the existing `Contact.ULBC_Donation_Link__c` formula is unaffected.
   - **Site itself**: NOT authored as metadata in this commit. First-time `CustomSite` deployment via metadata API tends to fail because the standard error pages it references don't exist before Site creation. Manual Setup-UI creation (≈5 min) is faster than fighting the bootstrap. Once the Site exists, retrieve it via `sf project retrieve start --metadata CustomSite:ULBC_Public` and commit; from then on it's deployable.
-- **Why**: All choices documented in RUNBOOK-5A.4.md "Manual steps remaining" + "Known limitations / deferred" sections, with rationale.
-- **Implementation**: 1 new Apex class + test (`ULBC_StripeCheckoutController` + 20 tests), 3 new LWCs, 2 Aura wrapper apps, 2 Visualforce host pages, 1 new Custom Setting field (`EventsBaseURL__c`), permission set update granting controller class access. Post-deploy script `scripts/apex/set-stripe-urls.apex` for Custom Setting URL values. Org-wide tests: 203 passing.
+- **Why**: All choices documented in RUNBOOK-5A.4.md, with rationale.
+- **Implementation**: 1 new Apex class + test (`ULBC_StripeCheckoutController` + 20 tests), 3 new LWCs, 2 Aura wrapper apps, 2 Visualforce host pages, 1 new Custom Setting field (`EventsBaseURL__c`), permission set update granting controller class access. Post-deploy script `scripts/apex/set-stripe-urls.apex` for Custom Setting URL values. Org-wide tests: 208 passing.
 - **Date**: 2026-04-28
 
-### Decision 5.21 — Sharing strategy for the Stripe webhook chain
+### Decision 5.22 — Sharing strategy for the Stripe webhook chain
 - **What**: After a Stripe webhook payload has been signature-verified by `ULBC_StripeWebhook`, the entire downstream handler chain runs `without sharing`. Specifically:
   - **`with sharing`** (defence in depth at the receive boundary): `ULBC_StripeWebhook` itself — receives the HTTP, parses headers, verifies HMAC, writes the `ULBC_Webhook_Log__c` row.
   - **`without sharing`** (system-trusted post-verification work): `ULBC_DonationHandler`, `ULBC_EventTicketHandler`, `ULBC_ContactMatcher`, `ULBC_ContactTriggerHandler`, `ULBC_DonorTierEngine`.

@@ -1,5 +1,5 @@
 # ULBC Trust Salesforce — Open Questions
-*Last updated: 2026-04-28 (post-5A.4 smoke test)*
+*Last updated: 2026-04-29 (post-5A.4 smoke test, post-email-auth setup)*
 
 ---
 
@@ -161,15 +161,48 @@
 
 ---
 
-## Phase 5A.4 follow-ups (Added 2026-04-28)
+## Phase 3D Email Deliverability — Added 2026-04-28 (Decision 5.20)
 
-**OQ-039**: Event registration flow (`/events?id=<CampaignId>`) is built and deployed but not yet smoke-tested end-to-end with a real test card. Needs a Campaign with `ULBC_Ticket_Price__c` set + a £1 test-card flow + verification that `CampaignMember.Status = Purchased` and the corresponding Closed Won `Opportunity` (Type `Event Ticket`) land. **Slated for Phase 5A.5.**
+**OQ-039**: DKIM **Activate** button in Salesforce Setup → DKIM Keys not yet clicked. Primary CNAME `salesforce._domainkey.ulbctrust.org` is verified live via MXToolbox. Alternate CNAME `salesforcealt._domainkey.ulbctrust.org` not yet independently verified.
+*Action: verify alternate CNAME via MXToolbox CNAME Lookup, then click Activate. Confirm `Active = true` on the key record.*
+*Owner: Adrian. Blocking: clean DKIM signatures on all outbound Salesforce mail.*
 
-**OQ-040**: `ULBC_Webhook_Log__c` standard page layout doesn't expose the diagnostic fields (`ULBC_Status__c`, `ULBC_Stripe_Event_Type__c`, `ULBC_Stripe_Event_ID__c`, `ULBC_Error_Message__c`, `ULBC_Stripe_Timestamp__c`, `ULBC_Raw_Payload__c`). Investigation during 5A.4 smoke test required CLI SOQL to read the error message — admins shouldn't need that. **Add to 5A.5: edit the Compact Layout + Detail Layout to surface these fields, ideally with a list view showing Status + Stripe Event Type + Processed At as the default columns.**
+**OQ-040**: SPF and DMARC TXT records — the values are agreed (Decision 5.20) but it's not yet confirmed they are live in GoDaddy DNS. Need to verify with MXToolbox SPF Record Lookup and DMARC Lookup against `ulbctrust.org`.
+*Action: confirm both records resolve, then run a fresh mail-tester send and target 9+/10.*
+*Owner: Adrian. Blocking: deliverability sign-off.*
 
-**OQ-041**: Site metadata (`CustomSite:ULBC_Public`) was created via Setup UI rather than authored in source. Once the Site is stable, run `sf project retrieve start --metadata CustomSite:ULBC_Public --target-org ulbc` to pull it into `force-app/main/default/sites/` and commit. From that point the Site is metadata-tracked and reproducible in scratch orgs. **Slated for Phase 5A.5.**
+**OQ-041**: First mail-tester end-to-end send did not arrive at the test inbox `test-qtqqugfh9@srv1.mail-tester.com` (countdown reset repeatedly). Root cause not diagnosed in this session.
+*Possibilities: (a) sent via List Email and queued, (b) Activity-tab single send not fired, (c) Org-Wide Email Address profile restriction, (d) recipient address typed incorrectly.*
+*Action next session: send a fresh test from a Contact's Activity tab (From = `noreply@ulbctrust.org`, To = `adrian+salesforce@cassidy.uk.com`) and inspect headers + Setup → Email Logs.*
+*Owner: Adrian. Blocking: confirmation that authentication actually works end-to-end.*
 
-**OQ-042**: Three orphan Contacts created during 5A.4 smoke-test failures: `003Sk00000wKzp8IAC` (TrustID `ULBC-0001`, no Opportunity), `003Sk00000vmACiIAM` (TrustID likely `ULBC-0002`, no Opportunity), and the WHL-00008 Contact which DOES have an Opp attached. The first two are harmless but clutter the Contact list. Optional: query "no-Opp Contacts created today" and delete the two test artefacts. Not blocking anything.
+**OQ-042**: Should bulk fundraising mail use `noreply@ulbctrust.org` (current) or be migrated to a friendlier From such as `info@ulbctrust.org` or `fundraising@ulbctrust.org`?
+*Recommendation: Add a second Org-Wide Email Address (e.g. `info@ulbctrust.org`), keep `noreply@` only for system alerts (Upgrade Prospect, future automation). `noreply@` addresses score worse with spam filters and reduce reply-engagement, both of which hurt deliverability for a fundraising charity.*
+*Decision needed by: Fundraiser + Adrian.*
 
-**OQ-043**: Hostname mismatch between runbooks. RUNBOOK-5A.2 and 5A.3 documented Site URL as `ulbctrustlimited.my.site.com` (enhanced-domains form). The org actually serves at `ulbctrustlimited.my.salesforce-sites.com` (legacy form). Updated in `DonationBaseURL__c`, `EventsBaseURL__c`, and Stripe Dashboard webhook endpoint. The runbooks 5A.2 / 5A.3 still mention the wrong hostname — minor doc tidy in 5A.5 to update them retroactively (or accept as historical record).
+**OQ-043**: DMARC `rua` reporting address is `adrian+dmarc@cassidy.uk.com` — a different domain from `ulbctrust.org`. Some receivers (per RFC 7489) require a verification record at `ulbctrust.org._report._dmarc.cassidy.uk.com` on the receiving domain. Most receivers don't enforce this, but if reports don't arrive within 7 days of DMARC publish, this is the likely cause.
+*Action: monitor inbox for 7 days. If no aggregate reports arrive, either add the verification record on `cassidy.uk.com` or switch `rua` to an `@ulbctrust.org` mailbox.*
+*Owner: Adrian. Not blocking — deliverability still works without aggregate reports, we just lose visibility.*
+
+**OQ-044**: Bulk-email attachment policy. Salesforce List Email does NOT support file attachments (platform limitation). The agreed pattern is to upload to Salesforce Files, generate a Public Link, and paste the URL into the email body. No formal policy yet on file size, link expiry, or whether public links should be reviewed before sending.
+*Recommendation: standard pattern documented in PRD §13. Treat any attachment >5 MB as link-only. Public links should expire after 90 days for sensitive documents.*
+*Decision needed by: Fundraiser.*
+
+**OQ-045**: DMARC tightening — Decision 5.20 schedules a move from `p=none` → `p=quarantine` at week 2 and `p=reject` at week 6. Calendar reminder needed.
+*Action: schedule a calendar reminder for 2026-05-12 (week 2) and 2026-06-09 (week 6) to revisit DMARC policy. Cannot tighten until aggregate reports show no legitimate sender failing alignment.*
+*Owner: Adrian.*
+
+---
+
+## Phase 5A.4 follow-ups — Added 2026-04-29 (post-smoke-test)
+
+**OQ-046**: Event registration flow (`/events?id=<CampaignId>`) is built and deployed but not yet smoke-tested end-to-end with a real test card. Needs a Campaign with `ULBC_Ticket_Price__c` set + a £1 test-card flow + verification that `CampaignMember.Status = Purchased` and the corresponding Closed Won `Opportunity` (Type `Event Ticket`) land. **Slated for Phase 5A.5.**
+
+**OQ-047**: `ULBC_Webhook_Log__c` standard page layout doesn't expose the diagnostic fields (`ULBC_Status__c`, `ULBC_Stripe_Event_Type__c`, `ULBC_Stripe_Event_ID__c`, `ULBC_Error_Message__c`, `ULBC_Stripe_Timestamp__c`, `ULBC_Raw_Payload__c`). Investigation during 5A.4 smoke test required CLI SOQL to read the error message — admins shouldn't need that. **Add to 5A.5: edit the Compact Layout + Detail Layout to surface these fields, ideally with a list view showing Status + Stripe Event Type + Processed At as the default columns.**
+
+**OQ-048**: Site metadata (`CustomSite:ULBC_Public`) was created via Setup UI rather than authored in source. Once the Site is stable, run `sf project retrieve start --metadata CustomSite:ULBC_Public --target-org ulbc` to pull it into `force-app/main/default/sites/` and commit. From that point the Site is metadata-tracked and reproducible in scratch orgs. **Slated for Phase 5A.5.**
+
+**OQ-049**: Three orphan Contacts created during 5A.4 smoke-test failures: `003Sk00000wKzp8IAC` (TrustID `ULBC-0001`, no Opportunity), `003Sk00000vmACiIAM` (TrustID likely `ULBC-0002`, no Opportunity), and the WHL-00008 Contact which DOES have an Opp attached. The first two are harmless but clutter the Contact list. Optional: query "no-Opp Contacts created today" and delete the two test artefacts. Not blocking anything.
+
+**OQ-050**: Hostname mismatch between runbooks. RUNBOOK-5A.2 and 5A.3 documented Site URL as `ulbctrustlimited.my.site.com` (enhanced-domains form). The org actually serves at `ulbctrustlimited.my.salesforce-sites.com` (legacy form). Updated in `DonationBaseURL__c`, `EventsBaseURL__c`, and Stripe Dashboard webhook endpoint. The runbooks 5A.2 / 5A.3 still mention the wrong hostname — minor doc tidy in 5A.5 to update them retroactively (or accept as historical record).
 
