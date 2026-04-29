@@ -1,5 +1,5 @@
 # ULBC Trust Salesforce — Open Questions
-*Last updated: 2026-04-28*
+*Last updated: 2026-04-28 (post-5A.4 smoke test)*
 
 ---
 
@@ -158,4 +158,18 @@
 **OQ-038**: Broken legacy report `ULBC_Crews_By_Regatta` fails to deploy with "invalid report type" despite the referenced Custom Report Type `ULBC_Crew_Histories` existing in the org. Currently excluded from project deploys (file moved to `~/ulbc-crews-report-broken.xml.bak`) and the `ULBC_Dashboard.dashboard-meta.xml` that references it is also excluded (`*.broken` rename). Pre-existing from Phase 2C/3.
 *Investigate during a Phase 2C/3 tidy-up sprint. Either rebuild the Custom Report Type, or delete the report (and remove its reference from the dashboard).*
 *Not blocking any phase.*
+
+---
+
+## Phase 5A.4 follow-ups (Added 2026-04-28)
+
+**OQ-039**: Event registration flow (`/events?id=<CampaignId>`) is built and deployed but not yet smoke-tested end-to-end with a real test card. Needs a Campaign with `ULBC_Ticket_Price__c` set + a £1 test-card flow + verification that `CampaignMember.Status = Purchased` and the corresponding Closed Won `Opportunity` (Type `Event Ticket`) land. **Slated for Phase 5A.5.**
+
+**OQ-040**: `ULBC_Webhook_Log__c` standard page layout doesn't expose the diagnostic fields (`ULBC_Status__c`, `ULBC_Stripe_Event_Type__c`, `ULBC_Stripe_Event_ID__c`, `ULBC_Error_Message__c`, `ULBC_Stripe_Timestamp__c`, `ULBC_Raw_Payload__c`). Investigation during 5A.4 smoke test required CLI SOQL to read the error message — admins shouldn't need that. **Add to 5A.5: edit the Compact Layout + Detail Layout to surface these fields, ideally with a list view showing Status + Stripe Event Type + Processed At as the default columns.**
+
+**OQ-041**: Site metadata (`CustomSite:ULBC_Public`) was created via Setup UI rather than authored in source. Once the Site is stable, run `sf project retrieve start --metadata CustomSite:ULBC_Public --target-org ulbc` to pull it into `force-app/main/default/sites/` and commit. From that point the Site is metadata-tracked and reproducible in scratch orgs. **Slated for Phase 5A.5.**
+
+**OQ-042**: Three orphan Contacts created during 5A.4 smoke-test failures: `003Sk00000wKzp8IAC` (TrustID `ULBC-0001`, no Opportunity), `003Sk00000vmACiIAM` (TrustID likely `ULBC-0002`, no Opportunity), and the WHL-00008 Contact which DOES have an Opp attached. The first two are harmless but clutter the Contact list. Optional: query "no-Opp Contacts created today" and delete the two test artefacts. Not blocking anything.
+
+**OQ-043**: Hostname mismatch between runbooks. RUNBOOK-5A.2 and 5A.3 documented Site URL as `ulbctrustlimited.my.site.com` (enhanced-domains form). The org actually serves at `ulbctrustlimited.my.salesforce-sites.com` (legacy form). Updated in `DonationBaseURL__c`, `EventsBaseURL__c`, and Stripe Dashboard webhook endpoint. The runbooks 5A.2 / 5A.3 still mention the wrong hostname — minor doc tidy in 5A.5 to update them retroactively (or accept as historical record).
 

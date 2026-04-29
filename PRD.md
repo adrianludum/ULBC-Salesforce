@@ -434,7 +434,8 @@ Stripe handles **website donations** and **event ticketing** (dinners, BBQs, etc
 | 5A.1 | Data model — `ULBC_Stripe_Customer_ID__c` on Contact, `ULBC_Donation_Link__c` formula on Contact, `ULBC_Stripe_Payment_ID__c` on CampaignMember, `ULBC_Stripe_Settings__c` Custom Setting, permission set + layout updates | **Deployed ✅ 2026-04-27** |
 | 5A.2 | Apex webhook receiver: HMAC-SHA256 signature verify, `ULBC_Webhook_Log__c` audit object (Unique event_id for DB-level idempotency), `WebhookSigningSecret__c` on Custom Setting, 9 tests | **Deployed ✅ 2026-04-28** |
 | 5A.3 | Typed handlers: `ULBC_ContactMatcher` (Decision 5.8 priority), `ULBC_DonationHandler` (with Gift Aid capture per Decision 2.10), `ULBC_EventTicketHandler` (Campaign + CampaignMember + Opportunity), intent dispatch in webhook, 25 new tests | **Deployed ✅ 2026-04-28** |
-| 5A.4 | Salesforce Site + LWCs: `ulbcEventRegister` (event ticketing) AND `ulbcDonate` (personalised donations), per Decisions 5.4 + 5.15 | Not started |
+| 5A.4 | Salesforce Site + LWCs: `ulbcEventRegister` (event ticketing) AND `ulbcDonate` (personalised donations), per Decisions 5.4 + 5.15 | **Deployed ✅ 2026-04-28**, donate flow smoke-tested end-to-end (real £25 test card → Closed Won Opportunity in Salesforce). Event flow built but not yet smoke-tested. |
+| 5A.5 | Wrap-up: events smoke test, page layout polish for `ULBC_Webhook_Log__c`, retrieve `CustomSite:ULBC_Public` into source control. See `NEXT-SESSION.md`. | Planned |
 | ~~5B~~ | ~~Donation flow~~ | **Closed — merged into 5A.3 + 5A.4 by Decision 5.15** |
 
 ### Stripe metadata contract (Decision 5.9, amended 2026-04-27)

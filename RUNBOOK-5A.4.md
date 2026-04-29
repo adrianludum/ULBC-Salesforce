@@ -1,8 +1,9 @@
 # Phase 5A.4 — Site + LWCs + Stripe Checkout — Deployment Notes
 
-**Status:** Code deployed ✅ 2026-04-28 to org `ulbc`. Manual Site creation pending.
-**Test count:** 203 passing org-wide (20 new in `ULBC_StripeCheckoutController_Test`).
-**Deploy ID:** `0AfSk000001AXOjKAO`.
+**Status:** Deployed end-to-end ✅ 2026-04-28 to org `ulbc`. Donate-flow smoke test passed (real £25 test-card payment → Closed Won Opportunity in Salesforce).
+**Test count:** 208 passing org-wide (20 new in `ULBC_StripeCheckoutController_Test`).
+**Site URL:** `https://ulbctrustlimited.my.salesforce-sites.com` (legacy hostname form on this org — see "Hostname note" below).
+**Initial deploy ID:** `0AfSk000001AXOjKAO` (build). **Fix deploy ID:** `0AfSk000001AXi5KAG` (without-sharing fixes from smoke test).
 
 ---
 
@@ -42,11 +43,25 @@
 `ULBC_Full_Access` granted Apex class access on `ULBC_StripeCheckoutController`.
 
 ### Post-deploy script
-`scripts/apex/set-stripe-urls.apex` — sets `DonationBaseURL__c` to `https://ulbctrustlimited.my.site.com/donate` and `EventsBaseURL__c` to `https://ulbctrustlimited.my.site.com/events`. Run once after the public Site exists in Setup.
+`scripts/apex/set-stripe-urls.apex` — sets `DonationBaseURL__c` to `https://ulbctrustlimited.my.salesforce-sites.com/donate` and `EventsBaseURL__c` to `https://ulbctrustlimited.my.salesforce-sites.com/events`. Run once after the public Site exists in Setup. **Note:** initially written for `.my.site.com` (enhanced-domains form) but corrected to `.my.salesforce-sites.com` after the live test confirmed the org serves the Site under the legacy hostname only.
 
 ---
 
-## Manual steps remaining
+## Hostname note
+
+This org serves Sites at `ulbctrustlimited.my.salesforce-sites.com` (the legacy Salesforce Sites domain), NOT the enhanced-domains `ulbctrustlimited.my.site.com` form despite the runbooks for 5A.2 and 5A.3 documenting the latter. The Stripe Dashboard webhook endpoint URL must point at the working hostname:
+
+```
+https://ulbctrustlimited.my.salesforce-sites.com/services/apexrest/stripe/webhook
+```
+
+If a future Salesforce release switches the org over to enhanced-domain Site URLs, both the Stripe webhook URL and the `DonationBaseURL__c` / `EventsBaseURL__c` Custom Setting values will need to flip to `.my.site.com`. Until then, `.my.salesforce-sites.com` is the source of truth.
+
+---
+
+## Manual setup performed (2026-04-28)
+
+The Site itself was deliberately not authored as metadata in this phase — first-time `CustomSite` creation via metadata API tends to fail because the standard error pages it references don't yet exist. Creating it via Setup is faster than fighting the metadata bootstrap. The following steps were performed once, in order, by an admin in Setup:
 
 The Site itself was deliberately not authored as metadata in this phase — first-time `CustomSite` creation via metadata API tends to fail because the standard error pages it references don't yet exist. Creating it via Setup is faster than fighting the metadata bootstrap.
 
@@ -109,15 +124,15 @@ sf apex run -f scripts/apex/set-stripe-urls.apex --target-org ulbc
 
 This sets `DonationBaseURL__c` and `EventsBaseURL__c` in `ULBC_Stripe_Settings__c` so the controller can build success/cancel URLs and the `Contact.ULBC_Donation_Link__c` formula starts producing real personalised URLs.
 
-### 5. Smoke-test
+### 5. Smoke test (donate flow) — passed 2026-04-28
 
-1. Open `https://ulbctrustlimited.my.site.com/donate` in incognito. The donate LWC should load with £25 preset selected and Gift Aid toggle unchecked.
-2. Click "Continue to secure checkout". You should land on a real Stripe Checkout page (test mode).
-3. Pay with card `4242 4242 4242 4242`, any future expiry, any CVC, any postcode.
-4. Browser redirects to `…/donate?status=success&session_id=cs_test_…` and shows the green banner.
-5. Within seconds, check Salesforce: a new Contact (if not matched) and a Closed Won Opportunity for £25 with `ULBC_Gift_Source__c = Digital`. A `ULBC_Webhook_Log__c` row with `Status = Processed`.
+1. Open `https://ulbctrustlimited.my.salesforce-sites.com/donate` in incognito.
+2. Click £25 preset → Continue to secure checkout → real Stripe Checkout page.
+3. Pay with `4242 4242 4242 4242`, any future expiry / CVC / postcode.
+4. Browser redirects back, green success banner shown.
+5. **Result:** webhook log `WHL-00008` Status=Processed, "Donation £25 recorded. Created new Contact (Acquisition Channel: Stripe Donation)". Opportunity `006Sk00000ThXUfIAN` (£25, Closed Won, Gift Type=One-off, Stripe Payment ID `pi_3TRJS9D7BlsMEKft0WpajqMS`) confirmed in Salesforce.
 
-For the event flow, repeat with `https://ulbctrustlimited.my.site.com/events?id=<CampaignId>` where the Campaign has `ULBC_Ticket_Price__c` set.
+The event flow (`/events?id=<CampaignId>`) is built and deployed but **not yet smoke-tested** with a real card — pending in Phase 5A.5. Requires a Campaign with `ULBC_Ticket_Price__c` set.
 
 ---
 
@@ -179,4 +194,20 @@ The same LWC renders the post-payment banner when it sees `status=success` or `s
 
 5. **No standalone thank-you / cancelled pages.** Banners on the same LWC. Sufficient for v1; can split out if marketing wants tracking pixels or different copy.
 
-6. **End-to-end smoke test deferred until manual Site setup is done.** All 20 unit tests + the 174 prior org tests + the LWC framework checks pass. The full webhook→Opportunity loop was already proven in 5A.3 with mocked signed payloads. The remaining unproven leg is Site → Stripe redirect → return — verifiable in 5–10 min once the Site is up.
+6. **End-to-end smoke test deferred until manual Site setup is done.** ✅ **Resolved 2026-04-28**: donate-flow smoke test passed end-to-end with a real £25 test-card payment. Event flow still untested — pending 5A.5.
+
+---
+
+## Smoke-test fixes applied 2026-04-28 (commit `dc3b819`)
+
+The first three live test attempts (WHL-00001, WHL-00003, WHL-00005, WHL-00007) failed with three distinct errors, all rooted in guest-user sharing rules being enforced inside the system-trusted post-signature-verification handler chain:
+
+| # | Symptom | Root cause | Fix |
+|---|---|---|---|
+| 1 | `List has no rows for assignment to SObject` in `ULBC_ContactMatcher.findOrCreate` line 114 | Post-insert re-query of newly-created Contact returned empty under guest user (Salesforce Spring '21+ secure-guest-user blocks visibility of records the guest just created) | `ULBC_ContactMatcher` → `without sharing` |
+| 2 | `DUPLICATE_VALUE on ULBC_Trust_ID__c` (after fix #1 deployed) | `ULBC_ContactTriggerHandler.assignTrustId` queried max TrustID `with sharing`, returned empty, kept assigning `ULBC-0001` to every new Contact and tripping the unique constraint on the second delivery | `ULBC_ContactTriggerHandler` → `without sharing` |
+| 3 | `INSUFFICIENT_ACCESS_ON_CROSS_REFERENCE_ENTITY` in `ULBC_DonorTierEngine.recalculate` line 132 (chained from `ULBC_OpportunityTrigger` post-Opp-insert) | Aggregation engine ran `with sharing`, couldn't see Contact's parent Account (owned by site Default Record Owner) | `ULBC_DonorTierEngine` → `without sharing` |
+
+`ULBC_DonationHandler` and `ULBC_EventTicketHandler` were also flipped to `without sharing` in the same commit for consistency — the entire post-`ULBC_StripeWebhook.handlePost` chain is now system-trusted because signature verification at the entry point is the security boundary. Pattern documented as Decision 5.21.
+
+This is an established Salesforce pattern for public Site receivers: the public endpoint runs `with sharing` for receive + signature verification (defence in depth), and the verified-payload handler chain runs `without sharing` because the security check has already passed and the guest user's restricted view would block legitimate system operations.
