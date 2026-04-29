@@ -15,7 +15,15 @@
  *
  * Phase 5A.4.
  */
-public with sharing class ULBC_StripeCheckoutController {
+// without sharing: invoked by the public donate + events LWCs running as
+// the Site Guest User. Salesforce's secure-guest-user-record-access
+// feature prevents the guest user from seeing Campaigns owned by internal
+// users (e.g. fundraisers), so a `with sharing` getEventInfo / fund
+// lookup returns empty and the user sees "Event not found" / "Selected
+// fund not found". The Stripe Checkout API surface is the security
+// boundary — input parameters are typed and validated, no SOQL
+// injection, callout body is constructed from validated values.
+public without sharing class ULBC_StripeCheckoutController {
 
     @TestVisible
     private static final Decimal MIN_DONATION_GBP = 1.00;

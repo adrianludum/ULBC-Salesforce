@@ -225,3 +225,7 @@ The first three live test attempts (WHL-00001, WHL-00003, WHL-00005, WHL-00007) 
 `ULBC_DonationHandler` and `ULBC_EventTicketHandler` were also flipped to `without sharing` in the same commit for consistency — the entire post-`ULBC_StripeWebhook.handlePost` chain is now system-trusted because signature verification at the entry point is the security boundary. Pattern documented as Decision 5.21.
 
 This is an established Salesforce pattern for public Site receivers: the public endpoint runs `with sharing` for receive + signature verification (defence in depth), and the verified-payload handler chain runs `without sharing` because the security check has already passed and the guest user's restricted view would block legitimate system operations.
+
+### Sixth fix applied 2026-04-29 — controller also needs `without sharing`
+
+The events-flow smoke test (5A.5 OQ-046) failed with "Event not found" on the first try. Root cause: `ULBC_StripeCheckoutController.getEventInfo` was `with sharing`, and guest users can't see Campaigns owned by internal users (the fundraiser is the typical Campaign owner). Same secure-guest-user-record-access feature that bit us on Contact reads in 5A.4. Fix: `ULBC_StripeCheckoutController` flipped to `without sharing` too. Smoke test then passed first try — webhook log `WHL-00011` Status=Processed, Opportunity `006Sk00000TiLPpIAN` (£75 Henley Women 2026 Ticket) created, CampaignMember `00vSk00000LcVl3IAF` Status=Purchased with Stripe Payment ID stamped. Decision 5.22 amended to reflect.

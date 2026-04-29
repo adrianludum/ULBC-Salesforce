@@ -1,54 +1,85 @@
-# Next session — Phase 5A.5 wrap-up
+# Next session — Stripe production go-live (OQ-029)
 
-Email deliverability work (Decision 5.20, OQ-039 to OQ-045) is **parked** as of 2026-04-29 — ULBC is moving to a different email account / hosting setup, so the SPF/DMARC values would need to be reconsidered against the new sender. See OQ-051 for the gating decision. Don't touch email this session.
+Phase 5A is **complete**. Both donate and events flows smoke-tested end-to-end on test mode. All polish items closed (page layouts, Site in source, hostnames tidied, orphan cleaned). Three possible directions next, in rough urgency order:
+
+1. **Stripe production go-live (OQ-029)** — flip from test mode to live charges. Fully unblocked. Small scope. **Recommended next.**
+2. **Email deliverability (OQ-039..OQ-045)** — blocked on OQ-051 (decide new email account / hosting). Resume after that decision.
+3. **Phase 6 Xero integration** — blocked on OQ-030 (chart-of-accounts mapping from Finance Person). Larger scope, multiple sessions.
+
+The prompt below is for **option 1** (production go-live). Swap to a different prompt if you'd rather tackle email or start Phase 6 — see the alternative-prompt section at the bottom.
 
 Paste the block below into a new Claude session to resume.
 
 ---
 
-## Prompt to paste
+## Prompt to paste — Stripe production go-live (OQ-029)
 
-> Phase 5A.5 — wrap up the donate + event ticketing build. Donate flow is live and end-to-end verified; events flow is deployed but unverified; a few polish items are outstanding before we either flip 5A to production or move on to Phase 6 (Xero).
+> **Stripe production go-live.** Phase 5A is fully complete on test mode (last commit on `main` 2026-04-29). I need to flip Stripe to live mode end-to-end without breaking anything.
 >
 > **Status as of last session (2026-04-29):**
-> - All of 5A.1, 5A.2, 5A.3, 5A.4 deployed and committed.
-> - 208 tests passing org-wide.
-> - Public Salesforce Site `ULBC Public` is created and active at `https://ulbctrustlimited.my.salesforce-sites.com` (legacy `.my.salesforce-sites.com` hostname, NOT `.my.site.com`).
-> - Stripe Dashboard webhook endpoint is in test mode, pointed at `https://ulbctrustlimited.my.salesforce-sites.com/services/apexrest/stripe/webhook`, signing secret stored in Custom Setting.
-> - **Donate flow: smoke-tested end-to-end ✅** — real £25 test-card payment via `/donate` produced a Closed Won Opportunity (`006Sk00000ThXUfIAN`) and webhook log `WHL-00008` Status=Processed.
-> - **Email deliverability is parked** (OQ-051). Don't restart it this session. The DNS still has GoDaddy stock SPF/DMARC defaults — Salesforce mail is currently spam-foldered, but fixing it properly waits on the email-account-move decision.
+> - All of 5A.1–5A.5 deployed and committed. 208 tests passing org-wide.
+> - Donate flow smoke-tested end-to-end ✅ (£25 test card → Opportunity `006Sk00000ThXUfIAN`, webhook log `WHL-00008`).
+> - Events flow smoke-tested end-to-end ✅ (£75 test card on `Henley Women 2026` → Opportunity `006Sk00000TiLPpIAN`, CampaignMember Status=Purchased, webhook log `WHL-00011`).
+> - Public Site live at `https://ulbctrustlimited.my.salesforce-sites.com` (legacy hostname), urlPathPrefix=donate.
+> - Stripe Dashboard webhook endpoint is currently in **test mode** at `https://ulbctrustlimited.my.salesforce-sites.com/services/apexrest/stripe/webhook`.
+> - Named Credential `Stripe_API` currently uses a **test-mode** restricted API key (`rk_test_…`).
+> - `ULBC_Stripe_Settings__c.WebhookSigningSecret__c` currently holds the **test-mode** webhook signing secret.
 >
-> **Read first** (in this order):
-> 1. `RUNBOOK-5A.4.md` end-to-end — especially "Smoke-test fixes applied" and "Hostname note".
-> 2. `DECISIONS.md` Decision 5.21 (5A.4 implementation choices), Decision 5.22 (sharing strategy). Skip 5.20 (parked).
-> 3. `OPEN-QUESTIONS.md` items OQ-046 to OQ-050 — the explicit 5A.5 backlog. (OQ-039 to OQ-045 are all marked ⏸️ on hold and OQ-051 is the gate that has to clear before they reopen.)
+> **Read first**: `OPEN-QUESTIONS.md` OQ-029 (the documented checklist for the test→live flip), `DECISIONS.md` Decision 5.22 (the sharing strategy that Phase 5A converged on, including the 2026-04-29 amendment for the controller).
 >
 > **Goals for this session, in order:**
 >
-> 1. **Smoke-test the event ticketing flow (OQ-046).** Find or create a test Campaign with `ULBC_Ticket_Price__c` set (e.g. £10). Open `https://ulbctrustlimited.my.salesforce-sites.com/events?id=<CampaignId>` in incognito, complete a test-card flow, and verify the resulting `CampaignMember` (Status=Purchased, Stripe Payment ID stamped) and Closed Won `Opportunity` (Type=Event Ticket, linked to the Campaign). Diagnose any failures the same way we did the donation flow — most likely failure mode is another `with sharing` class somewhere in the trigger chain that wasn't caught.
+> 1. **Pre-flight check.** Confirm test-mode is healthy: latest webhook log Status=Processed, the £25 + £75 Opportunities still exist, the Stripe Dashboard test-mode webhook is still receiving events successfully. If anything's degraded since 2026-04-29, fix that first before going live.
 >
-> 2. **Surface webhook log diagnostic fields (OQ-047).** Edit `ULBC_Webhook_Log__c`'s Compact Layout AND Detail Layout to expose `ULBC_Status__c`, `ULBC_Stripe_Event_Type__c`, `ULBC_Stripe_Event_ID__c`, `ULBC_Error_Message__c`, `ULBC_Stripe_Timestamp__c`, and `ULBC_Processed_At__c`. Also update the default list view columns so the at-a-glance triage works without CLI SOQL. Deploy as metadata so it's reproducible.
+> 2. **Stripe Dashboard switch to live mode.** Adrian creates:
+>     - A live-mode webhook endpoint pointed at the same Salesforce URL (`https://ulbctrustlimited.my.salesforce-sites.com/services/apexrest/stripe/webhook`), subscribed to `checkout.session.completed`. Capture the **live signing secret** (`whsec_live_…`).
+>     - A live-mode restricted API key with the same scopes as the test key (Checkout Sessions: Write, Customers: Write). Capture the secret value once (`rk_live_…`).
 >
-> 3. **Pull the Site into source control (OQ-048).** Run `sf project retrieve start --metadata CustomSite:ULBC_Public --target-org ulbc` and commit the resulting `force-app/main/default/sites/ULBC_Public.site-meta.xml` so the Site is reproducible in a scratch org from now on.
+> 3. **Salesforce config swap.** Three values to update:
+>     - `ULBC_Stripe_Settings__c.WebhookSigningSecret__c` → live `whsec_live_…` (write a one-line Anonymous Apex script in `scripts/apex/set-live-signing-secret.apex`, then run it; do NOT commit the secret).
+>     - Named Credential `Stripe_API` → swap the password (the API key) from `rk_test_…` to `rk_live_…` in Setup. URL stays at `https://api.stripe.com`.
+>     - Decide whether to keep both webhook endpoints active in Stripe (test + live) or disable the test one. Recommendation: keep test active and pointed at the same URL — our handler dedupes by event_id, so it's safe; useful to keep test working for future debugging.
 >
-> 4. **Optional: clean up the two orphan Contacts (OQ-049)** — `003Sk00000wKzp8IAC` and `003Sk00000vmACiIAM` were created during the failed-smoke-test attempts. If they're still around and have no related Opportunities/CampaignMembers, delete them via SOQL or Setup. Skip if you want to keep them as a record.
+> 4. **Live smoke test.** Adrian makes a real **£1** donation to the unrestricted fund through `/donate?fund=<unrestricted-campaign-id>` using a real card. Watch the webhook log for `Status=Processed`. Verify the Opportunity lands. Then **refund** the £1 in Stripe Dashboard. (Refund handling itself is OQ-035 — out of scope for this session; we're just confirming the live happy path.)
 >
-> 5. **Optional: tidy up runbooks 5A.2 / 5A.3 to reflect the correct `.my.salesforce-sites.com` hostname (OQ-050).** Or accept the runbooks as a historical record and add a single corrigendum line.
+> 5. **Document.** Create `RUNBOOK-5A-PROD-GO-LIVE.md` recording: the date of cutover, the two new Stripe IDs (webhook endpoint id, restricted-key prefix only — never the secret), the date and amount of the live smoke test, the refund event id. Close OQ-029 in `OPEN-QUESTIONS.md`.
 >
 > **Out of scope this session:**
+> - Refund-to-Salesforce handling (OQ-035) — separate work.
+> - Email deliverability (parked on OQ-051).
+> - Phase 6 Xero (blocked on OQ-030).
 >
-> - **Email deliverability** (Decision 5.20, OQ-039..045). Parked until OQ-051 (new email account/hosting decision) is resolved. Will be picked up in its own focused session once the new setup is decided.
-> - **Production go-live** (OQ-029) — separate deliberate session. Requires live-mode Stripe webhook + live signing secret + live restricted API key in Named Credential `Stripe_API` + a real £1 charge-and-refund test.
-> - **Phase 6 Xero** — the next significant chunk after 5A.5 closes and production goes live. Blocked anyway on OQ-030 (chart of accounts mapping from Finance Person).
+> **Don't paste any Stripe secret into source control or chat.** Use scripts that read from prompts, or paste directly into Setup. The runbook records prefixes only.
+
+---
+
+## Alternative prompt — Email deliverability (after OQ-051 resolved)
+
+> Resume Phase 3D email deliverability. ULBC has decided on the new email account / hosting setup (OQ-051 — fill in the answer here when known: domain, host, From addresses). Decision 5.20 was scoped against the old `ulbctrust.org` Microsoft 365 setup and is parked; the values need to be reconsidered against the new sender.
+>
+> Read first: `DECISIONS.md` Decision 5.20 (parked — original record preserved), `OPEN-QUESTIONS.md` OQ-039 to OQ-045 (all marked ⏸️ on hold) and OQ-051 (the gate — should now be resolved).
+>
+> Goals: generate a new DKIM key pair in Salesforce for the new domain → publish CNAMEs in DNS → verify with `dig` → publish SPF + DMARC TXT records (values depend on the new host) → click Activate → mail-tester end-to-end ≥ 9/10 → Decision 5.20 superseded by a new decision recording the live setup.
+
+---
+
+## Alternative prompt — Phase 6 Xero integration (after OQ-030 resolved)
+
+> Start Phase 6 Xero integration. Adrian / Finance Person has provided the chart-of-accounts mapping (OQ-030).
+>
+> Read first: `PRD.md` §15a (Xero integration), `DECISIONS.md` Decisions 6.1 through 6.8.
+>
+> Goals (multi-session): Phase 6A.1 Connected App registration → 6A.2 Named Credential + OAuth flow → 6A.3 Custom Metadata Type for the account mapping → 6A.4 `ULBC_XeroInvoiceService` class → 6A.5 `ULBC_OpportunityXeroSync` trigger → 6A.6 `ULBC_Xero_Contact_ID__c` lazy creation. End-to-end smoke test: a Closed Won Opportunity in Salesforce produces a paid invoice in Xero against the right account code.
 
 ---
 
 ## What you'll need on hand
 
-- Salesforce CLI authenticated to org `ulbc` (already done — `sf org list` should show it).
-- Stripe Dashboard test-mode access (for any further webhook config if needed).
-- A Campaign with `ULBC_Ticket_Price__c` set, OR be ready to create one in Setup before the events smoke test. (The `Test Event` Campaign created during 5A.4 unit tests is wiped after each test run — you'll need a real persistent one.)
+For the production go-live track (option 1):
+- Stripe Dashboard access in live mode (Adrian).
+- Salesforce CLI + admin in `ulbc` org.
+- A real card for the £1 live smoke test (refunded immediately after).
 
-When the session finishes:
-- 5A is functionally complete with the events flow proven and the Site in source control.
-- The next milestones are (a) decide the email-account move (OQ-051) so deliverability work can resume, (b) production cutover (OQ-029), and (c) Phase 6 Xero integration build.
+For the email track (option 2): the new email-account setup details.
+
+For the Xero track (option 3): the chart-of-accounts mapping from Finance Person.

@@ -198,7 +198,7 @@
 
 ## Phase 5A.4 follow-ups — Added 2026-04-29 (post-smoke-test)
 
-**OQ-046**: Event registration flow (`/events?id=<CampaignId>`) is built and deployed but not yet smoke-tested end-to-end with a real test card. Needs a Campaign with `ULBC_Ticket_Price__c` set + a £1 test-card flow + verification that `CampaignMember.Status = Purchased` and the corresponding Closed Won `Opportunity` (Type `Event Ticket`) land. **Slated for Phase 5A.5.**
+**OQ-046** ✅ [CLOSED 2026-04-29]: Event registration flow smoke-tested end-to-end against the `Henley Women 2026` Campaign (`701Sk00000zERDNIA4`, £75 ticket). First attempt failed with "Event not found" — root cause `ULBC_StripeCheckoutController` was `with sharing`, guest user couldn't see the Campaign (same secure-guest-user pattern that bit 5A.4). Fix: controller flipped to `without sharing`, Decision 5.22 amended. Retry passed: webhook log `WHL-00011` Status=Processed, Opportunity `006Sk00000TiLPpIAN` (£75 Closed Won, Type=Event Ticket), CampaignMember `00vSk00000LcVl3IAF` Status=Purchased, Stripe Payment ID `pi_3TRWYjD7BlsMEKft1bLkLLtq` stamped on both.
 
 **OQ-047**: `ULBC_Webhook_Log__c` standard page layout doesn't expose the diagnostic fields (`ULBC_Status__c`, `ULBC_Stripe_Event_Type__c`, `ULBC_Stripe_Event_ID__c`, `ULBC_Error_Message__c`, `ULBC_Stripe_Timestamp__c`, `ULBC_Raw_Payload__c`). Investigation during 5A.4 smoke test required CLI SOQL to read the error message — admins shouldn't need that. **Add to 5A.5: edit the Compact Layout + Detail Layout to surface these fields, ideally with a list view showing Status + Stripe Event Type + Processed At as the default columns.**
 
