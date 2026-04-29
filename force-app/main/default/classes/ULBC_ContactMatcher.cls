@@ -3,7 +3,7 @@
  *
  * Implements the Stripe-payment → Salesforce Contact match priority
  * defined in Decision 5.8:
- *   1. metadata.ulbc_trust_id        (TrustID from personalised link)
+ *   1. metadata.ulbc_trust_id        (Trust ID from personalised link)
  *   2. Stripe Customer ID match      (Contact.ULBC_Stripe_Customer_ID__c)
  *   3. Email match                   (Contact.Email or ULBC_Secondary_Email__c)
  *   4. Create new Contact            (Acquisition Channel from caller)
@@ -44,7 +44,7 @@ public without sharing class ULBC_ContactMatcher {
      * Contact with Id populated.
      */
     public static MatchResult findOrCreate(Inputs inputs) {
-        // 1. TrustID
+        // 1. Trust ID
         if (String.isNotBlank(inputs.trustId)) {
             List<Contact> byTrust = [
                 SELECT Id, AccountId, FirstName, LastName, Email,
@@ -55,7 +55,7 @@ public without sharing class ULBC_ContactMatcher {
             ];
             if (!byTrust.isEmpty()) {
                 return new MatchResult(byTrust[0], 1,
-                    'Matched on TrustID ' + inputs.trustId);
+                    'Matched on Trust ID ' + inputs.trustId);
             }
         }
 

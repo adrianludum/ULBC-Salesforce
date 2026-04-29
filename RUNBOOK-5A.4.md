@@ -13,7 +13,7 @@
 | Class | Purpose |
 |---|---|
 | `ULBC_StripeCheckoutController` | Two `@AuraEnabled` methods (`createDonationSession`, `createEventSession`) that build Stripe Checkout Sessions via HTTP callout to `callout:Stripe_API/v1/checkout/sessions` and return the hosted Checkout URL. Plus `getEventInfo` (cacheable) for the event LWC to render Campaign details. |
-| `ULBC_StripeCheckoutController_Test` | 20 tests. HttpCalloutMock captures the form-encoded body sent to Stripe and asserts the metadata contract (Decision 5.9 amended) on every variation. Covers happy path, Gift Aid w/ postcode, TrustID flow, recurring pass-through, validation rejections (below-min, missing postcode, invalid fund, zero qty, no ticket price), Stripe 4xx/5xx handling, missing URL fields, and the EventInfo wire. |
+| `ULBC_StripeCheckoutController_Test` | 20 tests. HttpCalloutMock captures the form-encoded body sent to Stripe and asserts the metadata contract (Decision 5.9 amended) on every variation. Covers happy path, Gift Aid w/ postcode, Trust ID flow, recurring pass-through, validation rejections (below-min, missing postcode, invalid fund, zero qty, no ticket price), Stripe 4xx/5xx handling, missing URL fields, and the EventInfo wire. |
 
 ### New LWCs
 | Component | Purpose |
@@ -219,7 +219,7 @@ The first three live test attempts (WHL-00001, WHL-00003, WHL-00005, WHL-00007) 
 | # | Symptom | Root cause | Fix |
 |---|---|---|---|
 | 1 | `List has no rows for assignment to SObject` in `ULBC_ContactMatcher.findOrCreate` line 114 | Post-insert re-query of newly-created Contact returned empty under guest user (Salesforce Spring '21+ secure-guest-user blocks visibility of records the guest just created) | `ULBC_ContactMatcher` → `without sharing` |
-| 2 | `DUPLICATE_VALUE on ULBC_Trust_ID__c` (after fix #1 deployed) | `ULBC_ContactTriggerHandler.assignTrustId` queried max TrustID `with sharing`, returned empty, kept assigning `ULBC-0001` to every new Contact and tripping the unique constraint on the second delivery | `ULBC_ContactTriggerHandler` → `without sharing` |
+| 2 | `DUPLICATE_VALUE on ULBC_Trust_ID__c` (after fix #1 deployed) | `ULBC_ContactTriggerHandler.assignTrustId` queried max Trust ID `with sharing`, returned empty, kept assigning `ULBC-0001` to every new Contact and tripping the unique constraint on the second delivery | `ULBC_ContactTriggerHandler` → `without sharing` |
 | 3 | `INSUFFICIENT_ACCESS_ON_CROSS_REFERENCE_ENTITY` in `ULBC_DonorTierEngine.recalculate` line 132 (chained from `ULBC_OpportunityTrigger` post-Opp-insert) | Aggregation engine ran `with sharing`, couldn't see Contact's parent Account (owned by site Default Record Owner) | `ULBC_DonorTierEngine` → `without sharing` |
 
 `ULBC_DonationHandler` and `ULBC_EventTicketHandler` were also flipped to `without sharing` in the same commit for consistency — the entire post-`ULBC_StripeWebhook.handlePost` chain is now system-trusted because signature verification at the entry point is the security boundary. Pattern documented as Decision 5.21.

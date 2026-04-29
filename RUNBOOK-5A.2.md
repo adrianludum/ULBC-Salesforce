@@ -1,5 +1,7 @@
 # Phase 5A.2 — Stripe Webhook Receiver — Deployment Notes
 
+> **2026-04-29 corrigendum**: this runbook (and 5A.3) refers to the Site URL as `ulbctrustlimited.my.site.com` (enhanced-domains form). The org actually serves Sites at `ulbctrustlimited.my.salesforce-sites.com` (legacy form). The Stripe webhook endpoint URL was updated accordingly during 5A.4 smoke testing. See RUNBOOK-5A.4.md "Hostname + URL Path Prefix note" for the current state.
+
 **Status:** Deployed ✅ 2026-04-28 to org `ulbc` (`ulbctrustlimited.my.salesforce.com`).
 **Test count:** 167 passing org-wide (9 new in `ULBC_StripeWebhook_Test`).
 **Coverage:** `ULBC_StripeWebhook` 92%.

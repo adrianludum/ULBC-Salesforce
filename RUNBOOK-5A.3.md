@@ -1,5 +1,7 @@
 # Phase 5A.3 — Typed Handlers — Deployment Notes
 
+> **2026-04-29 corrigendum**: this runbook refers to the Site URL as `ulbctrustlimited.my.site.com` (enhanced-domains form). The org actually serves Sites at `ulbctrustlimited.my.salesforce-sites.com` (legacy form), with `urlPathPrefix=donate` (so the events page is at `/donate/events`, not `/events` directly). The Stripe webhook endpoint URL was updated accordingly during 5A.4 smoke testing. See RUNBOOK-5A.4.md "Hostname + URL Path Prefix note" for the current state.
+
 **Status:** Deployed ✅ 2026-04-28 to org `ulbc`.
 **Test count:** 194 passing org-wide (25 new across 4 test classes).
 **Coverage:** 94% org-wide.

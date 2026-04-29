@@ -1,7 +1,7 @@
 /**
  * ULBC_ContactTriggerHandler
  * Phase 2A: Gone Away → HasOptedOutOfEmail (one-way)
- * Phase 3C: Auto-assign TrustID on insert (ULBC-XXXX sequential)
+ * Phase 3C: Auto-assign Trust ID on insert (ULBC-XXXX sequential)
  */
 // without sharing: assignTrustId queries the global max ULBC_Trust_ID__c
 // to compute the next sequential ID. Guest users (used by the Stripe

@@ -111,7 +111,7 @@
 - **Date**: 2026-03-27
 
 ### Decision 1.28 — Jade Smith is the primary test record
-- **Implementation**: Jade Smith loaded in org (TrustID: ULBC-0001) ✅
+- **Implementation**: Jade Smith loaded in org (Trust ID: ULBC-0001) ✅
 - **Date**: 2026-03-27
 
 ---
@@ -253,9 +253,9 @@
 - **Why**: Additive permission model — each role sees only what's granted. FLS on custom fields controls field visibility per role.
 - **Date**: 2026-04-15
 
-### Decision 3.12 — Auto-TrustID on Contact insert
-- **What**: ULBC_ContactTriggerHandler.assignTrustId fires on before insert. Queries highest existing ULBC-XXXX and assigns next sequential number. Pre-set TrustIDs (migration) are not overwritten.
-- **Why**: Removes manual TrustID assignment step. Ensures every Contact gets a unique TrustID automatically, including those created via Lead conversion.
+### Decision 3.12 — Auto-Trust ID on Contact insert
+- **What**: ULBC_ContactTriggerHandler.assignTrustId fires on before insert. Queries highest existing ULBC-XXXX and assigns next sequential number. Pre-set Trust IDs (migration) are not overwritten.
+- **Why**: Removes manual Trust ID assignment step. Ensures every Contact gets a unique Trust ID automatically, including those created via Lead conversion.
 - **Date**: 2026-04-15
 
 ### Decision 3.13 — Current Athletes list view for Coach/Boathouse Manager
@@ -358,14 +358,14 @@
 - **Why**: For dinners and BBQs, the registrar (fundraiser/event organiser) can manage edge cases manually. Hard cap creates failure modes when there's a queue at capacity. Soft cap matches how the events run in practice.
 - **Date**: 2026-04-27
 
-### Decision 5.7 — TrustID-personalised links for known alumni
-- **What**: Event registration LWC accepts a `?c=ULBC-XXXX` URL parameter. When present, the page pre-fills name/email from the matching Contact and the Stripe Checkout metadata includes `trust_id` for reliable Contact matching on the webhook side. Anonymous registration (no TrustID) still works via email-based matching.
-- **Why**: Alumni clicking from an emailed event invitation get a friction-free registration. Webhook can match on TrustID (reliable) rather than email (which may be different to what's on file). Building this in v1 because the email comms work in Phase 3D will produce these links anyway.
+### Decision 5.7 — Trust ID-personalised links for known alumni
+- **What**: Event registration LWC accepts a `?c=ULBC-XXXX` URL parameter. When present, the page pre-fills name/email from the matching Contact and the Stripe Checkout metadata includes `trust_id` for reliable Contact matching on the webhook side. Anonymous registration (no Trust ID) still works via email-based matching.
+- **Why**: Alumni clicking from an emailed event invitation get a friction-free registration. Webhook can match on Trust ID (reliable) rather than email (which may be different to what's on file). Building this in v1 because the email comms work in Phase 3D will produce these links anyway.
 - **Date**: 2026-04-27
 
 ### Decision 5.8 — Contact matching priority for Stripe webhooks
 - **What**: When a Stripe webhook fires (donation or event ticket), Salesforce matches the donor to a Contact in this priority order:
-  1. TrustID from Stripe metadata (if present, e.g. from personalised email link)
+  1. Trust ID from Stripe metadata (if present, e.g. from personalised email link)
   2. Stripe Customer ID match (existing ULBC_Stripe_Customer_ID__c on Contact)
   3. Email match (Contact.Email or ULBC_Secondary_Email__c)
   4. Create new Contact: Primary Contact Type = "Other", Acquisition Channel = "Stripe Donation" or "Stripe Event Registration"
@@ -575,7 +575,7 @@
 - **What**: After a Stripe webhook payload has been signature-verified by `ULBC_StripeWebhook`, the entire downstream handler chain runs `without sharing`. Specifically:
   - **`with sharing`** (defence in depth at the receive boundary): `ULBC_StripeWebhook` itself — receives the HTTP, parses headers, verifies HMAC, writes the `ULBC_Webhook_Log__c` row.
   - **`without sharing`** (system-trusted post-verification work): `ULBC_DonationHandler`, `ULBC_EventTicketHandler`, `ULBC_ContactMatcher`, `ULBC_ContactTriggerHandler`, `ULBC_DonorTierEngine`.
-- **Why**: Stripe webhooks deliver as the Site Guest User. Salesforce post-Spring '21 enforces "secure guest user record access" — the guest user cannot see records they just created, and cannot see records owned by other users (e.g. the site's Default Record Owner) under standard sharing rules. Forcing `with sharing` on the handler chain produced three distinct failure modes during smoke testing: (a) post-insert Contact re-query returns empty in `ULBC_ContactMatcher`; (b) max-TrustID lookup in `ULBC_ContactTriggerHandler.assignTrustId` returns empty, breaking the sequential ID generator and tripping the unique constraint; (c) `INSUFFICIENT_ACCESS_ON_CROSS_REFERENCE_ENTITY` when `ULBC_DonorTierEngine` tries to update Contacts whose parent Account the guest user can't see. The signature verification is the security boundary; once a payload is verified as genuinely from Stripe, the rest is a system-trusted backend that should not be subject to guest-user visibility rules.
+- **Why**: Stripe webhooks deliver as the Site Guest User. Salesforce post-Spring '21 enforces "secure guest user record access" — the guest user cannot see records they just created, and cannot see records owned by other users (e.g. the site's Default Record Owner) under standard sharing rules. Forcing `with sharing` on the handler chain produced three distinct failure modes during smoke testing: (a) post-insert Contact re-query returns empty in `ULBC_ContactMatcher`; (b) max-Trust ID lookup in `ULBC_ContactTriggerHandler.assignTrustId` returns empty, breaking the sequential ID generator and tripping the unique constraint; (c) `INSUFFICIENT_ACCESS_ON_CROSS_REFERENCE_ENTITY` when `ULBC_DonorTierEngine` tries to update Contacts whose parent Account the guest user can't see. The signature verification is the security boundary; once a payload is verified as genuinely from Stripe, the rest is a system-trusted backend that should not be subject to guest-user visibility rules.
 - **Pattern**: This applies to any future system-trusted code that may be invoked from the webhook chain — including the planned Phase 6 Xero invoice creation, which will be triggered by `ULBC_OpportunityTrigger` and may therefore also run in guest-user context. New classes in this chain should declare `without sharing` explicitly with a comment explaining why.
 - **What this is NOT**: this is not a blanket "all internal Apex is without sharing". Admin-driven flows (UI edits, list views, reports) still go through `with sharing` paths. The exemption is specifically for the Stripe-receive code path after HMAC verification. The CRUD/FLS settings on the Site Guest User profile remain minimal (Read on Campaign / Contact / Opportunity, no Edit / Create) — DML still works because `without sharing` Apex code gets system-context DML execution for the operations it performs.
 - **Implementation**: 5 classes flipped from `with sharing` to `without sharing` in commit `dc3b819` after live smoke testing exposed the failure modes above. `ULBC_StripeCheckoutController` (the LWC-callable Checkout Session creator) stays `with sharing` — it's invoked from a public-facing LWC and only does Campaign reads, no privilege-escalation needed.
