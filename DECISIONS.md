@@ -532,7 +532,11 @@
 - **Implementation**: 4 new Apex classes (`ULBC_ContactMatcher`, `ULBC_DonationHandler`, `ULBC_EventTicketHandler`, dispatch logic in `ULBC_StripeWebhook`). 25 new tests (8 ContactMatcher, 7 DonationHandler, 4 EventTicketHandler, 6 dispatch). Org-wide tests: 194 passing, 94% coverage.
 - **Date**: 2026-04-28
 
-### Decision 5.20 — Email authentication (SPF / DKIM / DMARC) on `ulbctrust.org`
+### Decision 5.20 — Email authentication (SPF / DKIM / DMARC) on `ulbctrust.org` — **ON HOLD 2026-04-29**
+
+> **Status flip 2026-04-29**: ULBC is moving to a different email account / hosting setup. Decision 5.20 is parked until that move is decided and executed; the SPF/DMARC values below would need to be reconsidered against the new sender. DKIM keys generated in Salesforce remain valid (still sign the configured domain) but Activate has not been clicked. DNS-side SPF and DMARC for `ulbctrust.org` remain at GoDaddy defaults (verified via dig 2026-04-29: `v=spf1 include:secureserver.net -all` and `p=quarantine; rua=mailto:dmarc_rua@onsecureserver.net`) — these were never updated to the values agreed below. See OQ-051 for the new email-account decision that gates resuming this work. Original record below preserved for reference.
+
+
 - **What**: Authenticate all Salesforce-originated mail from `noreply@ulbctrust.org` with SPF, DKIM and DMARC, hosted at GoDaddy DNS for `ulbctrust.org`.
 - **Why**: Without DKIM and SPF, Salesforce mail fails authentication at Gmail/Outlook and is spam-foldered. Critical for fundraising deliverability against ~1,500 alumni inboxes. Original symptom: bulk fundraising email landing in spam.
 - **Records**:

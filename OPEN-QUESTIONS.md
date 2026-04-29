@@ -1,5 +1,5 @@
 # ULBC Trust Salesforce — Open Questions
-*Last updated: 2026-04-29 (post-5A.4 smoke test, post-email-auth setup)*
+*Last updated: 2026-04-29 (post-5A.4 smoke test, email work parked pending new-account decision)*
 
 ---
 
@@ -161,34 +161,36 @@
 
 ---
 
-## Phase 3D Email Deliverability — Added 2026-04-28 (Decision 5.20)
+## Phase 3D Email Deliverability — Added 2026-04-28 (Decision 5.20) — **ALL ON HOLD 2026-04-29**
 
-**OQ-039**: DKIM **Activate** button in Salesforce Setup → DKIM Keys not yet clicked. Primary CNAME `salesforce._domainkey.ulbctrust.org` is verified live via MXToolbox. Alternate CNAME `salesforcealt._domainkey.ulbctrust.org` not yet independently verified.
+> Parked: ULBC is moving to a different email account / hosting setup. Resume after OQ-051 is resolved. The questions below describe the state-as-of-2026-04-29 against the current `ulbctrust.org` setup, but the answers will change once the email account move happens. Verified via dig 2026-04-29: SPF and DMARC are still GoDaddy defaults — they were never actually updated despite earlier session notes saying otherwise. DKIM CNAMEs are correct and live.
+
+**OQ-039** ⏸️: DKIM **Activate** button in Salesforce Setup → DKIM Keys not yet clicked. Primary CNAME `salesforce._domainkey.ulbctrust.org` is verified live via MXToolbox. Alternate CNAME `salesforcealt._domainkey.ulbctrust.org` not yet independently verified.
 *Action: verify alternate CNAME via MXToolbox CNAME Lookup, then click Activate. Confirm `Active = true` on the key record.*
 *Owner: Adrian. Blocking: clean DKIM signatures on all outbound Salesforce mail.*
 
-**OQ-040**: SPF and DMARC TXT records — the values are agreed (Decision 5.20) but it's not yet confirmed they are live in GoDaddy DNS. Need to verify with MXToolbox SPF Record Lookup and DMARC Lookup against `ulbctrust.org`.
+**OQ-040** ⏸️: SPF and DMARC TXT records on `ulbctrust.org` — verified 2026-04-29 still at GoDaddy stock defaults (`v=spf1 include:secureserver.net -all` and `p=quarantine; rua=mailto:dmarc_rua@onsecureserver.net`), NOT the Decision 5.20 values. Active SPF excludes Salesforce, so Salesforce mail fails SPF. Active DMARC quarantines failures. Combined effect: Salesforce-sent mail goes to spam.
 *Action: confirm both records resolve, then run a fresh mail-tester send and target 9+/10.*
 *Owner: Adrian. Blocking: deliverability sign-off.*
 
-**OQ-041**: First mail-tester end-to-end send did not arrive at the test inbox `test-qtqqugfh9@srv1.mail-tester.com` (countdown reset repeatedly). Root cause not diagnosed in this session.
+**OQ-041** ⏸️: First mail-tester end-to-end send did not arrive at the test inbox `test-qtqqugfh9@srv1.mail-tester.com` (countdown reset repeatedly). Root cause not diagnosed in this session.
 *Possibilities: (a) sent via List Email and queued, (b) Activity-tab single send not fired, (c) Org-Wide Email Address profile restriction, (d) recipient address typed incorrectly.*
 *Action next session: send a fresh test from a Contact's Activity tab (From = `noreply@ulbctrust.org`, To = `adrian+salesforce@cassidy.uk.com`) and inspect headers + Setup → Email Logs.*
 *Owner: Adrian. Blocking: confirmation that authentication actually works end-to-end.*
 
-**OQ-042**: Should bulk fundraising mail use `noreply@ulbctrust.org` (current) or be migrated to a friendlier From such as `info@ulbctrust.org` or `fundraising@ulbctrust.org`?
+**OQ-042** ⏸️: Should bulk fundraising mail use `noreply@ulbctrust.org` (current) or be migrated to a friendlier From such as `info@ulbctrust.org` or `fundraising@ulbctrust.org`?
 *Recommendation: Add a second Org-Wide Email Address (e.g. `info@ulbctrust.org`), keep `noreply@` only for system alerts (Upgrade Prospect, future automation). `noreply@` addresses score worse with spam filters and reduce reply-engagement, both of which hurt deliverability for a fundraising charity.*
 *Decision needed by: Fundraiser + Adrian.*
 
-**OQ-043**: DMARC `rua` reporting address is `adrian+dmarc@cassidy.uk.com` — a different domain from `ulbctrust.org`. Some receivers (per RFC 7489) require a verification record at `ulbctrust.org._report._dmarc.cassidy.uk.com` on the receiving domain. Most receivers don't enforce this, but if reports don't arrive within 7 days of DMARC publish, this is the likely cause.
+**OQ-043** ⏸️: DMARC `rua` reporting address is `adrian+dmarc@cassidy.uk.com` — a different domain from `ulbctrust.org`. Some receivers (per RFC 7489) require a verification record at `ulbctrust.org._report._dmarc.cassidy.uk.com` on the receiving domain. Most receivers don't enforce this, but if reports don't arrive within 7 days of DMARC publish, this is the likely cause.
 *Action: monitor inbox for 7 days. If no aggregate reports arrive, either add the verification record on `cassidy.uk.com` or switch `rua` to an `@ulbctrust.org` mailbox.*
 *Owner: Adrian. Not blocking — deliverability still works without aggregate reports, we just lose visibility.*
 
-**OQ-044**: Bulk-email attachment policy. Salesforce List Email does NOT support file attachments (platform limitation). The agreed pattern is to upload to Salesforce Files, generate a Public Link, and paste the URL into the email body. No formal policy yet on file size, link expiry, or whether public links should be reviewed before sending.
+**OQ-044** ⏸️: Bulk-email attachment policy. Salesforce List Email does NOT support file attachments (platform limitation). The agreed pattern is to upload to Salesforce Files, generate a Public Link, and paste the URL into the email body. No formal policy yet on file size, link expiry, or whether public links should be reviewed before sending.
 *Recommendation: standard pattern documented in PRD §13. Treat any attachment >5 MB as link-only. Public links should expire after 90 days for sensitive documents.*
 *Decision needed by: Fundraiser.*
 
-**OQ-045**: DMARC tightening — Decision 5.20 schedules a move from `p=none` → `p=quarantine` at week 2 and `p=reject` at week 6. Calendar reminder needed.
+**OQ-045** ⏸️: DMARC tightening — Decision 5.20 schedules a move from `p=none` → `p=quarantine` at week 2 and `p=reject` at week 6. Calendar reminder needed.
 *Action: schedule a calendar reminder for 2026-05-12 (week 2) and 2026-06-09 (week 6) to revisit DMARC policy. Cannot tighten until aggregate reports show no legitimate sender failing alignment.*
 *Owner: Adrian.*
 
@@ -205,4 +207,19 @@
 **OQ-049**: Three orphan Contacts created during 5A.4 smoke-test failures: `003Sk00000wKzp8IAC` (TrustID `ULBC-0001`, no Opportunity), `003Sk00000vmACiIAM` (TrustID likely `ULBC-0002`, no Opportunity), and the WHL-00008 Contact which DOES have an Opp attached. The first two are harmless but clutter the Contact list. Optional: query "no-Opp Contacts created today" and delete the two test artefacts. Not blocking anything.
 
 **OQ-050**: Hostname mismatch between runbooks. RUNBOOK-5A.2 and 5A.3 documented Site URL as `ulbctrustlimited.my.site.com` (enhanced-domains form). The org actually serves at `ulbctrustlimited.my.salesforce-sites.com` (legacy form). Updated in `DonationBaseURL__c`, `EventsBaseURL__c`, and Stripe Dashboard webhook endpoint. The runbooks 5A.2 / 5A.3 still mention the wrong hostname — minor doc tidy in 5A.5 to update them retroactively (or accept as historical record).
+
+---
+
+## Email account migration — Added 2026-04-29
+
+**OQ-051**: Decide on the new email account / hosting setup before resuming Decision 5.20.
+*Context: as of 2026-04-29 ULBC is moving away from the `ulbctrust.org` Microsoft 365 / GoDaddy setup that Decision 5.20 was scoped against. The decision drives downstream: which mailbox Salesforce sends FROM, which `include:` lines belong in SPF, what DKIM key Salesforce should generate for the new domain, what DMARC policy makes sense, and what the Org-Wide Email Address in Salesforce should be.*
+*Sub-questions to answer before resuming:*
+- *Is the domain itself changing (e.g. `ulbctrust.org` → something else), or just the mailbox / hosting service?*
+- *New host (Google Workspace, Microsoft 365 on a different tenant, Fastmail, self-hosted, …)?*
+- *New From address(es) — bulk fundraising vs system alerts (Upgrade Prospect notifications) — same or different?*
+- *Migration plan for in-flight things that hardcode `noreply@ulbctrust.org`: the Org-Wide Email Address record in Salesforce, the Upgrade Prospect alert recipient, future donor-receipt automation.*
+*Action: when the email account move is decided, raise a fresh decision (5.23 or later) with the new SPF / DKIM / DMARC values for the new domain, supersede or amend Decision 5.20, and reopen OQ-039 to OQ-045 against the new setup.*
+*Decision needed by: Adrian.*
+*Status: open. Blocks resuming all of OQ-039 to OQ-045.*
 
