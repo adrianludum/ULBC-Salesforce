@@ -204,7 +204,9 @@
 
 **OQ-048**: Site metadata (`CustomSite:ULBC_Public`) was created via Setup UI rather than authored in source. Once the Site is stable, run `sf project retrieve start --metadata CustomSite:ULBC_Public --target-org ulbc` to pull it into `force-app/main/default/sites/` and commit. From that point the Site is metadata-tracked and reproducible in scratch orgs. **Slated for Phase 5A.5.**
 
-**OQ-049**: Three orphan Contacts created during 5A.4 smoke-test failures: `003Sk00000wKzp8IAC` (TrustID `ULBC-0001`, no Opportunity), `003Sk00000vmACiIAM` (TrustID likely `ULBC-0002`, no Opportunity), and the WHL-00008 Contact which DOES have an Opp attached. The first two are harmless but clutter the Contact list. Optional: query "no-Opp Contacts created today" and delete the two test artefacts. Not blocking anything.
+**OQ-049** ✅ [CLOSED 2026-04-29]: Of the two suspected smoke-test orphans, only one was actually an orphan. Investigation:
+- `003Sk00000wKzp8IAC` ("err werwer", TrustID `ULBC-0001`, 0 Opps, 0 CMs, created 2026-04-28 16:21) — true orphan from WHL-00001's broken-trigger-state attempt. **Deleted via `sf data delete record`.**
+- `003Sk00000vmACiIAM` (Adrian Cassidy's real Contact, TrustID `54`, 237 Opps + 13 CMs, created 2026-04-15) — NOT an orphan. The WHL-00007 error message named this id as the "cross-reference" target because the donation handler matched the donor's identity to Adrian's Contact and tried to update it; the trigger chain (DonorTierEngine) failed under guest-user sharing. The Contact itself was untouched. WHL-00008's successful donation also linked to this Contact (the £25 Opportunity `006Sk00000ThXUfIAN` is on Adrian Cassidy's Contact).
 
 **OQ-050**: Hostname mismatch between runbooks. RUNBOOK-5A.2 and 5A.3 documented Site URL as `ulbctrustlimited.my.site.com` (enhanced-domains form). The org actually serves at `ulbctrustlimited.my.salesforce-sites.com` (legacy form). Updated in `DonationBaseURL__c`, `EventsBaseURL__c`, and Stripe Dashboard webhook endpoint. The runbooks 5A.2 / 5A.3 still mention the wrong hostname — minor doc tidy in 5A.5 to update them retroactively (or accept as historical record).
 
