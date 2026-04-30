@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>ULBC_Watermark_After__c</fullName>
+    <description>Value LastSyncedAt__c was advanced to at the end of this run. Equals the most recent UpdatedDateUTC seen in the response page. Null on Error rows (watermark not advanced on failure).</description>
+    <label>Watermark After</label>
+    <required>false</required>
+    <trackTrending>false</trackTrending>
+    <type>DateTime</type>
+</CustomField>

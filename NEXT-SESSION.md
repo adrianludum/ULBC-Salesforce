@@ -1,10 +1,10 @@
 # Next session — Stripe production go-live (OQ-029)
 
-Phase 5A is **complete**. Both donate and events flows smoke-tested end-to-end on test mode. All polish items closed (page layouts, Site in source, hostnames tidied, orphan cleaned). Three possible directions next, in rough urgency order:
+Phase 5A is **complete**. Phase 6 Xero is **live** (Decisions 6.9–6.12, daily 02:00 UTC import). Phase 6 orphan notifications **deployed 2026-04-30** (Decision 6.13) — bell channel live to Martin Peel, email digest built and pre-wired to `adminulbh@gmail.com` but switch is OFF until first natural orphan smoke test (waiting on tomorrow's 02:00 UTC run). Three possible directions next, in rough urgency order:
 
 1. **Stripe production go-live (OQ-029)** — flip from test mode to live charges. Fully unblocked. Small scope. **Recommended next.**
 2. **Email deliverability (OQ-039..OQ-045)** — blocked on OQ-051 (decide new email account / hosting). Resume after that decision.
-3. **Phase 6 Xero integration** — blocked on OQ-030 (chart-of-accounts mapping from Finance Person). Larger scope, multiple sessions.
+3. **Verify orphan notifications + flip email switch on** — small follow-up after the next 02:00 UTC run produces a real orphan and confirms Martin's bell channel works end-to-end. One Custom Setting flip (`ULBC_Xero_Settings__c.OrphanNotificationsEnabled__c = true`).
 
 The prompt below is for **option 1** (production go-live). Swap to a different prompt if you'd rather tackle email or start Phase 6 — see the alternative-prompt section at the bottom.
 

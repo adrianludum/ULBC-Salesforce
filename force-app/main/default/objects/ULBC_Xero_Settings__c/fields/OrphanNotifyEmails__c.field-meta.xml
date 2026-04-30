@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>OrphanNotifyEmails__c</fullName>
+    <description>Comma- semicolon- or whitespace-separated list of email addresses that receive the orphan-Opportunity digest at the end of each Xero import page. Leave blank to disable email even if OrphanNotificationsEnabled is true.</description>
+    <externalId>false</externalId>
+    <label>Orphan Notify Emails</label>
+    <length>255</length>
+    <required>false</required>
+    <trackTrending>false</trackTrending>
+    <type>Text</type>
+    <unique>false</unique>
+</CustomField>

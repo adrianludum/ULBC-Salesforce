@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>LastSyncedAt__c</fullName>
+    <description>Watermark — UpdatedDateUTC of the most recent Xero BankTransaction successfully imported. The next importer run pulls only transactions modified after this timestamp. Updated at the end of every successful page; left untouched on errors so a failed run can be retried without skipping data.</description>
+    <label>Last Synced At</label>
+    <required>false</required>
+    <trackTrending>false</trackTrending>
+    <type>DateTime</type>
+</CustomField>

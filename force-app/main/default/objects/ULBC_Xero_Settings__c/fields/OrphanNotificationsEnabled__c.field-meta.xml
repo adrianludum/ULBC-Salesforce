@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>OrphanNotificationsEnabled__c</fullName>
+    <defaultValue>false</defaultValue>
+    <description>Master switch for the orphan-Opportunity email digest sent at the end of each Xero import page. Off by default — flip to true once recipients are confirmed in OrphanNotifyEmails.</description>
+    <externalId>false</externalId>
+    <label>Orphan Notifications Enabled</label>
+    <trackTrending>false</trackTrending>
+    <type>Checkbox</type>
+</CustomField>

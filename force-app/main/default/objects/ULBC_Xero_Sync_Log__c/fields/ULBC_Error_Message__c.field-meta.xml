@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>ULBC_Error_Message__c</fullName>
+    <description>Detail when Status is Error or Partial — exception message, HTTP status, or per-row failure summary. Plain text only, no secrets.</description>
+    <label>Error Message</label>
+    <length>4096</length>
+    <trackTrending>false</trackTrending>
+    <type>LongTextArea</type>
+    <visibleLines>5</visibleLines>
+</CustomField>
