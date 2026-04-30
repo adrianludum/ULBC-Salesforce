@@ -1,5 +1,5 @@
 # ULBC Trust Salesforce — Product Requirements Document
-*Status: Phase 4 Complete — Phase 5 (Stripe + Event Ticketing) & Phase 6 (Xero) Planned*
+*Status: Phase 5A Complete (Stripe donate + events flows live, test mode). Phase 6 Live (Xero → Salesforce daily import 02:00 UTC, orphan dual-channel notifications to Martin Peel — bell live, email armed-but-disabled until first natural orphan smoke test). Phase 5A go-live (test → prod) and email deliverability resumption next.*
 *Last synthesised: 2026-04-28*
 
 ---
@@ -427,8 +427,8 @@ DMARC tightening schedule (post-verification):
 | Phase 4 | ~~Full 1,500 record migration from FileMaker~~ | ✅ Complete |
 | **Phase 5A** | **Stripe webhook receiver + event ticketing flow (Salesforce Site + LWC). ~3 sessions.** |
 | **Phase 5B** | **Donation flow on Stripe webhook — deferred until website rebuild decided (OQ-026)** |
-| **Phase 6A** | **Xero invoice creation on Opportunity Closed Won. ~1.5 sessions. Blocked on OQ-030 (account mapping) and OQ-033 (Connected App).** |
-| **Phase 6C** | **Native Xero Stripe feed — manual config in Xero by Finance Person. ~30 mins.** |
+| ~~Phase 6A (original)~~ | ~~Salesforce → Xero invoice push~~ — **direction reversed 2026-04-29 (Decision 6.9). See Phase 6 (revised) below.** |
+| **Phase 6 (revised)** | **Xero → Salesforce daily import (Closed Won Opportunities mirrored from Xero RECEIVE bank transactions). Decisions 6.9–6.13.** | ✅ **Live 2026-04-29**, orphan dual-channel notifications to Martin Peel deployed 2026-04-30. |
 
 ### Source tables
 | FileMaker Table | Salesforce Target | Notes |
@@ -502,7 +502,39 @@ The donor never sees or types their TrustID. Two mechanisms get the TrustID into
 
 ---
 
-## 15a. Xero Integration — Phase 6 (Planned 2026-04-27)
+## 15a. Xero Integration — Phase 6
+
+> **Direction reversed 2026-04-29 (Decision 6.9).** The original "Salesforce → Xero invoices" plan below (§15a planned-state, Decisions 6.1–6.8) is preserved as historical context but **does not reflect what was built**. The deployed Phase 6 mirrors income inbound from Xero into Salesforce — see "§15a deployed state" immediately below for the live architecture.
+
+### Deployed state (2026-04-29 → 2026-04-30) — Decisions 6.9–6.13
+
+**Direction**: Xero → Salesforce (Xero is the source of truth for received income; Salesforce mirrors it as Closed Won Opportunities).
+
+**Trigger**: Daily scheduled Apex (`ULBC Xero Daily Income Import`, 02:00 UTC, cron `0 0 2 * * ?`).
+
+**Flow**:
+1. `ULBC_XeroImportSchedulable` → `ULBC_XeroIncomeImporterQueueable` chains pages.
+2. Each page: `GET /api.xro/2.0/BankTransactions?where=Type=="RECEIVE"` with `If-Modified-Since: <watermark>` (page size 100).
+3. Per-page enrichment: `GET /api.xro/2.0/Contacts?IDs=<csv>` to fetch AccountNumber + EmailAddress (Xero's BankTransactions endpoint omits AccountNumber).
+4. Per transaction → one Opportunity: Stage = Closed Won, Amount + Date from Xero, `ULBC_Source__c = 'Xero Import'`.
+5. Donor link: `Trust ID = Xero Contact AccountNumber`. Match on `Contact.ULBC_Trust_ID__c`.
+6. No match → orphan Opportunity (no Primary Contact). Surfaced via list view + Chatter feed item + dual-channel notification to Martin Peel (Decision 6.13):
+   - **Bell** (Custom Notification, mobile + desktop) — Flow `Xero_Orphan_Alert` v2, fires per orphan on insert.
+   - **Email digest** (per import page) — `ULBC_XeroIncomeImporter.sendOrphanDigestEmail`. Off by default; recipient list and master switch on `ULBC_Xero_Settings__c`.
+7. Idempotency: `ULBC_Xero_Transaction_ID__c` is External ID + Unique on Opportunity. Re-runs skip duplicates.
+8. Donor-tier engine fires automatically on Opp insert via existing `ULBC_OpportunityTrigger` — no extra wiring.
+
+**Auth**: Web-app OAuth 2.0 via Named Credential `ULBC_Xero` (Salesforce Auth Provider type "Open ID Connect"). Scopes: `openid offline_access accounting.banktransactions.read accounting.contacts.read`. Tenant ID set as Custom Header `Xero-tenant-id` on the Named Credential.
+
+**Audit**: Every page-run writes a `ULBC_Xero_Sync_Log__c` row (transactions read, opportunities created, orphans created, skipped duplicates, watermark before/after, status, error message).
+
+**Code in source** (committed as of `a7b433d`): `ULBC_XeroIncomeImporter`, `ULBC_XeroIncomeImporterQueueable`, `ULBC_XeroImportSchedulable`, `ULBC_XeroHttpMock`, `ULBC_XeroIncomeImporter_Test` (12 tests). Custom objects: `ULBC_Xero_Settings__c`, `ULBC_Xero_Sync_Log__c`. Flow: `Xero_Orphan_Alert` v2 active.
+
+**Out of scope**: Refunds (handled in Xero, not mirrored). Stripe-paid donations create both a webhook Opportunity AND a Xero-import Opportunity — see OQ-053. Backfilling AccountNumbers onto historical Xero Contacts — see OQ-052.
+
+---
+
+### §15a planned state (NOT BUILT — superseded by Decisions 6.9–6.13)
 
 ### Scope
 Bridge the workflow boundary between Fundraiser/Admin (Salesforce) and Finance Person (Xero). Two flows:
@@ -518,13 +550,13 @@ Bridge the workflow boundary between Fundraiser/Admin (Salesforce) and Finance P
 ### Sub-phases
 | Sub-phase | Scope | Status |
 |---|---|---|
-| 6A.1 | Xero Connected App registration (one-time, Adrian) | Not started — OQ-033 |
-| 6A.2 | Named Credential setup, OAuth 2.0 flow tested | Not started |
-| 6A.3 | Custom Metadata Type for account mapping | Not started — blocked on OQ-030 |
-| 6A.4 | ULBC_XeroInvoiceService Apex class — create invoice from Opportunity | Not started |
-| 6A.5 | ULBC_OpportunityXeroSync trigger | Not started |
-| 6A.6 | ULBC_Xero_Contact_ID__c field + Contact sync logic | Not started |
-| 6B | Refund handling via Credit Notes | Not started — OQ-035 |
+| 6A.1 | Xero Connected App registration (one-time, Adrian) | ~~OQ-033~~ Superseded — actual auth is Web-App OAuth via Named Credential, not a Connected App |
+| 6A.2 | Named Credential setup, OAuth 2.0 flow tested | ~~Superseded~~ — replaced by the deployed `ULBC_Xero` Named Credential (Open ID Connect provider) used by the Xero → Salesforce import |
+| 6A.3 | Custom Metadata Type for account mapping | ~~OQ-030 / Decision 6.7~~ Superseded — no chart-of-accounts mapping needed (no invoices created) |
+| 6A.4 | ULBC_XeroInvoiceService Apex class — create invoice from Opportunity | ~~Superseded~~ — no invoices created |
+| 6A.5 | ULBC_OpportunityXeroSync trigger | ~~Superseded~~ — direction reversed; no Salesforce → Xero push |
+| 6A.6 | ULBC_Xero_Contact_ID__c field + Contact sync logic | ~~Superseded~~ — match-only via Trust ID = AccountNumber |
+| 6B | Refund handling via Credit Notes | ~~OQ-035~~ Superseded — refunds handled in Xero, not mirrored |
 | 6C | Finance Person configures native Xero Stripe feed | Not started — manual, in Xero |
 
 ### Out of scope (v1)

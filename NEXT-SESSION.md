@@ -2,9 +2,11 @@
 
 Phase 5A is **complete**. Phase 6 Xero is **live** (Decisions 6.9–6.12, daily 02:00 UTC import). Phase 6 orphan notifications **deployed 2026-04-30** (Decision 6.13) — bell channel live to Martin Peel, email digest built and pre-wired to `adminulbh@gmail.com` but switch is OFF until first natural orphan smoke test (waiting on tomorrow's 02:00 UTC run). Three possible directions next, in rough urgency order:
 
-1. **Stripe production go-live (OQ-029)** — flip from test mode to live charges. Fully unblocked. Small scope. **Recommended next.**
-2. **Email deliverability (OQ-039..OQ-045)** — blocked on OQ-051 (decide new email account / hosting). Resume after that decision.
-3. **Verify orphan notifications + flip email switch on** — small follow-up after the next 02:00 UTC run produces a real orphan and confirms Martin's bell channel works end-to-end. One Custom Setting flip (`ULBC_Xero_Settings__c.OrphanNotificationsEnabled__c = true`).
+1. **Resolve OQ-053 (Stripe ↔ Xero double-counting)** — **NEW blocker raised 2026-04-30.** Now that Phase 6 mirrors Xero income inbound, every Stripe donation would create *two* Closed Won Opportunities once Stripe goes live: one from the Stripe webhook, one from the next day's Xero import. Tier engine totals double-count. Must fix before flipping Stripe to live. Recommended fix: extend `ULBC_XeroIncomeImporter` to skip transactions whose Xero reference matches an existing `ULBC_Stripe_Payment_ID__c` on Opportunity. **This is now the Stripe go-live prerequisite.**
+2. **Stripe production go-live (OQ-029)** — flip from test mode to live charges. **Blocked on OQ-053 above.** Otherwise fully ready.
+3. **Email deliverability (OQ-039..OQ-045)** — blocked on OQ-051 (decide new email account / hosting). Resume after that decision.
+4. **Verify orphan notifications + flip email switch on** — small follow-up after the next 02:00 UTC run produces a real orphan and confirms Martin's bell channel works end-to-end. One Custom Setting flip (`ULBC_Xero_Settings__c.OrphanNotificationsEnabled__c = true`).
+5. **OQ-052** — close the orphan loop by pushing assigned Trust IDs back to Xero AccountNumber so the same donor doesn't show up as orphan next month. Quick Action on Opportunity. Not blocking.
 
 The prompt below is for **option 1** (production go-live). Swap to a different prompt if you'd rather tackle email or start Phase 6 — see the alternative-prompt section at the bottom.
 

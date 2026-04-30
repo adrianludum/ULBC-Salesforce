@@ -110,35 +110,32 @@
 
 ## Phase 6 Open Questions — Xero Integration (Added 2026-04-27)
 
-**OQ-030**: Chart of accounts mapping. For each combination of Salesforce Fund (Campaign) × Gift Type, what is the corresponding Xero Account Code and Tracking Category? Need full mapping table from Finance Person before Phase 6 build. Example rows needed:
-| Fund | Gift Type | Xero Account Code | Xero Tracking Category |
-|---|---|---|---|
-| Unrestricted / General | One-Off | ??? | ??? |
-| Unrestricted / General | Recurring | ??? | ??? |
-| Scholarship | One-Off | ??? | ??? |
-| ...etc for all 7 funds × all gift types | | | |
-*Blocking: Phase 6 build (cannot create accurate Xero invoices without this).*
-*Decision needed by: Finance Person.*
+> **OQ-030, OQ-031, OQ-032, OQ-033, OQ-034, OQ-035 superseded 2026-04-29 by Decision 6.9.** These questions all assumed the original Salesforce → Xero invoice-push direction. The actual deployed Phase 6 mirrors income inbound from Xero into Salesforce — no invoices are ever created in Xero by this integration, so chart-of-accounts mapping, invoice numbering, Gift Aid line items, Connected App registration, historical backfill, and Credit Note refund handling are all moot. Original text retained below for historical context. New Phase 6 questions tracked as OQ-052 / OQ-053.
 
-**OQ-031**: Xero invoice numbering. Should Salesforce-generated invoices use Xero's auto-numbering, or follow a Salesforce pattern (e.g. SF-OPP-12345)? Affects how Finance Person searches/reconciles in Xero.
-*Recommendation: Use Xero auto-numbering. Salesforce Opportunity ID stored in Xero Reference field for cross-reference.*
-*Decision needed by: Finance Person.*
+**OQ-030** ❌ [SUPERSEDED 2026-04-29]: ~~Chart of accounts mapping. For each combination of Salesforce Fund (Campaign) × Gift Type, what is the corresponding Xero Account Code and Tracking Category?~~ N/A — no invoices created.
 
-**OQ-032**: Gift Aid in Xero — separate line item, separate invoice, or tracking-only? When a £100 donation is Gift Aid eligible, how should the £25 reclaim appear in Xero?
-*Options: (a) £100 invoice with Gift Aid as a tracking flag only; reclaim entered manually as separate income when HMRC pays out. (b) £125 invoice with £25 line as "Gift Aid receivable". (c) Two invoices.*
-*Recommendation: (a) — keep Gift Aid out of donation invoices, log as separate income on HMRC payout. Charity accounting standard.*
-*Decision needed by: Finance Person + auditor.*
+**OQ-031** ❌ [SUPERSEDED 2026-04-29]: ~~Xero invoice numbering.~~ N/A — no invoices created.
 
-**OQ-033**: Xero Connected App registration. Adrian needs to register a Salesforce Connected App in the Xero developer portal (https://developer.xero.com/) to obtain OAuth 2.0 client ID and secret. One-time setup.
-*Blocking: Phase 6 build.*
+**OQ-032** ❌ [SUPERSEDED 2026-04-29]: ~~Gift Aid in Xero — separate line item, separate invoice, or tracking-only?~~ N/A — no invoices created. Gift Aid continues to live as a Salesforce-side flag on Opportunity; HMRC payout reconciliation is a Xero-side bookkeeping task.
 
-**OQ-034**: Historical opportunities — should Xero invoices be created retroactively for the 24,940 migrated Opportunities, or only for new Opportunities created after Xero integration go-live?
-*Recommendation: New only. Backfilling 24,940 invoices into Xero would create accounting chaos in periods that are already closed and audited. Historical donations remain in Salesforce only.*
-*Decision needed by: Finance Person + Adrian.*
+**OQ-033** ❌ [SUPERSEDED 2026-04-29]: ~~Xero Connected App registration.~~ N/A — actual auth uses a Web-App OAuth flow via Named Credential `ULBC_Xero` (Salesforce Auth Provider type "Open ID Connect"). No Connected App was registered on the Xero side.
 
-**OQ-035**: Refunds in Xero. When a donation is refunded in Stripe, how does Xero handle it? Options: (a) Credit Note created automatically by Salesforce → Xero handler. (b) Manual handling by Finance Person.
-*Recommendation: (a) Automated Credit Note. Build alongside the main invoice creation.*
-*Decision needed by: Finance Person.*
+**OQ-034** ❌ [SUPERSEDED 2026-04-29]: ~~Historical opportunities — should Xero invoices be created retroactively?~~ N/A — no invoices created.
+
+**OQ-035** ❌ [SUPERSEDED 2026-04-29]: ~~Refunds in Xero — Credit Note via handler or manual?~~ N/A in the new direction. Refunds are handled inside Xero by Finance Person; the next daily import does not re-create the refunded transaction (which is a `SPEND` type, filtered out by `Type=="RECEIVE"`). Salesforce-side refund mirroring is a future open question if needed.
+
+---
+
+## Phase 6 Open Questions (revised direction) — Added 2026-04-29
+
+**OQ-052**: Backfilling AccountNumbers onto existing Xero Contacts. The match logic relies on `Xero Contact AccountNumber == Salesforce ULBC_Trust_ID__c`. Many existing Xero Contacts have no AccountNumber set, which causes them to come through as orphans on every donation until manually fixed. Should we (a) bulk-update Xero Contacts with their Trust ID via a one-shot script, (b) add a Quick Action on the Salesforce Opportunity that pushes the matched Trust ID back into the Xero Contact when Martin assigns it, or (c) leave Finance to handle Xero-side?
+*Recommendation: (b) — small Apex action invoked from Martin's orphan triage flow, pushes `Contact.ULBC_Trust_ID__c` into the Xero Contact's AccountNumber field via Xero PUT /Contacts. Closes the loop on the orphan that was just assigned.*
+*Owner: Adrian. Not blocking — the system functions, orphans just persist as a recurring annoyance until Xero Contacts are stamped.*
+
+**OQ-053**: Stripe webhook overlap with Xero import — duplicate Opportunities. A donation paid via Stripe today creates an Opportunity via the Stripe webhook (Phase 5A) AND the same payment lands in Xero's bank feed and creates a second Opportunity via the Xero daily import (Phase 6). Both are Closed Won, both link to the same donor — the donation gets double-counted in tier engine totals.
+*Options: (a) suppress Xero-import Opportunity creation when an existing Opportunity already has the matching Stripe Payment Intent ID — needs a join key visible to both sides; (b) rely on Finance to delete the Xero side as a duplicate during reconciliation; (c) have the Xero importer skip transactions tagged as Stripe payouts.*
+*Recommendation: (a) — make Xero importer check for an existing Opportunity with matching `ULBC_Stripe_Payment_ID__c` derived from the Xero transaction's reference (Stripe sets `txn_reference` to the Stripe Payment Intent on its bank feed). Skip insert if a match exists; log as `skippedDuplicates`.*
+*Owner: Adrian. Blocking go-live of Stripe production charges (would otherwise double-count every Stripe donation in tier totals from day 1).*
 
 
 ---
