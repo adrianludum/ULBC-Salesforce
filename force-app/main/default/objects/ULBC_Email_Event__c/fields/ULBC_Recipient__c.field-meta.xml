@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>ULBC_Recipient__c</fullName>
+    <description>Recipient this ping was for. Lookup (not master-detail) by design — blind inserts from the public Site endpoint must not lock the parent rollup. SetNull on delete: if a recipient is purged, the event row remains as an orphan for forensic purposes.</description>
+    <deleteConstraint>SetNull</deleteConstraint>
+    <externalId>false</externalId>
+    <label>Recipient</label>
+    <referenceTo>ULBC_Email_Send_Recipient__c</referenceTo>
+    <relationshipLabel>Events</relationshipLabel>
+    <relationshipName>Events</relationshipName>
+    <required>false</required>
+    <trackTrending>false</trackTrending>
+    <type>Lookup</type>
+</CustomField>

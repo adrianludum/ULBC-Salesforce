@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>ULBC_URL__c</fullName>
+    <description>For Click events: the destination URL that was rewritten and clicked. Decoded before storage.</description>
+    <externalId>false</externalId>
+    <label>Clicked URL</label>
+    <required>false</required>
+    <trackTrending>false</trackTrending>
+    <type>Url</type>
+</CustomField>

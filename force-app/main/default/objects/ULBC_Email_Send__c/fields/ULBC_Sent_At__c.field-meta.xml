@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>ULBC_Sent_At__c</fullName>
+    <description>Datetime the final batch finished and Status transitioned to Sent. Null while sending. Used as the time anchor for engagement reports ("opens within 24h of send").</description>
+    <externalId>false</externalId>
+    <label>Sent At</label>
+    <required>false</required>
+    <trackTrending>false</trackTrending>
+    <type>DateTime</type>
+</CustomField>

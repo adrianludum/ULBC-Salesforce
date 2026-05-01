@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>ULBC_Event_Type__c</fullName>
+    <description>What this ping represents. Open = pixel hit. Click = redirect endpoint hit. Unsubscribe = unsub endpoint hit. Bounce = inbound bounce notification (v2).</description>
+    <label>Event Type</label>
+    <required>true</required>
+    <trackTrending>false</trackTrending>
+    <type>Picklist</type>
+    <valueSet>
+        <valueSetDefinition>
+            <sorted>false</sorted>
+            <value>
+                <fullName>Open</fullName>
+                <default>false</default>
+                <label>Open</label>
+            </value>
+            <value>
+                <fullName>Click</fullName>
+                <default>false</default>
+                <label>Click</label>
+            </value>
+            <value>
+                <fullName>Unsubscribe</fullName>
+                <default>false</default>
+                <label>Unsubscribe</label>
+            </value>
+            <value>
+                <fullName>Bounce</fullName>
+                <default>false</default>
+                <label>Bounce</label>
+            </value>
+        </valueSetDefinition>
+    </valueSet>
+</CustomField>

@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>ULBC_Last_Click_URL__c</fullName>
+    <description>Most recently clicked destination URL. Useful for spot-checking which CTA an engaged donor responded to without joining to ULBC_Email_Event__c.</description>
+    <externalId>false</externalId>
+    <label>Last Click URL</label>
+    <required>false</required>
+    <trackTrending>false</trackTrending>
+    <type>Url</type>
+</CustomField>

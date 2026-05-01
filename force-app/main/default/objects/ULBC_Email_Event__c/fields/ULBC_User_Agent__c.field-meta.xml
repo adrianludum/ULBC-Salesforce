@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>ULBC_User_Agent__c</fullName>
+    <description>User-Agent header on the ping request. Apple MPP and Gmail proxies have distinctive UAs — useful for filtering bot opens out of engagement reporting.</description>
+    <externalId>false</externalId>
+    <label>User Agent</label>
+    <length>255</length>
+    <required>false</required>
+    <trackTrending>false</trackTrending>
+    <type>Text</type>
+    <unique>false</unique>
+</CustomField>

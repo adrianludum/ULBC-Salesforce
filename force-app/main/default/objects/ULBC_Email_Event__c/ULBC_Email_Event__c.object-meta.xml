@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
+    <allowInChatterGroups>false</allowInChatterGroups>
+    <compactLayoutAssignment>SYSTEM</compactLayoutAssignment>
+    <deploymentStatus>Deployed</deploymentStatus>
+    <description>Forensic write-only log of tracking pings (open / click / unsub / bounce). Lookup (not master-detail) to ULBC_Email_Send_Recipient__c so the public Site endpoint can do a blind insert without locking parent rollups during high-volume opens. ULBC_EmailEventAggregator runs every 5 minutes to roll counts onto Recipient.</description>
+    <enableActivities>false</enableActivities>
+    <enableBulkApi>true</enableBulkApi>
+    <enableFeeds>false</enableFeeds>
+    <enableHistory>false</enableHistory>
+    <enableLicensing>false</enableLicensing>
+    <enableReports>true</enableReports>
+    <enableSearch>false</enableSearch>
+    <enableSharing>true</enableSharing>
+    <enableStreamingApi>true</enableStreamingApi>
+    <externalSharingModel>Private</externalSharingModel>
+    <label>ULBC Email Event</label>
+    <nameField>
+        <displayFormat>EEV-{0000000}</displayFormat>
+        <label>Event Number</label>
+        <type>AutoNumber</type>
+    </nameField>
+    <pluralLabel>ULBC Email Events</pluralLabel>
+    <searchLayouts/>
+    <sharingModel>ReadWrite</sharingModel>
+    <visibility>Public</visibility>
+</CustomObject>

@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>ULBC_Contact__c</fullName>
+    <description>Contact this row was sent to. Lookup (not master-detail) so a Contact deletion does not cascade-delete historical send recipients — donor erasure is handled by anonymising fields, not deleting audit rows.</description>
+    <deleteConstraint>SetNull</deleteConstraint>
+    <externalId>false</externalId>
+    <label>Contact</label>
+    <referenceTo>Contact</referenceTo>
+    <relationshipLabel>Email Send Recipients</relationshipLabel>
+    <relationshipName>ULBC_Email_Send_Recipients</relationshipName>
+    <required>false</required>
+    <trackTrending>false</trackTrending>
+    <type>Lookup</type>
+</CustomField>

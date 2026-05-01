@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>ULBC_Aggregated__c</fullName>
+    <defaultValue>false</defaultValue>
+    <description>Marker flipped by ULBC_EmailEventAggregator after the row's contribution has been folded into the parent recipient counts. Indexed-friendly via the predicate Aggregated__c = false on the aggregator's SOQL.</description>
+    <externalId>false</externalId>
+    <label>Aggregated</label>
+    <trackTrending>false</trackTrending>
+    <type>Checkbox</type>
+</CustomField>

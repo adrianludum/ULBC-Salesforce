@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
+    <allowInChatterGroups>false</allowInChatterGroups>
+    <compactLayoutAssignment>SYSTEM</compactLayoutAssignment>
+    <deploymentStatus>Deployed</deploymentStatus>
+    <description>Custom mass-email send. One row per send (e.g. one newsletter, one dinner-invite blast) scoped to a Campaign. Roll-up fields aggregate open and click counts from ULBC_Email_Send_Recipient__c so per-Campaign engagement is reportable as queryable fields rather than via standard Email Tracking joins.</description>
+    <enableActivities>false</enableActivities>
+    <enableBulkApi>true</enableBulkApi>
+    <enableFeeds>false</enableFeeds>
+    <enableHistory>true</enableHistory>
+    <enableLicensing>false</enableLicensing>
+    <enableReports>true</enableReports>
+    <enableSearch>true</enableSearch>
+    <enableSharing>true</enableSharing>
+    <enableStreamingApi>true</enableStreamingApi>
+    <externalSharingModel>Private</externalSharingModel>
+    <label>ULBC Email Send</label>
+    <nameField>
+        <displayFormat>EMS-{00000}</displayFormat>
+        <label>Send Number</label>
+        <type>AutoNumber</type>
+    </nameField>
+    <pluralLabel>ULBC Email Sends</pluralLabel>
+    <searchLayouts/>
+    <sharingModel>ReadWrite</sharingModel>
+    <visibility>Public</visibility>
+</CustomObject>

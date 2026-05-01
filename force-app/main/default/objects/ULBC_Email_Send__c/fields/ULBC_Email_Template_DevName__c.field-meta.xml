@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>ULBC_Email_Template_DevName__c</fullName>
+    <description>EmailTemplate.DeveloperName used for this send. Storing the DevName rather than Id keeps the audit trail readable across sandbox refreshes (record Ids change; DeveloperName does not). The Apex resolves to Id at send time.</description>
+    <externalId>false</externalId>
+    <label>Email Template DevName</label>
+    <length>80</length>
+    <required>true</required>
+    <trackTrending>false</trackTrending>
+    <type>Text</type>
+    <unique>false</unique>
+</CustomField>

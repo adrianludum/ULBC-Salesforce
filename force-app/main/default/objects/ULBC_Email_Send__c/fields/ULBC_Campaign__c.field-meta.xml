@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>ULBC_Campaign__c</fullName>
+    <description>Campaign this send is scoped to. Recipients are sourced from CampaignMember; tracking events roll up so per-Campaign open/click rates can be reported. Required — there is no "send to a list view" mode in v1.</description>
+    <deleteConstraint>Restrict</deleteConstraint>
+    <externalId>false</externalId>
+    <label>Campaign</label>
+    <referenceTo>Campaign</referenceTo>
+    <relationshipLabel>Email Sends</relationshipLabel>
+    <relationshipName>ULBC_Email_Sends</relationshipName>
+    <required>true</required>
+    <trackTrending>false</trackTrending>
+    <type>Lookup</type>
+</CustomField>

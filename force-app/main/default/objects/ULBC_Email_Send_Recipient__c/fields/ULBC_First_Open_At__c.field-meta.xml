@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>ULBC_First_Open_At__c</fullName>
+    <description>Earliest Occurred_At from a non-aggregated open event. Set once by ULBC_EmailEventAggregator and never overwritten. Null until first open.</description>
+    <externalId>false</externalId>
+    <label>First Open At</label>
+    <required>false</required>
+    <trackTrending>false</trackTrending>
+    <type>DateTime</type>
+</CustomField>

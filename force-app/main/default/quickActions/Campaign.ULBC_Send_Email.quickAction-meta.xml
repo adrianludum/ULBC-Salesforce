@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<QuickAction xmlns="http://soap.sforce.com/2006/04/metadata">
+    <description>Compose and queue a custom mass email to this Campaign's members with open and click tracking.</description>
+    <height>800</height>
+    <label>Send Email</label>
+    <lightningComponent>ulbcEmailSendComposer</lightningComponent>
+    <optionsCreateFeedItem>false</optionsCreateFeedItem>
+    <type>LightningComponent</type>
+    <width>80</width>
+</QuickAction>

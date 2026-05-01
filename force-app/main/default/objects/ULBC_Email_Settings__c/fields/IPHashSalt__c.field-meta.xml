@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>IPHashSalt__c</fullName>
+    <description>Secret salt prefixed to recipient IP before SHA-256 hashing. Stored on ULBC_Email_Event__c.ULBC_IP_Hash__c so historical IPs cannot be recovered (UK GDPR data minimisation), while same-day rate-limiting and forensic correlation remain possible. Rotate periodically — Phase v2 adds a scheduled rotation job. Treat as a secret: no permission set grants read.</description>
+    <externalId>false</externalId>
+    <label>IP Hash Salt</label>
+    <length>64</length>
+    <required>false</required>
+    <trackTrending>false</trackTrending>
+    <type>Text</type>
+    <unique>false</unique>
+</CustomField>

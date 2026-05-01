@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>DefaultFromAddress__c</fullName>
+    <description>Default sender address. Informational only — actual delivery uses OrgWideEmailAddressId__c, which Salesforce requires to be a verified OrgWideEmailAddress. Storing the address here lets the LWC composer show "From: ..." in the preview without an extra SOQL.</description>
+    <externalId>false</externalId>
+    <label>Default From Address</label>
+    <length>255</length>
+    <required>false</required>
+    <trackTrending>false</trackTrending>
+    <type>Email</type>
+    <unique>false</unique>
+</CustomField>

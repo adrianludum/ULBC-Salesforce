@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>ULBC_Occurred_At__c</fullName>
+    <description>System.now() at the moment the Site endpoint received the ping. Used by the aggregator to set First_Open_At / First_Click_At on the recipient.</description>
+    <externalId>false</externalId>
+    <label>Occurred At</label>
+    <required>true</required>
+    <trackTrending>false</trackTrending>
+    <type>DateTime</type>
+</CustomField>

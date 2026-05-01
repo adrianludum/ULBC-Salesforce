@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>ULBC_Initiated_By__c</fullName>
+    <description>User who pressed Send in the LWC composer. CreatedById would normally suffice, but this field is preserved across record re-parenting and surfaces in reports without a join.</description>
+    <deleteConstraint>SetNull</deleteConstraint>
+    <externalId>false</externalId>
+    <label>Initiated By</label>
+    <referenceTo>User</referenceTo>
+    <relationshipLabel>Email Sends Initiated</relationshipLabel>
+    <relationshipName>ULBC_Email_Sends_Initiated</relationshipName>
+    <required>false</required>
+    <trackTrending>false</trackTrending>
+    <type>Lookup</type>
+</CustomField>

@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>ULBC_Trust_ID__c</fullName>
+    <caseSensitive>false</caseSensitive>
+    <description>Denormalised copy of Contact.ULBC_Trust_ID__c at materialisation. Survives Contact merges/deletes and is the cross-system join key into Stripe (donations, dinner tickets) and Xero (Phase 6). Not unique here — the same Trust ID may appear across many sends.</description>
+    <externalId>true</externalId>
+    <label>Trust ID</label>
+    <length>40</length>
+    <required>false</required>
+    <trackTrending>false</trackTrending>
+    <type>Text</type>
+    <unique>false</unique>
+</CustomField>

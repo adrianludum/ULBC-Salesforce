@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>DefaultReplyTo__c</fullName>
+    <description>Reply-to address applied via Messaging.SingleEmailMessage.setReplyTo(). Lets replies route to a monitored mailbox even when the OrgWideEmailAddress is a no-reply identity.</description>
+    <externalId>false</externalId>
+    <label>Default Reply-To</label>
+    <length>255</length>
+    <required>false</required>
+    <trackTrending>false</trackTrending>
+    <type>Email</type>
+    <unique>false</unique>
+</CustomField>

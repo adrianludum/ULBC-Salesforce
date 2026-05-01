@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>TrackingBaseURL__c</fullName>
+    <description>Public Site origin used to build pixel and click-redirect URLs in outbound emails. Example: https://ulbc.my.salesforce-sites.com/donate. The /email/* REST resources are appended at send time. Set to the same Site that hosts /stripe/webhook so guest-user permissions are managed in one place.</description>
+    <externalId>false</externalId>
+    <label>Tracking Base URL</label>
+    <length>255</length>
+    <required>false</required>
+    <trackTrending>false</trackTrending>
+    <type>Text</type>
+    <unique>false</unique>
+</CustomField>

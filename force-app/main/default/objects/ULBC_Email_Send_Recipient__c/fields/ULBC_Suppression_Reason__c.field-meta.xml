@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>ULBC_Suppression_Reason__c</fullName>
+    <description>Why this recipient was Suppressed or Failed. Populated by ULBC_EmailRecipientResolver (for Suppressed) or by ULBC_EmailSendQueueable (for Failed). Null otherwise.</description>
+    <label>Suppression Reason</label>
+    <required>false</required>
+    <trackTrending>false</trackTrending>
+    <type>Picklist</type>
+    <valueSet>
+        <valueSetDefinition>
+            <sorted>false</sorted>
+            <value>
+                <fullName>OptedOut</fullName>
+                <default>false</default>
+                <label>Opted Out</label>
+            </value>
+            <value>
+                <fullName>Bounced</fullName>
+                <default>false</default>
+                <label>Bounced</label>
+            </value>
+            <value>
+                <fullName>MissingEmail</fullName>
+                <default>false</default>
+                <label>Missing Email</label>
+            </value>
+            <value>
+                <fullName>Duplicate</fullName>
+                <default>false</default>
+                <label>Duplicate</label>
+            </value>
+            <value>
+                <fullName>SendException</fullName>
+                <default>false</default>
+                <label>Send Exception</label>
+            </value>
+        </valueSetDefinition>
+    </valueSet>
+</CustomField>

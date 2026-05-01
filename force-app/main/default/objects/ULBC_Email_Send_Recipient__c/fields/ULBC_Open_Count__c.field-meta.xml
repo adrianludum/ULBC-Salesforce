@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>ULBC_Open_Count__c</fullName>
+    <description>Total open events aggregated for this recipient. Inflated by Apple Mail Privacy Protection and Gmail image proxying — anchor reporting on click rate, not opens.</description>
+    <externalId>false</externalId>
+    <label>Open Count</label>
+    <precision>9</precision>
+    <required>false</required>
+    <scale>0</scale>
+    <trackTrending>false</trackTrending>
+    <type>Number</type>
+    <unique>false</unique>
+</CustomField>

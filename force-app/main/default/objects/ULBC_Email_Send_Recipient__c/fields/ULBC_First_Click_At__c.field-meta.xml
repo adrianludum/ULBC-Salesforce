@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>ULBC_First_Click_At__c</fullName>
+    <description>Earliest Occurred_At from a non-aggregated click event. Set once and never overwritten. Click rate is the most honest engagement signal.</description>
+    <externalId>false</externalId>
+    <label>First Click At</label>
+    <required>false</required>
+    <trackTrending>false</trackTrending>
+    <type>DateTime</type>
+</CustomField>

@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>ULBC_Filter_Snapshot__c</fullName>
+    <description>JSON snapshot of the filter spec passed to ULBC_EmailRecipientResolver. Audit-only — lets us reconstruct who would have been included if the same Campaign were re-sent later.</description>
+    <externalId>false</externalId>
+    <label>Filter Snapshot</label>
+    <required>false</required>
+    <trackTrending>false</trackTrending>
+    <type>LongTextArea</type>
+    <length>32768</length>
+    <visibleLines>5</visibleLines>
+</CustomField>

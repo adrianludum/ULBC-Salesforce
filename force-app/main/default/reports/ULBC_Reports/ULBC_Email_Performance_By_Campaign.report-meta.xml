@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Report xmlns="http://soap.sforce.com/2006/04/metadata">
+    <name>ULBC Email Performance By Campaign</name>
+    <description>Per-Campaign open and click rates across all Email Sends. Anchor decisions on Click Rate; opens are inflated by Apple MPP and Gmail proxying.</description>
+    <reportType>ULBC_Campaign_Email_Performance</reportType>
+    <format>Summary</format>
+    <groupingsDown>
+        <dateGranularity>Day</dateGranularity>
+        <field>Campaign.Name</field>
+        <sortOrder>Asc</sortOrder>
+    </groupingsDown>
+    <columns>
+        <field>Campaign.ULBC_Email_Sends__r$Name</field>
+    </columns>
+    <columns>
+        <field>Campaign.ULBC_Email_Sends__r$ULBC_Subject__c</field>
+    </columns>
+    <columns>
+        <field>Campaign.ULBC_Email_Sends__r$ULBC_Status__c</field>
+    </columns>
+    <columns>
+        <field>Campaign.ULBC_Email_Sends__r$ULBC_Sent_At__c</field>
+    </columns>
+    <columns>
+        <field>Campaign.ULBC_Email_Sends__r$ULBC_Sent_Count__c</field>
+    </columns>
+    <columns>
+        <field>Campaign.ULBC_Email_Sends__r$ULBC_Open_Count__c</field>
+    </columns>
+    <columns>
+        <field>Campaign.ULBC_Email_Sends__r$ULBC_Click_Count__c</field>
+    </columns>
+    <columns>
+        <field>Campaign.ULBC_Email_Sends__r$ULBC_Open_Rate__c</field>
+    </columns>
+    <columns>
+        <field>Campaign.ULBC_Email_Sends__r$ULBC_Click_Rate__c</field>
+    </columns>
+    <aggregates>
+        <calculatedFormula>Campaign.ULBC_Email_Sends__r.ULBC_Sent_Count__c:SUM</calculatedFormula>
+        <datatype>number</datatype>
+        <description>Total emails sent across all sends in this Campaign</description>
+        <developerName>FORMULA_TOTAL_SENT</developerName>
+        <isActive>true</isActive>
+        <isCrossBlock>false</isCrossBlock>
+        <masterLabel>Total Sent</masterLabel>
+        <scale>0</scale>
+    </aggregates>
+    <aggregates>
+        <calculatedFormula>Campaign.ULBC_Email_Sends__r.ULBC_Click_Count__c:SUM</calculatedFormula>
+        <datatype>number</datatype>
+        <description>Total unique clickers across all sends in this Campaign</description>
+        <developerName>FORMULA_TOTAL_CLICKS</developerName>
+        <isActive>true</isActive>
+        <isCrossBlock>false</isCrossBlock>
+        <masterLabel>Total Clicks</masterLabel>
+        <scale>0</scale>
+    </aggregates>
+    <timeFrameFilter>
+        <dateColumn>Campaign.ULBC_Email_Sends__r$ULBC_Sent_At__c</dateColumn>
+        <interval>INTERVAL_CURRENT_NEXT_FY</interval>
+    </timeFrameFilter>
+    <showDetails>true</showDetails>
+</Report>

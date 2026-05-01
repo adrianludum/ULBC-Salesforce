@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<PermissionSet xmlns="http://soap.sforce.com/2006/04/metadata">
+    <label>ULBC Email Tracking Guest</label>
+    <description>Grants the ULBC Public Site Guest User the minimum permissions needed to record email opens, clicks, and unsubscribes. Assign to the Site Guest User profile via Setup → Sites → Public Access Settings.</description>
+    <hasActivationRequired>false</hasActivationRequired>
+
+    <!-- Email Event: Create only (the endpoint blind-inserts events) -->
+    <objectPermissions>
+        <allowCreate>true</allowCreate>
+        <allowDelete>false</allowDelete>
+        <allowEdit>false</allowEdit>
+        <allowRead>false</allowRead>
+        <modifyAllRecords>false</modifyAllRecords>
+        <object>ULBC_Email_Event__c</object>
+        <viewAllRecords>false</viewAllRecords>
+    </objectPermissions>
+
+    <!-- Recipient: Read (look up by token) + Edit (stamp Unsubscribed_At) -->
+    <objectPermissions>
+        <allowCreate>false</allowCreate>
+        <allowDelete>false</allowDelete>
+        <allowEdit>true</allowEdit>
+        <allowRead>true</allowRead>
+        <modifyAllRecords>false</modifyAllRecords>
+        <object>ULBC_Email_Send_Recipient__c</object>
+        <viewAllRecords>true</viewAllRecords>
+    </objectPermissions>
+
+    <!-- Field-level permissions -->
+    <fieldPermissions>
+        <field>ULBC_Email_Event__c.ULBC_Recipient__c</field>
+        <readable>true</readable>
+        <editable>true</editable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <field>ULBC_Email_Event__c.ULBC_Event_Type__c</field>
+        <readable>true</readable>
+        <editable>true</editable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <field>ULBC_Email_Event__c.ULBC_URL__c</field>
+        <readable>true</readable>
+        <editable>true</editable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <field>ULBC_Email_Event__c.ULBC_User_Agent__c</field>
+        <readable>true</readable>
+        <editable>true</editable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <field>ULBC_Email_Event__c.ULBC_IP_Hash__c</field>
+        <readable>true</readable>
+        <editable>true</editable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <field>ULBC_Email_Event__c.ULBC_Occurred_At__c</field>
+        <readable>true</readable>
+        <editable>true</editable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <field>ULBC_Email_Event__c.ULBC_Aggregated__c</field>
+        <readable>true</readable>
+        <editable>true</editable>
+    </fieldPermissions>
+
+    <fieldPermissions>
+        <field>ULBC_Email_Send_Recipient__c.ULBC_Token__c</field>
+        <readable>true</readable>
+        <editable>false</editable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <field>ULBC_Email_Send_Recipient__c.ULBC_Contact__c</field>
+        <readable>true</readable>
+        <editable>false</editable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <field>ULBC_Email_Send_Recipient__c.ULBC_Unsubscribed_At__c</field>
+        <readable>true</readable>
+        <editable>true</editable>
+    </fieldPermissions>
+
+    <!-- The class itself -->
+    <classAccesses>
+        <apexClass>ULBC_EmailTrackingResource</apexClass>
+        <enabled>true</enabled>
+    </classAccesses>
+</PermissionSet>

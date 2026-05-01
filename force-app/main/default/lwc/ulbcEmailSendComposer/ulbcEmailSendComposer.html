@@ -1,0 +1,122 @@
+<template>
+    <lightning-card title="Send Email to Campaign Members" icon-name="standard:email">
+        <div class="slds-p-horizontal_medium slds-p-bottom_medium">
+
+            <template lwc:if={loading}>
+                <lightning-spinner alternative-text="Loading"></lightning-spinner>
+            </template>
+
+            <!-- Step 1: Template -->
+            <lightning-combobox
+                name="template"
+                label="Email Template"
+                placeholder="Select a template"
+                options={templateOptions}
+                value={selectedTemplate}
+                onchange={handleTemplateChange}
+                required>
+            </lightning-combobox>
+
+            <!-- Step 2: Subject override -->
+            <lightning-input
+                type="text"
+                label="Subject (optional override)"
+                value={subjectOverride}
+                onchange={handleSubjectChange}
+                class="slds-m-top_small">
+            </lightning-input>
+
+            <!-- Step 3: Audience -->
+            <fieldset class="slds-m-top_medium slds-form-element">
+                <legend class="slds-form-element__label">Audience</legend>
+                <lightning-input
+                    type="checkbox"
+                    label="Exclude opted-out (always on)"
+                    checked
+                    disabled>
+                </lightning-input>
+                <lightning-input
+                    type="checkbox"
+                    label="Exclude bounced (always on)"
+                    checked
+                    disabled>
+                </lightning-input>
+                <lightning-input
+                    type="checkbox"
+                    label="Require Trust ID"
+                    checked={requireTrustId}
+                    onchange={handleRequireTrustIdChange}>
+                </lightning-input>
+                <lightning-input
+                    type="text"
+                    label="Campaign Member Statuses (comma-separated, blank = all)"
+                    value={statusesText}
+                    onchange={handleStatusesChange}>
+                </lightning-input>
+            </fieldset>
+
+            <!-- Step 4: Counts -->
+            <template lwc:if={hasCounts}>
+                <div class="slds-box slds-m-top_medium slds-theme_shade">
+                    <p>
+                        <strong>{counts.eligible}</strong> eligible,
+                        <strong>{counts.suppressed}</strong> suppressed,
+                        <strong>{counts.total}</strong> considered
+                    </p>
+                    <template lwc:if={hasSuppressionBreakdown}>
+                        <p class="slds-text-body_small slds-m-top_x-small">
+                            Suppression: {suppressionSummary}
+                        </p>
+                    </template>
+                </div>
+            </template>
+
+            <lightning-button
+                label="Refresh count"
+                onclick={refreshCounts}
+                class="slds-m-top_small">
+            </lightning-button>
+
+            <!-- Step 5: Preview -->
+            <template lwc:if={selectedTemplate}>
+                <lightning-button
+                    variant="neutral"
+                    label="Preview render"
+                    onclick={handlePreview}
+                    class="slds-m-top_small slds-m-left_x-small">
+                </lightning-button>
+            </template>
+
+            <template lwc:if={preview}>
+                <div class="slds-box slds-m-top_medium">
+                    <p class="slds-text-title_caps slds-m-bottom_x-small">
+                        Preview — rendered for {preview.contactName}
+                    </p>
+                    <p><strong>Subject:</strong> {preview.subject}</p>
+                    <iframe
+                        class="preview-frame"
+                        title="Email preview"
+                        srcdoc={preview.htmlBody}>
+                    </iframe>
+                </div>
+            </template>
+
+            <!-- Send -->
+            <div class="slds-m-top_large">
+                <lightning-button
+                    variant="brand"
+                    label="Send"
+                    icon-name="utility:send"
+                    onclick={handleSend}
+                    disabled={sendDisabled}>
+                </lightning-button>
+                <p class="slds-text-body_small slds-m-top_x-small slds-text-color_weak">
+                    Pressing Send creates an Email Send record and queues delivery.
+                    Anchor reporting on click rate, not opens — open rates are
+                    inflated by Apple Mail Privacy and Gmail proxying.
+                </p>
+            </div>
+
+        </div>
+    </lightning-card>
+</template>

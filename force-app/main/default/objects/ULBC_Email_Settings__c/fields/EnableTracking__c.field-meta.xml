@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>EnableTracking__c</fullName>
+    <defaultValue>true</defaultValue>
+    <description>Master kill switch. When false, ULBC_EmailHtmlMutator skips pixel injection and link rewriting — emails still send but no opens/clicks are recorded. Use for sensitive or one-off comms where tracking would be inappropriate.</description>
+    <externalId>false</externalId>
+    <label>Enable Tracking</label>
+    <trackTrending>false</trackTrending>
+    <type>Checkbox</type>
+</CustomField>
