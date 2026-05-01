@@ -136,6 +136,7 @@
 *Options: (a) suppress Xero-import Opportunity creation when an existing Opportunity already has the matching Stripe Payment Intent ID — needs a join key visible to both sides; (b) rely on Finance to delete the Xero side as a duplicate during reconciliation; (c) have the Xero importer skip transactions tagged as Stripe payouts.*
 *Recommendation: (a) — make Xero importer check for an existing Opportunity with matching `ULBC_Stripe_Payment_ID__c` derived from the Xero transaction's reference (Stripe sets `txn_reference` to the Stripe Payment Intent on its bank feed). Skip insert if a match exists; log as `skippedDuplicates`.*
 *Owner: Adrian. Blocking go-live of Stripe production charges (would otherwise double-count every Stripe donation in tier totals from day 1).*
+*Note 2026-05-01 (Decision 6.14): the new "defer if no AccountNumber" rule incidentally suppresses double-counting for the subset of Stripe payouts that arrive in Xero with no AccountNumber, but it is **not** a substitute fix — Stripe payouts that DO have AccountNumber (e.g. once Martin starts stamping AccountNumbers on Stripe-payout Xero Contacts) would still double-count. OQ-053 remains open and still gates Stripe production go-live.*
 
 
 ---

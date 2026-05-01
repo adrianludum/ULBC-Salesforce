@@ -1,5 +1,5 @@
 # ULBC Trust Salesforce — Product Requirements Document
-*Status: Phase 5A Complete (Stripe donate + events flows live, test mode). Phase 6 Live (Xero → Salesforce daily import 02:00 UTC, orphan dual-channel notifications to Martin Peel — bell live, email armed-but-disabled until first natural orphan smoke test). Phase 5A go-live (test → prod) and email deliverability resumption next.*
+*Status: Phase 5A Complete (Stripe donate + events flows live, test mode). Phase 6 Live (Xero → Salesforce daily import 02:00 UTC; Decision 6.14 amendment 2026-05-01 defers no-AccountNumber txns; orphan dual-channel notifications to Martin Peel — bell live, email armed-but-disabled). Phase 5A go-live (test → prod, gated on OQ-053 Stripe↔Xero dedup) and email deliverability resumption next.*
 *Last synthesised: 2026-04-28*
 
 ---
@@ -506,7 +506,7 @@ The donor never sees or types their TrustID. Two mechanisms get the TrustID into
 
 > **Direction reversed 2026-04-29 (Decision 6.9).** The original "Salesforce → Xero invoices" plan below (§15a planned-state, Decisions 6.1–6.8) is preserved as historical context but **does not reflect what was built**. The deployed Phase 6 mirrors income inbound from Xero into Salesforce — see "§15a deployed state" immediately below for the live architecture.
 
-### Deployed state (2026-04-29 → 2026-04-30) — Decisions 6.9–6.13
+### Deployed state (2026-04-29 → 2026-05-01) — Decisions 6.9–6.14
 
 **Direction**: Xero → Salesforce (Xero is the source of truth for received income; Salesforce mirrors it as Closed Won Opportunities).
 
@@ -518,17 +518,18 @@ The donor never sees or types their TrustID. Two mechanisms get the TrustID into
 3. Per-page enrichment: `GET /api.xro/2.0/Contacts?IDs=<csv>` to fetch AccountNumber + EmailAddress (Xero's BankTransactions endpoint omits AccountNumber).
 4. Per transaction → one Opportunity: Stage = Closed Won, Amount + Date from Xero, `ULBC_Source__c = 'Xero Import'`.
 5. Donor link: `Trust ID = Xero Contact AccountNumber`. Match on `Contact.ULBC_Trust_ID__c`.
-6. No match → orphan Opportunity (no Primary Contact). Surfaced via list view + Chatter feed item + dual-channel notification to Martin Peel (Decision 6.13):
-   - **Bell** (Custom Notification, mobile + desktop) — Flow `Xero_Orphan_Alert` v2, fires per orphan on insert.
-   - **Email digest** (per import page) — `ULBC_XeroIncomeImporter.sendOrphanDigestEmail`. Off by default; recipient list and master switch on `ULBC_Xero_Settings__c`.
-7. Idempotency: `ULBC_Xero_Transaction_ID__c` is External ID + Unique on Opportunity. Re-runs skip duplicates.
+6. **Three outcomes per transaction (Decision 6.14, 2026-05-01):**
+   - **Matched** — Salesforce Contact exists with that Trust ID → Opportunity created with Primary Contact set.
+   - **Orphan** — Xero AccountNumber is set but no Salesforce Contact has it → Opportunity created without Primary Contact, surfaced via list view + Chatter feed item + dual-channel notification to Martin Peel (Decision 6.13: bell via Flow `Xero_Orphan_Alert` v2 + email digest via `ULBC_XeroIncomeImporter.sendOrphanDigestEmail`, off by default, master switch + recipient list on `ULBC_Xero_Settings__c`).
+   - **Deferred** — Xero AccountNumber is blank → no Opportunity, no notification, watermark held back to (`min(deferred UpdatedDateUTC) - 1s`) so the next nightly run re-pulls it once Martin assigns the AccountNumber on Xero. Counted on `ULBC_Xero_Sync_Log__c.ULBC_Deferred_No_AccountNumber__c`.
+7. Idempotency: `ULBC_Xero_Transaction_ID__c` is External ID + Unique on Opportunity. Re-runs of the same txn skip cleanly (defer-then-import or import-then-re-pull both handled).
 8. Donor-tier engine fires automatically on Opp insert via existing `ULBC_OpportunityTrigger` — no extra wiring.
 
 **Auth**: Web-app OAuth 2.0 via Named Credential `ULBC_Xero` (Salesforce Auth Provider type "Open ID Connect"). Scopes: `openid offline_access accounting.banktransactions.read accounting.contacts.read`. Tenant ID set as Custom Header `Xero-tenant-id` on the Named Credential.
 
-**Audit**: Every page-run writes a `ULBC_Xero_Sync_Log__c` row (transactions read, opportunities created, orphans created, skipped duplicates, watermark before/after, status, error message).
+**Audit**: Every page-run writes a `ULBC_Xero_Sync_Log__c` row (transactions read, opportunities created, orphans created, deferred-no-AccountNumber count, skipped duplicates, watermark before/after, status, error message).
 
-**Code in source** (committed as of `a7b433d`): `ULBC_XeroIncomeImporter`, `ULBC_XeroIncomeImporterQueueable`, `ULBC_XeroImportSchedulable`, `ULBC_XeroHttpMock`, `ULBC_XeroIncomeImporter_Test` (12 tests). Custom objects: `ULBC_Xero_Settings__c`, `ULBC_Xero_Sync_Log__c`. Flow: `Xero_Orphan_Alert` v2 active.
+**Code in source** (Decision 6.14 deploy 2026-05-01, deploy id `0AfSk000001AbKHKA0`): `ULBC_XeroIncomeImporter`, `ULBC_XeroIncomeImporterQueueable`, `ULBC_XeroImportSchedulable`, `ULBC_XeroHttpMock`, `ULBC_XeroIncomeImporter_Test` (15 tests, was 12). Custom objects: `ULBC_Xero_Settings__c`, `ULBC_Xero_Sync_Log__c` (with new field `ULBC_Deferred_No_AccountNumber__c`). Flow: `Xero_Orphan_Alert` v2 active. Permission set: `ULBC_Full_Access` granted FLS on the Xero Sync Log fields and Opportunity Xero fields (was previously a gap — admins couldn't query via API).
 
 **Out of scope**: Refunds (handled in Xero, not mirrored). Stripe-paid donations create both a webhook Opportunity AND a Xero-import Opportunity — see OQ-053. Backfilling AccountNumbers onto historical Xero Contacts — see OQ-052.
 

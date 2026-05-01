@@ -4,9 +4,15 @@
 
 ## What's an "orphan"?
 
-Every night at 02:00 UTC, Salesforce pulls the previous day's `RECEIVE` bank transactions from Xero and creates one Opportunity per transaction. It tries to match the Xero contact to a Salesforce Contact by **Trust ID** (= Xero contact's AccountNumber).
+Every night at 02:00 UTC, Salesforce pulls the previous day's `RECEIVE` bank transactions from Xero. For each one, it tries to match the Xero contact to a Salesforce Contact by **Trust ID** (= Xero contact's AccountNumber).
 
-When it can't find a match, it still creates the Opportunity — but **without a Primary Contact**. That's an orphan. The donation isn't lost; it just isn't attributed to a donor yet.
+There are three outcomes:
+
+1. **Matched** — Salesforce finds a Contact with the same Trust ID. Opportunity created and linked to that Contact. Silent.
+2. **Orphan** — the Xero contact **has** an AccountNumber, but no Salesforce Contact has it as their Trust ID. Opportunity is still created (the donation isn't lost), but **without a Primary Contact**. You get notified — this is what needs your attention.
+3. **Deferred** — the Xero contact has **no AccountNumber set yet**. Salesforce skips it for now. **No Opportunity is created and no notification fires.** The next nightly run picks it up automatically once you set the AccountNumber on the Xero side.
+
+So: an orphan alert means *Salesforce-side mismatch* — find or create the right Contact and link it. It does **not** mean "Xero hasn't been triaged yet" — the system handles those silently and waits for you. (Decision 6.14, 2026-05-01.)
 
 ## How you'll find out
 

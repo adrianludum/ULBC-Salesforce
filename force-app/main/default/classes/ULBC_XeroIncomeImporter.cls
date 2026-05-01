@@ -32,6 +32,7 @@ public without sharing class ULBC_XeroIncomeImporter {
         public Integer opportunitiesCreated = 0;
         public Integer orphansCreated = 0;
         public Integer skippedDuplicates = 0;
+        public Integer deferredNoAccountNumber = 0;
         public Boolean hasMore = false;
         public String status = 'Error';
         public String errorMessage;
@@ -123,6 +124,11 @@ public without sharing class ULBC_XeroIncomeImporter {
 
             List<Opportunity> toInsert = new List<Opportunity>();
             DateTime maxUpdated = (watermark != null) ? watermark : null;
+            // Decision 6.14: track the earliest UpdatedDateUTC among txns deferred
+            // because their Xero Contact has no AccountNumber. Used to hold the
+            // watermark back so the next run re-pulls them once Martin sets the
+            // AccountNumber on the Xero side.
+            DateTime minDeferredUpdated = null;
             for (XeroBankTransaction t : txns) {
                 if (t.updatedDateUtc != null && (maxUpdated == null || t.updatedDateUtc > maxUpdated)) {
                     maxUpdated = t.updatedDateUtc;
@@ -131,9 +137,15 @@ public without sharing class ULBC_XeroIncomeImporter {
                     result.skippedDuplicates++;
                     continue;
                 }
-                Id contactId = (String.isNotBlank(t.contactAccountNumber))
-                    ? contactByTrustId.get(t.contactAccountNumber)
-                    : null;
+                if (String.isBlank(t.contactAccountNumber)) {
+                    result.deferredNoAccountNumber++;
+                    if (t.updatedDateUtc != null
+                        && (minDeferredUpdated == null || t.updatedDateUtc < minDeferredUpdated)) {
+                        minDeferredUpdated = t.updatedDateUtc;
+                    }
+                    continue;
+                }
+                Id contactId = contactByTrustId.get(t.contactAccountNumber);
                 Opportunity opp = buildOpportunity(t, contactId);
                 toInsert.add(opp);
                 if (contactId == null) result.orphansCreated++;
@@ -146,8 +158,19 @@ public without sharing class ULBC_XeroIncomeImporter {
                 sendOrphanDigestEmail(toInsert, txnsByBankTxnId);
             }
 
-            result.watermarkAfter = maxUpdated;
-            updateWatermark(maxUpdated);
+            // Hold the watermark back to just before the earliest deferred txn so
+            // the next If-Modified-Since query re-pulls it. Imported txns advance
+            // freely; idempotency on ULBC_Xero_Transaction_ID__c prevents dupes.
+            // Subtract 1 second (not 1ms): If-Modified-Since is RFC 1123 GMT with
+            // second precision, so a sub-second offset would format identically
+            // and exclude the deferred txn from the next run's response.
+            DateTime effectiveNewWatermark = maxUpdated;
+            if (minDeferredUpdated != null && maxUpdated != null
+                && minDeferredUpdated <= maxUpdated) {
+                effectiveNewWatermark = minDeferredUpdated.addSeconds(-1);
+            }
+            result.watermarkAfter = effectiveNewWatermark;
+            updateWatermark(effectiveNewWatermark);
 
             result.status = 'Success';
             result.hasMore = (txns.size() == PAGE_SIZE);
@@ -474,6 +497,7 @@ public without sharing class ULBC_XeroIncomeImporter {
             ULBC_Opportunities_Created__c = r.opportunitiesCreated,
             ULBC_Orphans_Created__c = r.orphansCreated,
             ULBC_Skipped_Duplicates__c = r.skippedDuplicates,
+            ULBC_Deferred_No_AccountNumber__c = r.deferredNoAccountNumber,
             ULBC_Error_Message__c = r.errorMessage,
             ULBC_Watermark_Before__c = r.watermarkBefore,
             ULBC_Watermark_After__c = r.watermarkAfter,

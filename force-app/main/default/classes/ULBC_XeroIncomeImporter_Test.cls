@@ -3,7 +3,7 @@
  *
  * Phase 6A — covers Xero income import end-to-end using HttpCalloutMock:
  *   1. Match by Trust ID → Opportunity created with Contact
- *   2. Empty AccountNumber → orphan Opportunity + Chatter post
+ *   2. Empty AccountNumber → deferred (no Opp, watermark held back) — Decision 6.14
  *   3. Unknown AccountNumber → orphan Opportunity, AccountNumber preserved
  *   4. Multi-page response → second page processed via direct call
  *   5. Re-run idempotency → duplicate transaction IDs skipped
@@ -14,6 +14,9 @@
  *  10. Orphan digest email — disabled → no send
  *  11. Orphan digest email — no orphans on page → no send
  *  12. Orphan digest email — recipients blank → no send
+ *  13. Mixed AccountNumber on a page → imports matched, defers blank — Decision 6.14
+ *  14. Deferred txn re-pulled after AccountNumber assigned → imports cleanly, no dup
+ *  15. Genuine orphan (AccountNumber set, no SF match) still creates orphan + email
  */
 @IsTest
 private class ULBC_XeroIncomeImporter_Test {
@@ -53,9 +56,9 @@ private class ULBC_XeroIncomeImporter_Test {
         return [
             SELECT Id, ULBC_Status__c, ULBC_Transactions_Read__c,
                    ULBC_Opportunities_Created__c, ULBC_Orphans_Created__c,
-                   ULBC_Skipped_Duplicates__c, ULBC_Error_Message__c,
-                   ULBC_Page_Number__c, ULBC_Watermark_Before__c,
-                   ULBC_Watermark_After__c
+                   ULBC_Skipped_Duplicates__c, ULBC_Deferred_No_AccountNumber__c,
+                   ULBC_Error_Message__c, ULBC_Page_Number__c,
+                   ULBC_Watermark_Before__c, ULBC_Watermark_After__c
             FROM ULBC_Xero_Sync_Log__c
             ORDER BY CreatedDate DESC
             LIMIT 1
@@ -97,14 +100,18 @@ private class ULBC_XeroIncomeImporter_Test {
         System.assertEquals('Xero Import', opp.ULBC_Source__c);
     }
 
-    // ─── 2. No AccountNumber → orphan + Chatter ────────────────────────
+    // ─── 2. No AccountNumber → deferred (no Opp, watermark held back) ──
+    // Decision 6.14: a Xero Contact with no AccountNumber is "Xero side hasn't
+    // been triaged yet", not an orphan. Skip the import; hold the watermark so
+    // the next nightly run re-pulls the txn once Martin sets the AccountNumber.
 
     @IsTest
-    static void test_noAccountNumber_createsOrphanWithChatter() {
+    static void test_noAccountNumber_defersTransaction_holdsWatermark() {
+        DateTime txnTime = DateTime.newInstanceGmt(2026, 4, 26, 11, 0, 0);
         ULBC_XeroHttpMock mock = new ULBC_XeroHttpMock();
         mock.body = ULBC_XeroHttpMock.buildResponse(new List<Map<String, Object>>{
             ULBC_XeroHttpMock.txn(
-                'txn-002', 50.00, DateTime.newInstanceGmt(2026, 4, 26, 11, 0, 0),
+                'txn-002', 50.00, txnTime,
                 'Anonymous Bank Transfer', null, null
             )
         });
@@ -116,18 +123,32 @@ private class ULBC_XeroIncomeImporter_Test {
         Test.stopTest();
 
         System.assertEquals('Success', r.status);
-        System.assertEquals(1, r.opportunitiesCreated);
-        System.assertEquals(1, r.orphansCreated);
+        System.assertEquals(1, r.transactionsRead);
+        System.assertEquals(0, r.opportunitiesCreated, 'No Opp on a deferred txn');
+        System.assertEquals(0, r.orphansCreated, 'Deferred is not an orphan');
+        System.assertEquals(1, r.deferredNoAccountNumber);
 
-        Opportunity opp = latestImportedOpp();
-        System.assertEquals(null, opp.npe01__Contact_Id_for_Role__c, 'Should be orphan');
-        System.assertEquals(null, opp.ULBC_Xero_AccountNumber_Seen__c);
+        Integer importedCount = [
+            SELECT COUNT() FROM Opportunity WHERE ULBC_Xero_Transaction_ID__c = 'txn-002'
+        ];
+        System.assertEquals(0, importedCount, 'Deferred txn must not produce an Opp');
 
-        List<FeedItem> posts = [SELECT Id, Body FROM FeedItem WHERE ParentId = :opp.Id];
-        System.assertEquals(1, posts.size(),
-            'Orphan should have exactly one Chatter feed item');
-        System.assert(posts[0].Body.contains('no matching Trust ID'),
-            'Chatter body should explain the orphan reason');
+        Integer feedCount = [SELECT COUNT() FROM FeedItem];
+        System.assertEquals(0, feedCount, 'No Chatter post on deferred txns');
+
+        ULBC_Xero_Sync_Log__c log = latestLog();
+        System.assertEquals(1, log.ULBC_Deferred_No_AccountNumber__c);
+        System.assertEquals(0, log.ULBC_Opportunities_Created__c);
+        System.assertEquals(0, log.ULBC_Orphans_Created__c);
+
+        // Watermark must be held back to (deferred - 1 second), so the next
+        // run's If-Modified-Since (RFC 1123, second precision) re-includes it.
+        ULBC_Xero_Settings__c s = ULBC_Xero_Settings__c.getOrgDefaults();
+        System.assertNotEquals(null, s.LastSyncedAt__c);
+        System.assert(s.LastSyncedAt__c < txnTime,
+            'Watermark must be strictly before the deferred txn UpdatedDateUTC');
+        System.assertEquals(txnTime.addSeconds(-1), s.LastSyncedAt__c,
+            'Watermark should be exactly one second before the deferred txn');
     }
 
     // ─── 3. Unknown AccountNumber → orphan ─────────────────────────────
@@ -167,10 +188,14 @@ private class ULBC_XeroIncomeImporter_Test {
         ULBC_XeroHttpMock mock = new ULBC_XeroHttpMock();
         List<Map<String, Object>> page1 = new List<Map<String, Object>>();
         for (Integer i = 0; i < ULBC_XeroIncomeImporter.PAGE_SIZE; i++) {
+            // Decision 6.14: txns must have AccountNumber to import. Use the
+            // seeded Trust ID 'ULBC-9001' so the whole page imports as matched
+            // donations to Jade Smith — this test exercises pagination, not
+            // matching-vs-deferring.
             page1.add(ULBC_XeroHttpMock.txn(
                 'txn-page1-' + i, 5.00,
                 DateTime.newInstanceGmt(2026, 4, 28, 10, 0, i),
-                'Donor ' + i, null, null
+                'Donor ' + i, 'ULBC-9001', null
             ));
         }
         mock.body = ULBC_XeroHttpMock.buildResponse(page1);
@@ -187,7 +212,7 @@ private class ULBC_XeroIncomeImporter_Test {
         mock.body = ULBC_XeroHttpMock.buildResponse(new List<Map<String, Object>>{
             ULBC_XeroHttpMock.txn(
                 'txn-page2-0', 7.00, DateTime.newInstanceGmt(2026, 4, 28, 10, 5, 0),
-                'Last donor', null, null
+                'Last donor', 'ULBC-9001', null
             )
         });
         System.enqueueJob(new ULBC_XeroIncomeImporterQueueable(2, r1.watermarkAfter));
@@ -337,10 +362,13 @@ private class ULBC_XeroIncomeImporter_Test {
             'SetupOwnerId should match running org');
 
         ULBC_XeroHttpMock mock = new ULBC_XeroHttpMock();
+        // Decision 6.14: a deferred txn (no AccountNumber) doesn't create an Opp,
+        // so the email path never runs. Use a present-but-unmatched AccountNumber
+        // to create a genuine orphan that exercises the email path.
         mock.body = ULBC_XeroHttpMock.buildResponse(new List<Map<String, Object>>{
             ULBC_XeroHttpMock.txn(
                 'txn-email-1', 50.00, DateTime.newInstanceGmt(2026, 4, 30, 10, 0, 0),
-                'Anonymous Bank Transfer', null, null
+                'Anonymous Bank Transfer', 'ULBC-EMAIL-UNMATCHED-1', null
             )
         });
         Test.setMock(HttpCalloutMock.class, mock);
@@ -364,11 +392,13 @@ private class ULBC_XeroIncomeImporter_Test {
     @IsTest
     static void test_orphanEmail_disabled_noSend() {
         // Default setupSettings() leaves OrphanNotificationsEnabled false.
+        // Use a present-but-unmatched AccountNumber to create a genuine orphan
+        // (Decision 6.14: blank AccountNumber would defer, never reach email path).
         ULBC_XeroHttpMock mock = new ULBC_XeroHttpMock();
         mock.body = ULBC_XeroHttpMock.buildResponse(new List<Map<String, Object>>{
             ULBC_XeroHttpMock.txn(
                 'txn-email-2', 50.00, DateTime.newInstanceGmt(2026, 4, 30, 11, 0, 0),
-                'Anonymous Bank Transfer', null, null
+                'Anonymous Bank Transfer', 'ULBC-EMAIL-UNMATCHED-2', null
             )
         });
         Test.setMock(HttpCalloutMock.class, mock);
@@ -421,11 +451,13 @@ private class ULBC_XeroIncomeImporter_Test {
         s.OrphanNotifyEmails__c = null;
         update s;
 
+        // Decision 6.14: blank AccountNumber would defer, never reach email path.
+        // Use a present-but-unmatched AccountNumber to create a genuine orphan.
         ULBC_XeroHttpMock mock = new ULBC_XeroHttpMock();
         mock.body = ULBC_XeroHttpMock.buildResponse(new List<Map<String, Object>>{
             ULBC_XeroHttpMock.txn(
                 'txn-email-4', 50.00, DateTime.newInstanceGmt(2026, 4, 30, 13, 0, 0),
-                'Anonymous Bank Transfer', null, null
+                'Anonymous Bank Transfer', 'ULBC-EMAIL-UNMATCHED-4', null
             )
         });
         Test.setMock(HttpCalloutMock.class, mock);
@@ -463,5 +495,176 @@ private class ULBC_XeroIncomeImporter_Test {
         ];
         System.assertEquals(1, impCount,
             'Schedulable should enqueue queueable, which runs at Test.stopTest()');
+    }
+
+    // ─── 13. Mixed page: matched imports, blank defers ─────────────────
+    // Decision 6.14: same page, two txns. One has a matching AccountNumber and
+    // imports; one has no AccountNumber and defers. The deferred txn has the
+    // smaller UpdatedDateUTC, so the watermark write-back must hold back to
+    // (deferred - 1s) rather than advance to the imported max.
+
+    @IsTest
+    static void test_mixedAccountNumber_importsAndDefers() {
+        DateTime deferredTime = DateTime.newInstanceGmt(2026, 5, 1, 9, 0, 0);
+        DateTime importedTime = DateTime.newInstanceGmt(2026, 5, 1, 10, 0, 0);
+
+        ULBC_XeroHttpMock mock = new ULBC_XeroHttpMock();
+        mock.body = ULBC_XeroHttpMock.buildResponse(new List<Map<String, Object>>{
+            ULBC_XeroHttpMock.txn(
+                'txn-mixed-defer', 40.00, deferredTime,
+                'Anonymous Bank Transfer', null, null
+            ),
+            ULBC_XeroHttpMock.txn(
+                'txn-mixed-import', 60.00, importedTime,
+                'Jade Smith', 'ULBC-9001', 'jade@example.com'
+            )
+        });
+        Test.setMock(HttpCalloutMock.class, mock);
+
+        Test.startTest();
+        ULBC_XeroIncomeImporter.PageResult r =
+            ULBC_XeroIncomeImporter.runPage(1, null);
+        Test.stopTest();
+
+        System.assertEquals('Success', r.status);
+        System.assertEquals(2, r.transactionsRead);
+        System.assertEquals(1, r.opportunitiesCreated, 'Only the matched txn imports');
+        System.assertEquals(0, r.orphansCreated);
+        System.assertEquals(1, r.deferredNoAccountNumber);
+
+        Integer importedCount = [
+            SELECT COUNT() FROM Opportunity
+            WHERE ULBC_Xero_Transaction_ID__c = 'txn-mixed-import'
+        ];
+        System.assertEquals(1, importedCount, 'Matched txn should produce one Opp');
+
+        Integer deferredCount = [
+            SELECT COUNT() FROM Opportunity
+            WHERE ULBC_Xero_Transaction_ID__c = 'txn-mixed-defer'
+        ];
+        System.assertEquals(0, deferredCount, 'Deferred txn must NOT produce an Opp');
+
+        ULBC_Xero_Sync_Log__c log = latestLog();
+        System.assertEquals(1, log.ULBC_Deferred_No_AccountNumber__c);
+        System.assertEquals(1, log.ULBC_Opportunities_Created__c);
+
+        ULBC_Xero_Settings__c s = ULBC_Xero_Settings__c.getOrgDefaults();
+        System.assertEquals(deferredTime.addSeconds(-1), s.LastSyncedAt__c,
+            'Watermark must be held back to (deferred - 1s), not advanced to imported time');
+    }
+
+    // ─── 14. Deferred → AccountNumber assigned → imports cleanly ───────
+    // Same DML→callout constraint as tests 4 and 5: re-run via Queueable so the
+    // second callout starts in a fresh transaction at Test.stopTest().
+
+    @IsTest
+    static void test_deferredThenAssigned_picksUpCleanly_noDuplicate() {
+        DateTime txnTime = DateTime.newInstanceGmt(2026, 5, 1, 14, 0, 0);
+
+        ULBC_XeroHttpMock mock = new ULBC_XeroHttpMock();
+        // Run 1: txn arrives with no AccountNumber → deferred.
+        mock.body = ULBC_XeroHttpMock.buildResponse(new List<Map<String, Object>>{
+            ULBC_XeroHttpMock.txn(
+                'txn-defer-cycle', 80.00, txnTime,
+                'New Donor', null, null
+            )
+        });
+        Test.setMock(HttpCalloutMock.class, mock);
+
+        Test.startTest();
+        ULBC_XeroIncomeImporter.PageResult firstRun =
+            ULBC_XeroIncomeImporter.runPage(1, null);
+
+        // Run 2: Martin has assigned the AccountNumber on the Xero side. The
+        // next If-Modified-Since query re-pulls the same txn — now with
+        // AccountNumber 'ULBC-9001' set — and it should import cleanly.
+        mock.body = ULBC_XeroHttpMock.buildResponse(new List<Map<String, Object>>{
+            ULBC_XeroHttpMock.txn(
+                'txn-defer-cycle', 80.00, txnTime,
+                'Jade Smith', 'ULBC-9001', 'jade@example.com'
+            )
+        });
+        System.enqueueJob(new ULBC_XeroIncomeImporterQueueable(1, null));
+        Test.stopTest();
+
+        System.assertEquals(1, firstRun.deferredNoAccountNumber);
+        System.assertEquals(0, firstRun.opportunitiesCreated);
+
+        Contact known = [SELECT Id FROM Contact WHERE ULBC_Trust_ID__c = 'ULBC-9001'];
+        List<Opportunity> opps = [
+            SELECT Id, npe01__Contact_Id_for_Role__c, Amount
+            FROM Opportunity
+            WHERE ULBC_Xero_Transaction_ID__c = 'txn-defer-cycle'
+        ];
+        System.assertEquals(1, opps.size(),
+            'Re-run should produce exactly one Opp — no duplicate');
+        System.assertEquals(known.Id, opps[0].npe01__Contact_Id_for_Role__c,
+            'Re-run Opp should be linked to the matched Contact');
+
+        // The re-run sync log proves the queueable saw a clean import (not
+        // dedup-via-skippedDuplicates: there was no Opp to skip the first time).
+        List<ULBC_Xero_Sync_Log__c> logs = [
+            SELECT ULBC_Status__c, ULBC_Opportunities_Created__c,
+                   ULBC_Skipped_Duplicates__c, ULBC_Deferred_No_AccountNumber__c
+            FROM ULBC_Xero_Sync_Log__c
+            ORDER BY CreatedDate DESC, Id DESC
+            LIMIT 1
+        ];
+        System.assertEquals('Success', logs[0].ULBC_Status__c);
+        System.assertEquals(1, logs[0].ULBC_Opportunities_Created__c);
+        System.assertEquals(0, logs[0].ULBC_Skipped_Duplicates__c);
+        System.assertEquals(0, logs[0].ULBC_Deferred_No_AccountNumber__c);
+    }
+
+    // ─── 15. Genuine orphan (AccountNumber set, no SF match) ───────────
+    // Confirms Decision 6.14 didn't break the genuine-orphan path: when an
+    // AccountNumber IS set but no Salesforce Contact has the matching Trust
+    // ID, the Opportunity is still created without a Primary Contact, the
+    // Chatter post fires, and the email digest sends to Martin.
+
+    @IsTest
+    static void test_genuineOrphan_stillCreatesOrphan_andFiresNotification() {
+        ULBC_Xero_Settings__c s = ULBC_Xero_Settings__c.getOrgDefaults();
+        s.OrphanNotificationsEnabled__c = true;
+        s.OrphanNotifyEmails__c = 'finance@example.com';
+        update s;
+
+        ULBC_XeroHttpMock mock = new ULBC_XeroHttpMock();
+        mock.body = ULBC_XeroHttpMock.buildResponse(new List<Map<String, Object>>{
+            ULBC_XeroHttpMock.txn(
+                'txn-genuine-orphan', 120.00,
+                DateTime.newInstanceGmt(2026, 5, 1, 15, 0, 0),
+                'Mystery Donor', 'ULBC-SOMEONE-ELSE', 'mystery@example.com'
+            )
+        });
+        Test.setMock(HttpCalloutMock.class, mock);
+
+        ULBC_XeroIncomeImporter.lastEmailOutcome = null;
+        Test.startTest();
+        ULBC_XeroIncomeImporter.PageResult r =
+            ULBC_XeroIncomeImporter.runPage(1, null);
+        Test.stopTest();
+
+        System.assertEquals('Success', r.status);
+        System.assertEquals(1, r.opportunitiesCreated);
+        System.assertEquals(1, r.orphansCreated, 'AccountNumber set but no SF match = orphan');
+        System.assertEquals(0, r.deferredNoAccountNumber);
+
+        Opportunity opp = [
+            SELECT Id, npe01__Contact_Id_for_Role__c, ULBC_Xero_AccountNumber_Seen__c
+            FROM Opportunity
+            WHERE ULBC_Xero_Transaction_ID__c = 'txn-genuine-orphan'
+        ];
+        System.assertEquals(null, opp.npe01__Contact_Id_for_Role__c, 'Genuine orphan');
+        System.assertEquals('ULBC-SOMEONE-ELSE', opp.ULBC_Xero_AccountNumber_Seen__c,
+            'Original AccountNumber preserved for triage');
+
+        List<FeedItem> posts = [SELECT Id FROM FeedItem WHERE ParentId = :opp.Id];
+        System.assertEquals(1, posts.size(), 'Genuine orphan still gets a Chatter post');
+
+        System.assertNotEquals(null, ULBC_XeroIncomeImporter.lastEmailOutcome);
+        System.assert(ULBC_XeroIncomeImporter.lastEmailOutcome.startsWith('sent'),
+            'Email should send for genuine orphans. Got: '
+                + ULBC_XeroIncomeImporter.lastEmailOutcome);
     }
 }
