@@ -4,7 +4,6 @@
     <description>Roll-up of recipients in Sent status. Denominator for open and click rate.</description>
     <externalId>false</externalId>
     <label>Sent Count</label>
-    <summarizedField>ULBC_Email_Send_Recipient__c.Id</summarizedField>
     <summaryFilterItems>
         <field>ULBC_Email_Send_Recipient__c.ULBC_Status__c</field>
         <operation>equals</operation>

@@ -4,7 +4,6 @@
     <description>Number of unique recipients with at least one open. Counts ULBC_Email_Send_Recipient__c rows with Open_Count__c &gt; 0 — so each recipient is counted once regardless of how many times they (or their inbox proxy) loaded the pixel.</description>
     <externalId>false</externalId>
     <label>Unique Open Count</label>
-    <summarizedField>ULBC_Email_Send_Recipient__c.Id</summarizedField>
     <summaryFilterItems>
         <field>ULBC_Email_Send_Recipient__c.ULBC_Open_Count__c</field>
         <operation>greaterThan</operation>

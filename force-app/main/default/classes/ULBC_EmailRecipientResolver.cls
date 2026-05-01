@@ -61,6 +61,7 @@ public with sharing class ULBC_EmailRecipientResolver {
             SELECT Status,
                    ContactId,
                    Contact.Id,
+                   Contact.LastName,
                    Contact.Email,
                    Contact.HasOptedOutOfEmail,
                    Contact.EmailBouncedDate,

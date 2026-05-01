@@ -5,10 +5,6 @@
     <deployed>true</deployed>
     <description>Email Send → Recipients → Contact. Forensic per-recipient detail: who clicked which link, who unsubscribed, who bounced.</description>
     <join>
-        <join>
-            <outerJoin>true</outerJoin>
-            <relationship>ULBC_Contact__r</relationship>
-        </join>
         <outerJoin>false</outerJoin>
         <relationship>Recipients__r</relationship>
     </join>
@@ -88,23 +84,5 @@
             <table>ULBC_Email_Send__c.Recipients__r</table>
         </columns>
         <masterLabel>Recipient</masterLabel>
-    </sections>
-    <sections>
-        <columns>
-            <checkedByDefault>false</checkedByDefault>
-            <field>Name</field>
-            <table>ULBC_Email_Send__c.Recipients__r.ULBC_Contact__r</table>
-        </columns>
-        <columns>
-            <checkedByDefault>false</checkedByDefault>
-            <field>HasOptedOutOfEmail</field>
-            <table>ULBC_Email_Send__c.Recipients__r.ULBC_Contact__r</table>
-        </columns>
-        <columns>
-            <checkedByDefault>false</checkedByDefault>
-            <field>EmailBouncedDate</field>
-            <table>ULBC_Email_Send__c.Recipients__r.ULBC_Contact__r</table>
-        </columns>
-        <masterLabel>Contact</masterLabel>
     </sections>
 </ReportType>

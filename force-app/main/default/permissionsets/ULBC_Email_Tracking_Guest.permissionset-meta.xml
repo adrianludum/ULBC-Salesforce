@@ -4,14 +4,27 @@
     <description>Grants the ULBC Public Site Guest User the minimum permissions needed to record email opens, clicks, and unsubscribes. Assign to the Site Guest User profile via Setup → Sites → Public Access Settings.</description>
     <hasActivationRequired>false</hasActivationRequired>
 
-    <!-- Email Event: Create only (the endpoint blind-inserts events) -->
+    <!-- Email Event: Create + Read (Salesforce requires Read alongside Create; default OWD Private prevents cross-guest visibility) -->
     <objectPermissions>
         <allowCreate>true</allowCreate>
         <allowDelete>false</allowDelete>
         <allowEdit>false</allowEdit>
-        <allowRead>false</allowRead>
+        <allowRead>true</allowRead>
         <modifyAllRecords>false</modifyAllRecords>
         <object>ULBC_Email_Event__c</object>
+        <viewAllRecords>false</viewAllRecords>
+    </objectPermissions>
+
+    <!-- Send: Read required because Recipient is master-detail child of Send.
+         Salesforce enforces "to read child you must read parent." viewAllRecords
+         off so cross-send visibility is governed by sharing rules. -->
+    <objectPermissions>
+        <allowCreate>false</allowCreate>
+        <allowDelete>false</allowDelete>
+        <allowEdit>false</allowEdit>
+        <allowRead>true</allowRead>
+        <modifyAllRecords>false</modifyAllRecords>
+        <object>ULBC_Email_Send__c</object>
         <viewAllRecords>false</viewAllRecords>
     </objectPermissions>
 
@@ -32,11 +45,8 @@
         <readable>true</readable>
         <editable>true</editable>
     </fieldPermissions>
-    <fieldPermissions>
-        <field>ULBC_Email_Event__c.ULBC_Event_Type__c</field>
-        <readable>true</readable>
-        <editable>true</editable>
-    </fieldPermissions>
+    <!-- ULBC_Event_Type__c is required at the field level; Salesforce manages
+         FLS implicitly and rejects explicit blocks. -->
     <fieldPermissions>
         <field>ULBC_Email_Event__c.ULBC_URL__c</field>
         <readable>true</readable>
@@ -52,11 +62,7 @@
         <readable>true</readable>
         <editable>true</editable>
     </fieldPermissions>
-    <fieldPermissions>
-        <field>ULBC_Email_Event__c.ULBC_Occurred_At__c</field>
-        <readable>true</readable>
-        <editable>true</editable>
-    </fieldPermissions>
+    <!-- ULBC_Occurred_At__c is required; FLS implicit. -->
     <fieldPermissions>
         <field>ULBC_Email_Event__c.ULBC_Aggregated__c</field>
         <readable>true</readable>

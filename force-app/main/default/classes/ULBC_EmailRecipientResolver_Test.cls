@@ -30,10 +30,19 @@ private class ULBC_EmailRecipientResolver_Test {
                         ULBC_Trust_ID__c = 'ULBC-006'),
             new Contact(LastName = 'Dupe2', Email = 'shared@example.com',
                         ULBC_Trust_ID__c = 'ULBC-007'),
-            // No Trust ID — used by the requireTrustId test
+            // No Trust ID — used by the requireTrustId test. Note that the
+            // ULBC_ContactTrigger auto-assigns a Trust ID on insert, so we
+            // clear it again immediately below.
             new Contact(LastName = 'NoTrustId', Email = 'e@example.com')
         };
         insert contacts;
+
+        // Clear the auto-assigned Trust ID for the "NoTrustId" contact so
+        // the requireTrustId filter test has a genuinely-blank field to
+        // exercise. assignTrustId only runs on insert, so the update is safe.
+        Contact noTrust = [SELECT Id FROM Contact WHERE LastName = 'NoTrustId' LIMIT 1];
+        noTrust.ULBC_Trust_ID__c = null;
+        update noTrust;
 
         List<CampaignMember> members = new List<CampaignMember>();
         for (Contact ct : contacts) {

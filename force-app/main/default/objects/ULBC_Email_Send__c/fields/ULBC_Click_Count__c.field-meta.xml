@@ -4,7 +4,6 @@
     <description>Number of unique recipients with at least one click. Most honest engagement signal — anchor reporting here, not on opens.</description>
     <externalId>false</externalId>
     <label>Unique Click Count</label>
-    <summarizedField>ULBC_Email_Send_Recipient__c.Id</summarizedField>
     <summaryFilterItems>
         <field>ULBC_Email_Send_Recipient__c.ULBC_Click_Count__c</field>
         <operation>greaterThan</operation>

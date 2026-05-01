@@ -12,12 +12,27 @@ public without sharing class ULBC_ContactTriggerHandler {
 
     public static void handleGoneAway(List<Contact> newContacts, Map<Id, Contact> oldMap) {
         for (Contact c : newContacts) {
-            Boolean wasGoneAway = (oldMap != null && oldMap.containsKey(c.Id))
-                ? oldMap.get(c.Id).ULBC_Gone_Away__c
-                : false;
             Boolean isGoneAway = c.ULBC_Gone_Away__c == true;
-            if (isGoneAway != wasGoneAway || oldMap == null) {
-                c.HasOptedOutOfEmail = isGoneAway ? true : false;
+            if (oldMap == null) {
+                // INSERT: only force opt-out when Gone_Away is true. Previously
+                // this branch always overwrote HasOptedOutOfEmail to mirror
+                // Gone_Away — silently clobbering any opt-out preference set
+                // by the inserting source (Stripe webhook, admin entry, data
+                // import). That broke per-record consent for the new mass
+                // email system. Now: only mirror Gone_Away when it's set.
+                if (isGoneAway) {
+                    c.HasOptedOutOfEmail = true;
+                }
+            } else {
+                // UPDATE: bidirectional sync only when Gone_Away actually
+                // changes. Setting Gone_Away=true forces opt-out on; clearing
+                // Gone_Away clears opt-out (long-standing behavior — see
+                // ULBC_GoneAwayTrigger_Test.test_update_clearGoneAway_clearsOptOut).
+                Boolean wasGoneAway = oldMap.containsKey(c.Id)
+                    && oldMap.get(c.Id).ULBC_Gone_Away__c == true;
+                if (isGoneAway != wasGoneAway) {
+                    c.HasOptedOutOfEmail = isGoneAway;
+                }
             }
         }
     }

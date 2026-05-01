@@ -126,13 +126,12 @@ public with sharing class ULBC_EmailSendController {
 
         ULBC_Email_Settings__c settings = ULBC_Email_Settings__c.getOrgDefaults();
         String baseUrl = (settings == null) ? '' : settings.TrackingBaseURL__c;
-        String footer = (settings == null) ? null : settings.FooterHtml__c;
         Boolean tracking = (settings != null) && (settings.EnableTracking__c == true);
 
         Messaging.SingleEmailMessage rendered =
             Messaging.renderStoredEmailTemplate(tpls[0].Id, targetContactId, null);
         String mutated = ULBC_EmailHtmlMutator.inject(
-            rendered.getHtmlBody(), 'PREVIEW_TOKEN', baseUrl, footer, tracking);
+            rendered.getHtmlBody(), 'PREVIEW_TOKEN', baseUrl, tracking);
 
         Contact c = [SELECT Name FROM Contact WHERE Id = :targetContactId LIMIT 1];
 

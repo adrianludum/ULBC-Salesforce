@@ -37,24 +37,11 @@
         <viewAllRecords>true</viewAllRecords>
     </objectPermissions>
 
-    <!-- Send: every field readable, key fields editable -->
-    <fieldPermissions>
-        <field>ULBC_Email_Send__c.ULBC_Campaign__c</field>
-        <readable>true</readable>
-        <editable>true</editable>
-    </fieldPermissions>
-    <fieldPermissions>
-        <field>ULBC_Email_Send__c.ULBC_Email_Template_DevName__c</field>
-        <readable>true</readable>
-        <editable>true</editable>
-    </fieldPermissions>
+    <!-- Send: every non-required field readable, key fields editable.
+         Required-at-field-level fields (ULBC_Campaign__c, ULBC_Email_Template_DevName__c,
+         ULBC_Status__c) get implicit FLS from Salesforce — explicit blocks are rejected. -->
     <fieldPermissions>
         <field>ULBC_Email_Send__c.ULBC_Subject__c</field>
-        <readable>true</readable>
-        <editable>true</editable>
-    </fieldPermissions>
-    <fieldPermissions>
-        <field>ULBC_Email_Send__c.ULBC_Status__c</field>
         <readable>true</readable>
         <editable>true</editable>
     </fieldPermissions>
@@ -125,11 +112,7 @@
         <readable>true</readable>
         <editable>true</editable>
     </fieldPermissions>
-    <fieldPermissions>
-        <field>ULBC_Email_Send_Recipient__c.ULBC_Status__c</field>
-        <readable>true</readable>
-        <editable>true</editable>
-    </fieldPermissions>
+    <!-- ULBC_Email_Send_Recipient__c.ULBC_Status__c is required; FLS implicit. -->
     <fieldPermissions>
         <field>ULBC_Email_Send_Recipient__c.ULBC_Suppression_Reason__c</field>
         <readable>true</readable>
@@ -172,11 +155,8 @@
         <readable>true</readable>
         <editable>false</editable>
     </fieldPermissions>
-    <fieldPermissions>
-        <field>ULBC_Email_Event__c.ULBC_Event_Type__c</field>
-        <readable>true</readable>
-        <editable>false</editable>
-    </fieldPermissions>
+    <!-- ULBC_Event_Type__c is required at the field level; Salesforce manages
+         its FLS implicitly and rejects explicit fieldPermissions blocks. -->
     <fieldPermissions>
         <field>ULBC_Email_Event__c.ULBC_URL__c</field>
         <readable>true</readable>
@@ -187,11 +167,7 @@
         <readable>true</readable>
         <editable>false</editable>
     </fieldPermissions>
-    <fieldPermissions>
-        <field>ULBC_Email_Event__c.ULBC_Occurred_At__c</field>
-        <readable>true</readable>
-        <editable>false</editable>
-    </fieldPermissions>
+    <!-- ULBC_Email_Event__c.ULBC_Occurred_At__c is required; FLS implicit. -->
     <fieldPermissions>
         <field>ULBC_Email_Event__c.ULBC_Aggregated__c</field>
         <readable>true</readable>

@@ -30,9 +30,30 @@ public with sharing class ULBC_EmailHtmlMutator {
 
     private static final Pattern BODY_CLOSE = Pattern.compile('(?i)</body\\s*>');
 
-    /** Token literal in FooterHtml__c that's substituted with the recipient's unsub URL. */
+    /** Substituted with the recipient's personalised unsubscribe URL at append time. */
     @TestVisible
     private static final String UNSUB_PLACEHOLDER = '{{UNSUB_URL}}';
+
+    /**
+     * Compliance footer (UK GDPR / PECR + UK Charity Commission). Hardcoded
+     * because Custom Settings don't support LongTextArea, and at ~700 chars
+     * the footer doesn't fit a 255-char Text field. To update the wording,
+     * change here and redeploy. Move to a Static Resource if frequent edits
+     * by non-developers become a need.
+     */
+    private static final String FOOTER_HTML =
+        '<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"' +
+        ' style="margin-top:32px;border-top:1px solid #e0e0e0;padding-top:16px;">' +
+        '<tr><td style="font-family:Arial,Helvetica,sans-serif;font-size:12px;' +
+        'line-height:1.5;color:#666;text-align:center;">' +
+        '<p style="margin:0 0 8px 0;">' +
+        'You\'re receiving this email because you\'re an alumnus of ULBC.' +
+        '</p><p style="margin:0 0 8px 0;">' +
+        'ULBC Trust Limited is a registered charity in England and Wales (no.&nbsp;1174721).<br />' +
+        'Registered office: University of London Boathouse, 81 Hartington Road, London W4&nbsp;3TU.' +
+        '</p><p style="margin:0;">' +
+        '<a href="{{UNSUB_URL}}" style="color:#666;text-decoration:underline;">Unsubscribe</a>' +
+        '</p></td></tr></table>';
 
     /**
      * Inject tracking into the rendered HTML for one recipient.
@@ -40,11 +61,11 @@ public with sharing class ULBC_EmailHtmlMutator {
      * @param html       rendered HTML from Messaging.renderStoredEmailTemplate
      * @param token      ULBC_Email_Send_Recipient__c.ULBC_Token__c
      * @param baseUrl    Public Site origin without trailing slash, e.g. https://x.my.salesforce-sites.com/donate
-     * @param footerHtml ULBC_Email_Settings__c.FooterHtml__c — may contain {{UNSUB_URL}}; null skips footer
-     * @param trackingEnabled when false, links are not rewritten and pixel is not injected (kill switch)
+     * @param trackingEnabled when false, links are not rewritten and pixel is not injected (kill switch).
+     *                        The footer + unsub link are appended either way (UK GDPR/PECR).
      */
     public static String inject(String html, String token, String baseUrl,
-                                 String footerHtml, Boolean trackingEnabled) {
+                                 Boolean trackingEnabled) {
         if (String.isBlank(html)) return html;
         if (String.isBlank(token) || String.isBlank(baseUrl)) return html;
 
@@ -54,9 +75,7 @@ public with sharing class ULBC_EmailHtmlMutator {
             working = rewriteLinks(working, token, baseUrl);
         }
 
-        // Footer is appended even when tracking is disabled — it still contains
-        // the unsubscribe link, which is required regardless.
-        working = appendFooter(working, token, baseUrl, footerHtml);
+        working = appendFooter(working, token, baseUrl);
 
         if (trackingEnabled) {
             working = injectPixel(working, token, baseUrl);
@@ -129,13 +148,11 @@ public with sharing class ULBC_EmailHtmlMutator {
     // ── Footer ─────────────────────────────────────────────────────────
 
     @TestVisible
-    private static String appendFooter(String html, String token, String baseUrl, String footerHtml) {
-        if (String.isBlank(footerHtml)) return html;
-
+    private static String appendFooter(String html, String token, String baseUrl) {
         String unsubUrl = baseUrl
             + '/services/apexrest/email/unsub?t='
             + EncodingUtil.urlEncode(token, 'UTF-8');
-        String resolved = footerHtml.replace(UNSUB_PLACEHOLDER, unsubUrl);
+        String resolved = FOOTER_HTML.replace(UNSUB_PLACEHOLDER, unsubUrl);
 
         Matcher m = BODY_CLOSE.matcher(html);
         if (m.find()) {

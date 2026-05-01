@@ -50,7 +50,6 @@ public with sharing class ULBC_EmailSendQueueable implements Queueable {
         ULBC_Email_Settings__c settings = ULBC_Email_Settings__c.getOrgDefaults();
         String oweId = (settings == null) ? null : settings.OrgWideEmailAddressId__c;
         String baseUrl = (settings == null) ? null : settings.TrackingBaseURL__c;
-        String footer = (settings == null) ? null : settings.FooterHtml__c;
         Boolean tracking = (settings != null) && (settings.EnableTracking__c == true);
         String replyTo = (settings == null) ? null : settings.DefaultReplyTo__c;
 
@@ -86,7 +85,7 @@ public with sharing class ULBC_EmailSendQueueable implements Queueable {
                     Messaging.renderStoredEmailTemplate(templateId, rcpt.ULBC_Contact__c, null);
 
                 String mutated = ULBC_EmailHtmlMutator.inject(
-                    rendered.getHtmlBody(), rcpt.ULBC_Token__c, baseUrl, footer, tracking);
+                    rendered.getHtmlBody(), rcpt.ULBC_Token__c, baseUrl, tracking);
 
                 Messaging.SingleEmailMessage msg = new Messaging.SingleEmailMessage();
                 msg.setHtmlBody(mutated);

@@ -93,11 +93,14 @@
                         Preview — rendered for {preview.contactName}
                     </p>
                     <p><strong>Subject:</strong> {preview.subject}</p>
-                    <iframe
-                        class="preview-frame"
-                        title="Email preview"
-                        srcdoc={preview.htmlBody}>
-                    </iframe>
+                    <div class="slds-m-top_small slds-p-around_small slds-border_top">
+                        <lightning-formatted-rich-text value={preview.htmlBody}>
+                        </lightning-formatted-rich-text>
+                    </div>
+                    <p class="slds-text-body_small slds-text-color_weak slds-m-top_x-small">
+                        Note: this preview strips inline styles for security.
+                        For a fully-styled view, send a test email to yourself.
+                    </p>
                 </div>
             </template>
 
