@@ -70,12 +70,21 @@ public with sharing class ULBC_EmailEventAggregator implements Schedulable {
 
         Map<Id, ULBC_Email_Send_Recipient__c> recipients =
             new Map<Id, ULBC_Email_Send_Recipient__c>([
-                SELECT Id,
+                SELECT Id, ULBC_Contact__c,
                        ULBC_Open_Count__c, ULBC_First_Open_At__c,
-                       ULBC_Click_Count__c, ULBC_First_Click_At__c, ULBC_Last_Click_URL__c
+                       ULBC_Click_Count__c, ULBC_First_Click_At__c, ULBC_Last_Click_URL__c,
+                       ULBC_Unsubscribed_At__c
                 FROM ULBC_Email_Send_Recipient__c
                 WHERE Id IN :recipientIds
             ]);
+
+        // Unsubscribe processing: the public endpoint runs as Site Guest User,
+        // which Salesforce forbids from holding Edit/ViewAll on custom objects.
+        // The endpoint inserts an Unsubscribe event only; we (running as the
+        // scheduled user with full CRUD) stamp Recipient.Unsubscribed_At and
+        // flip Contact.HasOptedOutOfEmail here. ~5-minute latency is acceptable
+        // industry-standard behaviour for unsubscribes.
+        Set<Id> contactsToOptOut = new Set<Id>();
 
         for (ULBC_Email_Event__c e : events) {
             if (e.ULBC_Recipient__c == null) continue;
@@ -99,11 +108,26 @@ public with sharing class ULBC_EmailEventAggregator implements Schedulable {
                 if (String.isNotBlank(e.ULBC_URL__c)) {
                     r.ULBC_Last_Click_URL__c = e.ULBC_URL__c;
                 }
+            } else if (e.ULBC_Event_Type__c == 'Unsubscribe') {
+                if (r.ULBC_Unsubscribed_At__c == null) {
+                    r.ULBC_Unsubscribed_At__c = e.ULBC_Occurred_At__c;
+                }
+                if (r.ULBC_Contact__c != null) {
+                    contactsToOptOut.add(r.ULBC_Contact__c);
+                }
             }
-            // Unsubscribe / Bounce are recorded as events but do not roll up to counts.
+            // Bounce events are still recorded but unhandled here (v2 backlog).
         }
 
         if (!recipients.isEmpty()) update recipients.values();
+
+        if (!contactsToOptOut.isEmpty()) {
+            List<Contact> contactUpdates = new List<Contact>();
+            for (Id contactId : contactsToOptOut) {
+                contactUpdates.add(new Contact(Id = contactId, HasOptedOutOfEmail = true));
+            }
+            update contactUpdates;
+        }
 
         for (ULBC_Email_Event__c e : events) e.ULBC_Aggregated__c = true;
         update events;

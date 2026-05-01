@@ -139,7 +139,7 @@ private class ULBC_EmailEventAggregator_Test {
     }
 
     @IsTest
-    static void test_aggregate_unsubscribeAndBounce_doNotIncrementCounts() {
+    static void test_aggregate_unsubscribeAndBounce_doNotIncrementOpenOrClickCounts() {
         ULBC_Email_Send_Recipient__c r = reload();
         insert new List<ULBC_Email_Event__c>{
             new ULBC_Email_Event__c(ULBC_Recipient__c = r.Id,
@@ -157,6 +157,67 @@ private class ULBC_EmailEventAggregator_Test {
         ULBC_Email_Send_Recipient__c after = reload();
         System.assertEquals(0, after.ULBC_Open_Count__c);
         System.assertEquals(0, after.ULBC_Click_Count__c);
+    }
+
+    @IsTest
+    static void test_aggregate_unsubscribe_stampsRecipientAndOptsOutContact() {
+        ULBC_Email_Send_Recipient__c r = reload();
+        Datetime unsubAt = System.now().addMinutes(-3);
+        insert new ULBC_Email_Event__c(
+            ULBC_Recipient__c = r.Id,
+            ULBC_Event_Type__c = 'Unsubscribe',
+            ULBC_Occurred_At__c = unsubAt,
+            ULBC_Aggregated__c = false
+        );
+
+        Test.startTest();
+        ULBC_EmailEventAggregator.aggregate();
+        Test.stopTest();
+
+        ULBC_Email_Send_Recipient__c after = [
+            SELECT ULBC_Unsubscribed_At__c, ULBC_Contact__c
+            FROM ULBC_Email_Send_Recipient__c
+            WHERE ULBC_Token__c = 'agg-token-1' LIMIT 1
+        ];
+        System.assertEquals(unsubAt, after.ULBC_Unsubscribed_At__c,
+            'Recipient.Unsubscribed_At stamped from event time');
+
+        Contact c = [SELECT HasOptedOutOfEmail FROM Contact WHERE Id = :after.ULBC_Contact__c];
+        System.assertEquals(true, c.HasOptedOutOfEmail,
+            'Contact.HasOptedOutOfEmail flipped by aggregator');
+    }
+
+    @IsTest
+    static void test_aggregate_unsubscribe_idempotentOnRepeatEvents() {
+        ULBC_Email_Send_Recipient__c r = reload();
+        Datetime first = System.now().addMinutes(-30);
+        Datetime second = System.now().addMinutes(-10);
+        insert new ULBC_Email_Event__c(
+            ULBC_Recipient__c = r.Id,
+            ULBC_Event_Type__c = 'Unsubscribe',
+            ULBC_Occurred_At__c = first,
+            ULBC_Aggregated__c = false
+        );
+        ULBC_EmailEventAggregator.aggregate();
+
+        // Second unsub event later — Unsubscribed_At must not be overwritten.
+        insert new ULBC_Email_Event__c(
+            ULBC_Recipient__c = r.Id,
+            ULBC_Event_Type__c = 'Unsubscribe',
+            ULBC_Occurred_At__c = second,
+            ULBC_Aggregated__c = false
+        );
+
+        Test.startTest();
+        ULBC_EmailEventAggregator.aggregate();
+        Test.stopTest();
+
+        ULBC_Email_Send_Recipient__c after = [
+            SELECT ULBC_Unsubscribed_At__c FROM ULBC_Email_Send_Recipient__c
+            WHERE ULBC_Token__c = 'agg-token-1' LIMIT 1
+        ];
+        System.assertEquals(first, after.ULBC_Unsubscribed_At__c,
+            'First Unsubscribed_At preserved across multiple events');
     }
 
     @IsTest

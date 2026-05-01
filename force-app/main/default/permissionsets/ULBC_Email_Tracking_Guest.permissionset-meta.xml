@@ -28,15 +28,19 @@
         <viewAllRecords>false</viewAllRecords>
     </objectPermissions>
 
-    <!-- Recipient: Read (look up by token) + Edit (stamp Unsubscribed_At) -->
+    <!-- Recipient: Read only. Salesforce's Guest User license forbids Edit
+         and ViewAll on custom objects. The endpoint's `without sharing`
+         Apex bypasses sharing rules to find recipients by token even when
+         OWD is Private. Recipient.Unsubscribed_At is stamped asynchronously
+         by ULBC_EmailEventAggregator (running as the scheduled user). -->
     <objectPermissions>
         <allowCreate>false</allowCreate>
         <allowDelete>false</allowDelete>
-        <allowEdit>true</allowEdit>
+        <allowEdit>false</allowEdit>
         <allowRead>true</allowRead>
         <modifyAllRecords>false</modifyAllRecords>
         <object>ULBC_Email_Send_Recipient__c</object>
-        <viewAllRecords>true</viewAllRecords>
+        <viewAllRecords>false</viewAllRecords>
     </objectPermissions>
 
     <!-- Field-level permissions -->
@@ -79,10 +83,12 @@
         <readable>true</readable>
         <editable>false</editable>
     </fieldPermissions>
+    <!-- ULBC_Unsubscribed_At__c: Guest no longer writes this directly;
+         aggregator stamps it. Read-only here so dashboards/QA can verify. -->
     <fieldPermissions>
         <field>ULBC_Email_Send_Recipient__c.ULBC_Unsubscribed_At__c</field>
         <readable>true</readable>
-        <editable>true</editable>
+        <editable>false</editable>
     </fieldPermissions>
 
     <!-- The class itself -->

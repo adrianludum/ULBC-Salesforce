@@ -195,7 +195,11 @@ private class ULBC_EmailTrackingResource_Test {
     // ── Unsubscribe ────────────────────────────────────────────────────
 
     @IsTest
-    static void test_unsub_setsContactOptOutAndStampsRecipient() {
+    static void test_unsub_insertsEventOnly_aggregatorAppliesOptOut() {
+        // The endpoint only records the Unsubscribe event — actual opt-out
+        // (Recipient.Unsubscribed_At + Contact.HasOptedOutOfEmail) is applied
+        // by ULBC_EmailEventAggregator, which has the necessary CRUD that
+        // Salesforce's Guest User license denies.
         mockRequest('/services/apexrest/email/unsub',
             new Map<String, String>{ 't' => KNOWN_TOKEN });
 
@@ -208,19 +212,23 @@ private class ULBC_EmailTrackingResource_Test {
         System.assert(res.headers.get('Content-Type').containsIgnoreCase('text/html'));
         System.assert(res.responseBody.toString().contains('unsubscribed'));
 
+        // Contact + Recipient are NOT updated synchronously here.
         Contact c = [SELECT HasOptedOutOfEmail FROM Contact WHERE Email = 'track@example.com'];
-        System.assertEquals(true, c.HasOptedOutOfEmail, 'Contact opted out');
-
+        System.assertEquals(false, c.HasOptedOutOfEmail,
+            'Contact opt-out is deferred to the aggregator');
         ULBC_Email_Send_Recipient__c r = [
             SELECT ULBC_Unsubscribed_At__c FROM ULBC_Email_Send_Recipient__c
             WHERE ULBC_Token__c = :KNOWN_TOKEN
         ];
-        System.assertNotEquals(null, r.ULBC_Unsubscribed_At__c);
+        System.assertEquals(null, r.ULBC_Unsubscribed_At__c,
+            'Recipient stamp deferred to the aggregator');
 
+        // The event itself IS recorded immediately.
         ULBC_Email_Event__c evt = [
-            SELECT ULBC_Event_Type__c FROM ULBC_Email_Event__c LIMIT 1
+            SELECT ULBC_Event_Type__c, ULBC_Recipient__c FROM ULBC_Email_Event__c LIMIT 1
         ];
         System.assertEquals('Unsubscribe', evt.ULBC_Event_Type__c);
+        System.assertEquals(getRecipientId(), evt.ULBC_Recipient__c);
     }
 
     @IsTest
@@ -235,7 +243,8 @@ private class ULBC_EmailTrackingResource_Test {
         System.assertEquals(200, RestContext.response.statusCode,
             'Unknown token still shows the confirmation page (do not leak)');
 
-        // No Contact has been opted out
+        // No Contact has been opted out (deferred to aggregator anyway, and
+        // an unknown token produces an orphan event the aggregator ignores).
         Contact c = [SELECT HasOptedOutOfEmail FROM Contact WHERE Email = 'track@example.com'];
         System.assertEquals(false, c.HasOptedOutOfEmail);
     }

@@ -128,28 +128,14 @@ global without sharing class ULBC_EmailTrackingResource {
 
     private static void handleUnsub(RestRequest req, RestResponse res) {
         String token = readParam(req, 't');
+        // Insert the Unsubscribe event only. The aggregator (running as the
+        // scheduled user, which has full CRUD) processes Unsubscribe events
+        // and stamps Recipient.Unsubscribed_At + Contact.HasOptedOutOfEmail
+        // within ~5 minutes. Salesforce's Guest User license forbids Edit
+        // and View All on custom objects, so we can't update those records
+        // from the public endpoint context — async via aggregator is the
+        // pattern Salesforce expects for guest-initiated mutations.
         recordEvent(token, 'Unsubscribe', null, req);
-
-        // Set HasOptedOutOfEmail + stamp Recipient.Unsubscribed_At
-        if (String.isNotBlank(token)) {
-            List<ULBC_Email_Send_Recipient__c> rcpts = [
-                SELECT Id, ULBC_Contact__c, ULBC_Unsubscribed_At__c
-                FROM ULBC_Email_Send_Recipient__c
-                WHERE ULBC_Token__c = :token
-                LIMIT 1
-            ];
-            if (!rcpts.isEmpty()) {
-                ULBC_Email_Send_Recipient__c r = rcpts[0];
-                if (r.ULBC_Unsubscribed_At__c == null) {
-                    r.ULBC_Unsubscribed_At__c = System.now();
-                    update r;
-                }
-                if (r.ULBC_Contact__c != null) {
-                    Contact c = new Contact(Id = r.ULBC_Contact__c, HasOptedOutOfEmail = true);
-                    update c;
-                }
-            }
-        }
 
         res.statusCode = 200;
         res.addHeader('Content-Type', 'text/html; charset=utf-8');
